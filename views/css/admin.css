@@ -1,0 +1,28 @@
+.mailsendvx-status-panel .mailsendvx-stat {
+  border: 1px solid #d6d4d4;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  min-height: 82px;
+  padding: 14px 16px;
+}
+
+.mailsendvx-stat-value {
+  color: #363a41;
+  display: block;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.mailsendvx-stat-label {
+  color: #6c757d;
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.mailsendvx-actions {
+  margin: 8px 0 20px;
+}
+
