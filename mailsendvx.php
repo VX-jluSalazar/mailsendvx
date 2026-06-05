@@ -15,6 +15,7 @@ class Mailsendvx extends Module
     private const ADMIN_PARENT_TAB_CLASS = 'AdminMailsendvx';
     private const ADMIN_CONFIGURE_TAB_CLASS = 'AdminMailsendvxConfigure';
     private const ADMIN_DASHBOARD_TAB_CLASS = 'AdminMailsendvxDashboard';
+    private const ADMIN_CONFIGURE_SECTION_CLASS = 'CONFIGURE';
 
     public function __construct()
     {
@@ -302,7 +303,7 @@ class Mailsendvx extends Module
         $idParent = $this->createOrUpdateAdminTab(
             self::ADMIN_PARENT_TAB_CLASS,
             'Mail Send VELOX',
-            0,
+            $this->getConfigureSectionTabId(),
             'markunread_mailbox'
         );
 
@@ -341,6 +342,11 @@ class Mailsendvx extends Module
         $saved = $idTab ? $tab->update() : $tab->add();
 
         return $saved ? (int) $tab->id : 0;
+    }
+
+    private function getConfigureSectionTabId(): int
+    {
+        return (int) Tab::getIdFromClassName(self::ADMIN_CONFIGURE_SECTION_CLASS);
     }
 
     private function uninstallAdminTabs(): bool

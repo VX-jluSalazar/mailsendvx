@@ -11,7 +11,7 @@ Esta fase no busca resolver todavia todos los casos comerciales, sino preparar e
 - Instalar y desinstalar el modulo desde Back Office.
 - Crear la configuracion general del modulo.
 - Registrar hooks de PrestaShop necesarios para fases futuras.
-- Crear un menu raiz en el sidebar del Back Office, al mismo nivel que `Modules`.
+- Crear un menu desplegable en el sidebar del Back Office, dentro de la seccion `Configure`, con el mismo comportamiento visual de `Shop Parameters`.
 - Crear un panel administrativo inicial.
 - Crear tablas base para plantillas, eventos, flujos, cola y logs.
 - Registrar eventos base para validar que los hooks funcionan.
@@ -27,7 +27,7 @@ Esta fase no busca resolver todavia todos los casos comerciales, sino preparar e
 | 0.4 Registro de hooks | Registrar hooks para pedido, cliente y newsletter. | Media | Eventos base capturados. |
 | 0.5 Creacion de tablas | Crear tablas `mailsendvx_template`, `mailsendvx_event`, `mailsendvx_flow`, `mailsendvx_queue` y `mailsendvx_log`. | Media | Tablas disponibles despues de instalar. |
 | 0.6 Servicios internos | Crear logger, mailer, renderer, repositorios y provider inicial. | Media | Servicios reutilizables por fases posteriores. |
-| 0.7 Menu administrativo | Crear `Mail Send VELOX` como menu raiz con icono de buzon y submenus `Configuracion` y `Dashboard`. | Media | Menu visible en el sidebar, fuera de `Modules`. |
+| 0.7 Menu administrativo | Crear `Mail Send VELOX` como menu desplegable con icono de buzon y submenus `Configuracion` y `Dashboard`. | Media | Menu visible dentro de `Configure`, con flecha desplegable como `Shop Parameters`. |
 | 0.8 Configuracion general | Guardar activo/inactivo, debug, provider y token de cron. | Baja-media | Configuracion persistente. |
 | 0.9 Sistema de logs | Registrar eventos, errores y acciones relevantes. | Baja-media | Trazabilidad minima. |
 | 0.10 Provider inicial | Usar `Mail::Send()` como primer strategy de envio. | Media | Base lista para Brevo, SMTP o API. |
@@ -41,21 +41,24 @@ Esta fase no busca resolver todavia todos los casos comerciales, sino preparar e
 - `classes/Service/MailSendVxVariableRenderer.php`: reemplazo simple de variables `{variable}`.
 - `classes/Service/MailSendVxMailer.php`: orquestacion de plantilla, variables, provider y log.
 - `classes/Provider/*`: abstraccion del proveedor de envio.
-- `controllers/admin/AdminMailsendvx.php`: entrada raiz del menu `Mail Send VELOX`, redirige al dashboard.
+- `controllers/admin/AdminMailsendvx.php`: entrada padre del menu `Mail Send VELOX`, redirige al dashboard si se accede por URL directa.
 - `controllers/admin/AdminMailsendvxConfigure.php`: pantalla `Configuracion` del menu lateral.
 - `controllers/admin/AdminMailsendvxDashboard.php`: dashboard inicial.
 
 ## Menu de Back Office
 
-La Fase 0 debe crear un menu de primer nivel en el sidebar, al mismo nivel que `Modules`, no dentro de la seccion de modulos.
+La Fase 0 debe crear un menu desplegable en el sidebar, dentro de la seccion nativa `Configure`, con el mismo comportamiento visual de `Shop Parameters`.
 
 ```txt
-Mail Send VELOX
-|-- Configuracion
-|-- Dashboard
+Configure
+|-- Shop Parameters
+|-- Advanced Parameters
+|-- Mail Send VELOX
+    |-- Configuracion
+    |-- Dashboard
 ```
 
-El menu raiz debe usar un icono de buzon de correo. En PrestaShop se puede registrar en `Tab->icon` usando el icono Material Icons `markunread_mailbox`.
+El menu padre debe usar un icono de buzon de correo. En PrestaShop se puede registrar en `Tab->icon` usando el icono Material Icons `markunread_mailbox`.
 
 ## Patrones recomendados
 
@@ -72,17 +75,18 @@ Esta fase no depende de fases anteriores. Es prerequisito obligatorio para Fase 
 ## Como probar la funcionalidad
 
 1. Instalar el modulo desde Back Office.
-2. Verificar que el sidebar muestra `Mail Send VELOX` al mismo nivel que `Modules`.
-3. Verificar que el icono del menu raiz se muestra como buzon de correo.
-4. Abrir `Mail Send VELOX > Configuracion`.
-5. Activar `Enable event capture` y guardar.
-6. Verificar que el provider visible sea `prestashop_mail`.
-7. Abrir `Mail Send VELOX > Dashboard` y confirmar que carga sin errores.
-8. Cambiar el estado de un pedido existente.
-9. Crear una cuenta de cliente de prueba.
-10. Ejecutar una suscripcion a newsletter si el hook esta disponible en la tienda.
-11. Revisar que existan filas nuevas en `PREFIX_mailsendvx_event`.
-12. Revisar que existan logs nuevos en `PREFIX_mailsendvx_log`.
+2. Verificar que el sidebar muestra `Mail Send VELOX` dentro de la seccion `Configure`.
+3. Verificar que `Mail Send VELOX` tiene flecha desplegable y se comporta como `Shop Parameters`.
+4. Verificar que el icono del menu se muestra como buzon de correo.
+5. Abrir `Mail Send VELOX > Configuracion`.
+6. Activar `Enable event capture` y guardar.
+7. Verificar que el provider visible sea `prestashop_mail`.
+8. Abrir `Mail Send VELOX > Dashboard` y confirmar que carga sin errores.
+9. Cambiar el estado de un pedido existente.
+10. Crear una cuenta de cliente de prueba.
+11. Ejecutar una suscripcion a newsletter si el hook esta disponible en la tienda.
+12. Revisar que existan filas nuevas en `PREFIX_mailsendvx_event`.
+13. Revisar que existan logs nuevos en `PREFIX_mailsendvx_log`.
 
 ## Consultas utiles de validacion
 
@@ -105,8 +109,9 @@ LIMIT 20;
 - El modulo se instala sin errores.
 - Las tablas internas se crean correctamente.
 - La configuracion se guarda y persiste.
-- El menu `Mail Send VELOX` aparece como menu raiz del sidebar.
-- El menu raiz muestra un icono de buzon de correo.
+- El menu `Mail Send VELOX` aparece dentro de la seccion `Configure`.
+- El menu muestra un icono de buzon de correo.
+- El menu tiene flecha desplegable y muestra sus submenus sin recargar la pagina como una pantalla independiente.
 - Los submenus `Configuracion` y `Dashboard` cargan desde Back Office.
 - Los hooks registrados capturan eventos cuando el modulo esta activo.
 - Si el modulo esta desactivado, no se capturan eventos nuevos.
