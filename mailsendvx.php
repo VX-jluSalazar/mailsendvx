@@ -12,7 +12,9 @@ class Mailsendvx extends Module
     public const CONFIG_CRON_TOKEN = 'MAILSENDVX_CRON_TOKEN';
 
     private const SUBMIT_ACTION = 'submitMailsendvxConfig';
-    private const ADMIN_TAB_CLASS = 'AdminMailsendvxDashboard';
+    private const ADMIN_PARENT_TAB_CLASS = 'AdminMailsendvx';
+    private const ADMIN_CONFIGURE_TAB_CLASS = 'AdminMailsendvxConfigure';
+    private const ADMIN_DASHBOARD_TAB_CLASS = 'AdminMailsendvxDashboard';
 
     public function __construct()
     {
@@ -61,7 +63,7 @@ class Mailsendvx extends Module
         return parent::install()
             && $this->installDatabase()
             && $this->installDefaultConfiguration()
-            && $this->installAdminTab()
+            && $this->installAdminTabs()
             && $this->registerHook([
                 'displayBackOfficeHeader',
                 'actionOrderStatusPostUpdate',
@@ -72,7 +74,7 @@ class Mailsendvx extends Module
 
     public function uninstall(): bool
     {
-        return $this->uninstallAdminTab()
+        return $this->uninstallAdminTabs()
             && $this->uninstallDatabase()
             && $this->deleteConfiguration()
             && parent::uninstall();
@@ -81,7 +83,12 @@ class Mailsendvx extends Module
     public function hookDisplayBackOfficeHeader(): void
     {
         $controller = Tools::getValue('controller');
-        if (Tools::getValue('configure') !== $this->name && $controller !== self::ADMIN_TAB_CLASS) {
+        $allowedControllers = [
+            self::ADMIN_CONFIGURE_TAB_CLASS,
+            self::ADMIN_DASHBOARD_TAB_CLASS,
+        ];
+
+        if (Tools::getValue('configure') !== $this->name && !in_array($controller, $allowedControllers, true)) {
             return;
         }
 
@@ -96,6 +103,7 @@ class Mailsendvx extends Module
         $output = '';
         $this->installDatabase();
         $this->installDefaultConfiguration(false);
+        $this->installAdminTabs();
 
         if (Tools::isSubmit(self::SUBMIT_ACTION)) {
             Configuration::updateValue(self::CONFIG_ENABLED, (bool) Tools::getValue(self::CONFIG_ENABLED));
@@ -289,38 +297,73 @@ class Mailsendvx extends Module
         return true;
     }
 
-    private function installAdminTab(): bool
+    private function installAdminTabs(): bool
     {
-        if ((int) Tab::getIdFromClassName(self::ADMIN_TAB_CLASS)) {
-            return true;
+        $idParent = $this->createOrUpdateAdminTab(
+            self::ADMIN_PARENT_TAB_CLASS,
+            'Mail Send VELOX',
+            0,
+            'markunread_mailbox'
+        );
+
+        if (!$idParent) {
+            return false;
         }
 
-        $tab = new Tab();
-        $tab->active = 1;
-        $tab->class_name = self::ADMIN_TAB_CLASS;
-        $tab->module = $this->name;
-        $tab->id_parent = (int) Tab::getIdFromClassName('AdminParentModulesSf');
-        if (!$tab->id_parent) {
-            $tab->id_parent = (int) Tab::getIdFromClassName('AdminModules');
-        }
-
-        foreach (Language::getLanguages(false) as $language) {
-            $tab->name[(int) $language['id_lang']] = 'Mail Send VX';
-        }
-
-        return (bool) $tab->add();
+        return $this->createOrUpdateAdminTab(
+            self::ADMIN_CONFIGURE_TAB_CLASS,
+            'Configuracion',
+            $idParent,
+            'settings'
+        ) && $this->createOrUpdateAdminTab(
+            self::ADMIN_DASHBOARD_TAB_CLASS,
+            'Dashboard',
+            $idParent,
+            'dashboard'
+        );
     }
 
-    private function uninstallAdminTab(): bool
+    private function createOrUpdateAdminTab(string $className, string $name, int $idParent, string $icon): int
     {
-        $idTab = (int) Tab::getIdFromClassName(self::ADMIN_TAB_CLASS);
-        if (!$idTab) {
-            return true;
+        $idTab = (int) Tab::getIdFromClassName($className);
+        $tab = $idTab ? new Tab($idTab) : new Tab();
+        $tab->active = 1;
+        $tab->enabled = 1;
+        $tab->class_name = $className;
+        $tab->module = $this->name;
+        $tab->id_parent = $idParent;
+        $tab->icon = $icon;
+
+        foreach (Language::getLanguages(false) as $language) {
+            $tab->name[(int) $language['id_lang']] = $name;
         }
 
-        $tab = new Tab($idTab);
+        $saved = $idTab ? $tab->update() : $tab->add();
 
-        return !Validate::isLoadedObject($tab) || (bool) $tab->delete();
+        return $saved ? (int) $tab->id : 0;
+    }
+
+    private function uninstallAdminTabs(): bool
+    {
+        $classes = [
+            self::ADMIN_CONFIGURE_TAB_CLASS,
+            self::ADMIN_DASHBOARD_TAB_CLASS,
+            self::ADMIN_PARENT_TAB_CLASS,
+        ];
+
+        foreach ($classes as $className) {
+            $idTab = (int) Tab::getIdFromClassName($className);
+            if (!$idTab) {
+                continue;
+            }
+
+            $tab = new Tab($idTab);
+            if (Validate::isLoadedObject($tab) && !$tab->delete()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function renderConfigurationForm(): string
@@ -333,8 +376,13 @@ class Mailsendvx extends Module
         $helper->allow_employee_form_lang = (int) Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG');
         $helper->identifier = $this->identifier;
         $helper->submit_action = self::SUBMIT_ACTION;
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        if (Tools::getValue('controller') === self::ADMIN_CONFIGURE_TAB_CLASS) {
+            $helper->currentIndex = AdminController::$currentIndex;
+            $helper->token = Tools::getAdminTokenLite(self::ADMIN_CONFIGURE_TAB_CLASS);
+        } else {
+            $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
+            $helper->token = Tools::getAdminTokenLite('AdminModules');
+        }
         $helper->fields_value = [
             self::CONFIG_ENABLED => (bool) Configuration::get(self::CONFIG_ENABLED),
             self::CONFIG_DEBUG => (bool) Configuration::get(self::CONFIG_DEBUG),
@@ -389,7 +437,7 @@ class Mailsendvx extends Module
             'mailsendvx_templates_count' => (new MailSendVxTemplateRepository())->countAll(),
             'mailsendvx_scheduled_count' => (new MailSendVxQueueRepository())->countByStatus('scheduled'),
             'mailsendvx_recent_logs' => (new MailSendVxLogRepository())->getRecent(8),
-            'mailsendvx_dashboard_url' => $this->context->link->getAdminLink(self::ADMIN_TAB_CLASS),
+            'mailsendvx_dashboard_url' => $this->context->link->getAdminLink(self::ADMIN_DASHBOARD_TAB_CLASS),
             'mailsendvx_cron_token' => (string) Configuration::get(self::CONFIG_CRON_TOKEN),
         ]);
 

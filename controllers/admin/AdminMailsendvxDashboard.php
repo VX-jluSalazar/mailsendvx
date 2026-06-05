@@ -25,11 +25,9 @@ class AdminMailsendvxDashboardController extends ModuleAdminController
             'scheduled_count' => (new MailSendVxQueueRepository())->countByStatus('scheduled'),
             'pending_count' => (new MailSendVxQueueRepository())->countByStatus('pending'),
             'recent_logs' => (new MailSendVxLogRepository())->getRecent(20),
-            'configure_url' => $this->context->link->getAdminLink('AdminModules')
-                . '&configure=' . $this->module->name,
+            'configure_url' => $this->context->link->getAdminLink('AdminMailsendvxConfigure'),
         ]);
 
         $this->setTemplate('dashboard.tpl');
     }
 }
-
