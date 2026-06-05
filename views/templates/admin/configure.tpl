@@ -27,6 +27,46 @@
     <a class="btn btn-default" href="{$mailsendvx_dashboard_url|escape:'html':'UTF-8'}">
       <i class="icon-list"></i> {l s='Open dashboard' mod='mailsendvx'}
     </a>
+    <a class="btn btn-default" href="{$mailsendvx_templates_url|escape:'html':'UTF-8'}">
+      <i class="icon-envelope"></i> {l s='Manage templates' mod='mailsendvx'}
+    </a>
+  </div>
+
+  <h4>{l s='Mail diagnostics' mod='mailsendvx'}</h4>
+  {if $mailsendvx_mail_diagnostics.warning}
+    <div class="alert alert-warning">
+      {$mailsendvx_mail_diagnostics.warning|escape:'html':'UTF-8'}
+    </div>
+  {/if}
+  <div class="table-responsive">
+    <table class="table">
+      <tbody>
+        <tr>
+          <th>{l s='Mail method' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.method|escape:'html':'UTF-8'}</td>
+        </tr>
+        <tr>
+          <th>{l s='Shop sender email' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.shop_email|escape:'html':'UTF-8'}</td>
+        </tr>
+        <tr>
+          <th>{l s='SMTP server' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.server|escape:'html':'UTF-8'}:{$mailsendvx_mail_diagnostics.port|escape:'html':'UTF-8'}</td>
+        </tr>
+        <tr>
+          <th>{l s='SMTP encryption' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.encryption|escape:'html':'UTF-8'}</td>
+        </tr>
+        <tr>
+          <th>{l s='SMTP user' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.user|escape:'html':'UTF-8'}</td>
+        </tr>
+        <tr>
+          <th>{l s='PrestaShop email log enabled' mod='mailsendvx'}</th>
+          <td>{$mailsendvx_mail_diagnostics.log_emails|escape:'html':'UTF-8'}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <h4>{l s='Recent logs' mod='mailsendvx'}</h4>
@@ -59,4 +99,3 @@
     <p class="text-muted">{l s='No logs yet.' mod='mailsendvx'}</p>
   {/if}
 </div>
-

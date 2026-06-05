@@ -1,5 +1,13 @@
 # Fase 01: emails instantaneos
 
+## Estado
+
+Implementado en `modules/mailsendvx/mailsendvx.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php` y `views/templates/admin/configure.tpl`.
+
+La pantalla `Mail Send VELOX > Templates` permite crear plantillas por evento, editar asunto/HTML/texto, activar/desactivar, previsualizar con datos de prueba y enviar un email de prueba.
+
+La pantalla `Mail Send VELOX > Configuracion` muestra ajustes generales, diagnostico de correo y logs recientes.
+
 ## Objetivo
 
 Enviar emails automaticamente cuando ocurren eventos inmediatos en PrestaShop, usando plantillas activas, variables simples y logs de resultado.
@@ -65,33 +73,46 @@ Guardar log de resultado
 - Tablas base creadas.
 - Provider `prestashop_mail` funcionando.
 - Configuracion nativa de email de PrestaShop probada.
+- Template fisico `mailsendvx_default` disponible en `modules/mailsendvx/mails/en` y `modules/mailsendvx/mails/es`.
 
 ## Como probar la funcionalidad
 
 ### Prueba 1: cambio de estado de pedido
 
 1. Crear o seleccionar un pedido de prueba.
-2. Crear una plantilla activa para el evento `order_status_updated`.
-3. Usar un asunto con variables, por ejemplo: `Pedido {order_reference}: {order_status}`.
-4. Cambiar el estado del pedido desde Back Office.
-5. Confirmar que el cliente recibe el email.
-6. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
+2. Ir a `Mail Send VELOX > Templates`.
+3. Crear una plantilla activa para el evento `order_status_updated`.
+4. Usar un asunto con variables, por ejemplo: `Pedido {order_reference}: {order_status}`.
+5. Cambiar el estado del pedido desde Back Office.
+6. Confirmar que el cliente recibe el email.
+7. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
 
 ### Prueba 2: registro de cliente
 
-1. Crear una plantilla activa para `customer_registered`.
-2. Registrar un cliente nuevo desde Front Office.
-3. Confirmar que se envia el email de bienvenida.
-4. Revisar el log del evento y validar destinatario, estado y mensaje.
+1. Ir a `Mail Send VELOX > Templates`.
+2. Crear una plantilla activa para `customer_registered`.
+3. Registrar un cliente nuevo desde Front Office.
+4. Confirmar que se envia el email de bienvenida.
+5. Revisar el log del evento y validar destinatario, estado y mensaje.
 
 ### Prueba 3: newsletter
 
-1. Crear una plantilla activa para `newsletter_registered`.
-2. Registrar un email nuevo en el formulario de newsletter.
-3. Confirmar que se genera el evento interno.
-4. Confirmar que se envia el email si hay destinatario valido.
+1. Ir a `Mail Send VELOX > Templates`.
+2. Crear una plantilla activa para `newsletter_registered`.
+3. Registrar un email nuevo en el formulario de newsletter.
+4. Confirmar que se genera el evento interno.
+5. Confirmar que se envia el email si hay destinatario valido.
 
-### Prueba 4: plantilla inexistente
+### Prueba 4: preview y envio de prueba
+
+1. Crear o editar una plantilla.
+2. Click en `Preview`.
+3. Confirmar que el asunto, HTML y texto reemplazan variables con datos de prueba.
+4. En la tabla de plantillas, escribir un email valido en `Test email`.
+5. Click en `Send test`.
+6. Confirmar que llega el correo y que el log queda como `sent`.
+
+### Prueba 5: plantilla inexistente
 
 1. Desactivar la plantilla de un evento.
 2. Ejecutar el evento correspondiente.
@@ -116,6 +137,7 @@ LIMIT 30;
 - Cada evento configurado puede enviar un email real.
 - Si no existe plantilla activa, el sistema registra `skipped`.
 - Las variables simples se reemplazan en el asunto y en las variables enviadas al template.
+- La pantalla admin permite crear, editar, previsualizar, eliminar y enviar prueba de plantillas.
 - El resultado del envio queda registrado en logs.
 - Los errores del provider quedan registrados sin romper el hook de PrestaShop.
 

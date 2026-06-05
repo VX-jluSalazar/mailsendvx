@@ -28,6 +28,9 @@
     <a class="btn btn-default" href="{$configure_url|escape:'html':'UTF-8'}">
       <i class="icon-cog"></i> {l s='Configure module' mod='mailsendvx'}
     </a>
+    <a class="btn btn-default" href="{$templates_url|escape:'html':'UTF-8'}">
+      <i class="icon-envelope"></i> {l s='Manage templates' mod='mailsendvx'}
+    </a>
   </div>
 </div>
 
@@ -64,4 +67,3 @@
     <p class="text-muted">{l s='No logs yet.' mod='mailsendvx'}</p>
   {/if}
 </div>
-

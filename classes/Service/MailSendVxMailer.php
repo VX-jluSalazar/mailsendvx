@@ -42,6 +42,16 @@ class MailSendVxMailer
             return false;
         }
 
+        return $this->sendTemplate($template, $recipient, $recipientName, $variables, $idLang, $idShop);
+    }
+
+    /**
+     * @param array<string, mixed> $template
+     * @param array<string, mixed> $variables
+     */
+    public function sendTemplate(array $template, string $recipient, ?string $recipientName, array $variables, int $idLang, int $idShop): bool
+    {
+        $eventName = (string) $template['event_name'];
         $subject = $this->renderer->render((string) $template['subject'], $variables);
         $mailTemplate = (string) $template['mail_template'];
         $mailVars = [];
@@ -50,6 +60,8 @@ class MailSendVxMailer
                 $mailVars['{' . $key . '}'] = (string) $value;
             }
         }
+        $mailVars['{mailsendvx_html_content}'] = $this->renderer->render((string) $template['html_content'], $variables);
+        $mailVars['{mailsendvx_text_content}'] = $this->renderer->render((string) $template['text_content'], $variables);
 
         try {
             $sent = $this->provider->send($idLang, $mailTemplate, $subject, $recipient, $recipientName, $mailVars, $idShop);
@@ -60,7 +72,7 @@ class MailSendVxMailer
                 (int) $template['id_mailsendvx_template'],
                 null,
                 $variables,
-                $sent ? 'Email sent.' : 'Mail provider returned false.',
+                $sent ? 'Email accepted by PrestaShop mail transport. Delivery depends on SMTP/sendmail and recipient server.' : 'Mail provider returned false.',
                 $idShop
             );
 
@@ -81,4 +93,3 @@ class MailSendVxMailer
         }
     }
 }
-

@@ -29,5 +29,73 @@ class MailSendVxTemplateRepository
             'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'mailsendvx_template`'
         );
     }
-}
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getAll(int $limit = 100): array
+    {
+        $sql = new DbQuery();
+        $sql->select('*');
+        $sql->from('mailsendvx_template');
+        $sql->orderBy('date_upd DESC');
+        $sql->limit(max(1, min(500, $limit)));
+
+        return Db::getInstance()->executeS($sql) ?: [];
+    }
+
+    /**
+     * @return array<string, mixed>|false
+     */
+    public function findById(int $idTemplate)
+    {
+        $sql = new DbQuery();
+        $sql->select('*');
+        $sql->from('mailsendvx_template');
+        $sql->where('id_mailsendvx_template = ' . (int) $idTemplate);
+
+        return Db::getInstance()->getRow($sql);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function save(array $data, ?int $idTemplate = null): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        $row = [
+            'id_shop' => (int) $data['id_shop'],
+            'id_lang' => (int) $data['id_lang'],
+            'event_name' => pSQL((string) $data['event_name']),
+            'name' => pSQL((string) $data['name']),
+            'subject' => pSQL((string) $data['subject']),
+            'mail_template' => pSQL((string) $data['mail_template']),
+            'html_content' => pSQL((string) $data['html_content'], true),
+            'text_content' => pSQL((string) $data['text_content'], true),
+            'json_design' => isset($data['json_design']) ? pSQL((string) $data['json_design'], true) : null,
+            'provider' => pSQL((string) $data['provider']),
+            'active' => (int) !empty($data['active']),
+            'date_upd' => $now,
+        ];
+
+        if ($idTemplate) {
+            return Db::getInstance()->update(
+                'mailsendvx_template',
+                $row,
+                'id_mailsendvx_template = ' . (int) $idTemplate
+            );
+        }
+
+        $row['date_add'] = $now;
+
+        return Db::getInstance()->insert('mailsendvx_template', $row);
+    }
+
+    public function delete(int $idTemplate): bool
+    {
+        return Db::getInstance()->delete(
+            'mailsendvx_template',
+            'id_mailsendvx_template = ' . (int) $idTemplate
+        );
+    }
+}

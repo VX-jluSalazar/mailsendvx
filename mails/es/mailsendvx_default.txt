@@ -1,0 +1,5 @@
+{mailsendvx_text_content}
+
+--
+{shop_name}
+{shop_url}

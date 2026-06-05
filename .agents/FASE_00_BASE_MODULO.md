@@ -27,7 +27,7 @@ Esta fase no busca resolver todavia todos los casos comerciales, sino preparar e
 | 0.4 Registro de hooks | Registrar hooks para pedido, cliente y newsletter. | Media | Eventos base capturados. |
 | 0.5 Creacion de tablas | Crear tablas `mailsendvx_template`, `mailsendvx_event`, `mailsendvx_flow`, `mailsendvx_queue` y `mailsendvx_log`. | Media | Tablas disponibles despues de instalar. |
 | 0.6 Servicios internos | Crear logger, mailer, renderer, repositorios y provider inicial. | Media | Servicios reutilizables por fases posteriores. |
-| 0.7 Menu administrativo | Crear `Mail Send VELOX` como menu desplegable con icono de buzon y submenus `Configuracion` y `Dashboard`. | Media | Menu visible dentro de `Configure`, con flecha desplegable como `Shop Parameters`. |
+| 0.7 Menu administrativo | Crear `Mail Send VELOX` como menu desplegable con icono de buzon y submenus `Configuracion`, `Templates` y `Dashboard`. | Media | Menu visible dentro de `Configure`, con flecha desplegable como `Shop Parameters`. |
 | 0.8 Configuracion general | Guardar activo/inactivo, debug, provider y token de cron. | Baja-media | Configuracion persistente. |
 | 0.9 Sistema de logs | Registrar eventos, errores y acciones relevantes. | Baja-media | Trazabilidad minima. |
 | 0.10 Provider inicial | Usar `Mail::Send()` como primer strategy de envio. | Media | Base lista para Brevo, SMTP o API. |
@@ -55,6 +55,7 @@ Configure
 |-- Advanced Parameters
 |-- Mail Send VELOX
     |-- Configuracion
+    |-- Templates
     |-- Dashboard
 ```
 
@@ -112,7 +113,7 @@ LIMIT 20;
 - El menu `Mail Send VELOX` aparece dentro de la seccion `Configure`.
 - El menu muestra un icono de buzon de correo.
 - El menu tiene flecha desplegable y muestra sus submenus sin recargar la pagina como una pantalla independiente.
-- Los submenus `Configuracion` y `Dashboard` cargan desde Back Office.
+- Los submenus `Configuracion`, `Templates` y `Dashboard` cargan desde Back Office.
 - Los hooks registrados capturan eventos cuando el modulo esta activo.
 - Si el modulo esta desactivado, no se capturan eventos nuevos.
 - La desinstalacion elimina configuracion, tab administrativo y tablas internas.
