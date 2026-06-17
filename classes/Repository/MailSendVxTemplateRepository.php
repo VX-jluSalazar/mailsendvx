@@ -9,6 +9,27 @@ class MailSendVxTemplateRepository
     /**
      * @return array<string, mixed>|false
      */
+    public function findByScope(string $eventName, int $idLang, int $idShop, ?int $excludeId = null)
+    {
+        $sql = new DbQuery();
+        $sql->select('*');
+        $sql->from('mailsendvx_template');
+        $sql->where('event_name = "' . pSQL($eventName) . '"');
+        $sql->where('id_lang = ' . (int) $idLang);
+        $sql->where('id_shop = ' . (int) $idShop);
+
+        if ($excludeId) {
+            $sql->where('id_mailsendvx_template != ' . (int) $excludeId);
+        }
+
+        $sql->orderBy('date_upd DESC, id_mailsendvx_template DESC');
+
+        return Db::getInstance()->getRow($sql);
+    }
+
+    /**
+     * @return array<string, mixed>|false
+     */
     public function findActiveByEvent(string $eventName, int $idLang, int $idShop)
     {
         $sql = new DbQuery();
@@ -68,10 +89,21 @@ class MailSendVxTemplateRepository
     public function save(array $data, ?int $idTemplate = null): bool
     {
         $now = date('Y-m-d H:i:s');
+        $eventName = (string) $data['event_name'];
+        $idLang = (int) $data['id_lang'];
+        $idShop = (int) $data['id_shop'];
+
+        if (!$idTemplate) {
+            $existing = $this->findByScope($eventName, $idLang, $idShop);
+            if ($existing) {
+                $idTemplate = (int) $existing['id_mailsendvx_template'];
+            }
+        }
+
         $row = [
-            'id_shop' => (int) $data['id_shop'],
-            'id_lang' => (int) $data['id_lang'],
-            'event_name' => pSQL((string) $data['event_name']),
+            'id_shop' => $idShop,
+            'id_lang' => $idLang,
+            'event_name' => pSQL($eventName),
             'name' => pSQL((string) $data['name']),
             'subject' => pSQL((string) $data['subject']),
             'mail_template' => pSQL((string) $data['mail_template']),
@@ -84,16 +116,27 @@ class MailSendVxTemplateRepository
         ];
 
         if ($idTemplate) {
-            return Db::getInstance()->update(
+            $updated = Db::getInstance()->update(
                 'mailsendvx_template',
                 $row,
                 'id_mailsendvx_template = ' . (int) $idTemplate
             );
+
+            if ($updated && !empty($data['active'])) {
+                $this->deactivateByScope($eventName, $idLang, $idShop, (int) $idTemplate);
+            }
+
+            return $updated;
         }
 
         $row['date_add'] = $now;
 
-        return Db::getInstance()->insert('mailsendvx_template', $row);
+        $inserted = Db::getInstance()->insert('mailsendvx_template', $row);
+        if ($inserted && !empty($data['active'])) {
+            $this->deactivateByScope($eventName, $idLang, $idShop, (int) Db::getInstance()->Insert_ID());
+        }
+
+        return $inserted;
     }
 
     public function delete(int $idTemplate): bool
@@ -101,6 +144,21 @@ class MailSendVxTemplateRepository
         return Db::getInstance()->delete(
             'mailsendvx_template',
             'id_mailsendvx_template = ' . (int) $idTemplate
+        );
+    }
+
+    private function deactivateByScope(string $eventName, int $idLang, int $idShop, int $excludeId): bool
+    {
+        return Db::getInstance()->update(
+            'mailsendvx_template',
+            [
+                'active' => 0,
+                'date_upd' => date('Y-m-d H:i:s'),
+            ],
+            'event_name = "' . pSQL($eventName) . '"'
+            . ' AND id_lang = ' . (int) $idLang
+            . ' AND id_shop = ' . (int) $idShop
+            . ' AND id_mailsendvx_template != ' . (int) $excludeId
         );
     }
 }

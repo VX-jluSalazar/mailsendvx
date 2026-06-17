@@ -518,11 +518,22 @@ class Mailsendvx extends Module
         $output = '';
         $repository = new MailSendVxTemplateRepository();
 
+        $flashMessage = $this->getTemplateFlashMessage();
+        if ($flashMessage !== '') {
+            $output .= $flashMessage;
+        }
+
         if (Tools::isSubmit(self::TEMPLATE_SUBMIT_ACTION)) {
             $idTemplate = (int) Tools::getValue('id_mailsendvx_template');
             $eventName = (string) Tools::getValue('event_name');
             $name = trim((string) Tools::getValue('template_name'));
             $subject = trim((string) Tools::getValue('subject'));
+            $htmlContent = (string) Tools::getValue('html_content');
+            $textContent = trim((string) Tools::getValue('text_content'));
+
+            if ($textContent === '') {
+                $textContent = $this->generateTextContentFromHtml($htmlContent);
+            }
 
             if (!array_key_exists($eventName, $this->getSupportedEvents())) {
                 $output .= $this->displayError($this->trans('Invalid event.', [], 'Modules.Mailsendvx.Admin'));
@@ -536,34 +547,48 @@ class Mailsendvx extends Module
                     'name' => $name,
                     'subject' => $subject,
                     'mail_template' => trim((string) Tools::getValue('mail_template', 'mailsendvx_default')) ?: 'mailsendvx_default',
-                    'html_content' => (string) Tools::getValue('html_content'),
-                    'text_content' => (string) Tools::getValue('text_content'),
+                    'html_content' => $htmlContent,
+                    'text_content' => $textContent,
                     'json_design' => null,
                     'provider' => 'prestashop_mail',
                     'active' => (bool) Tools::getValue('active'),
                 ], $idTemplate ?: null);
 
-                $output .= $saved
-                    ? $this->displayConfirmation($this->trans('Template saved.', [], 'Admin.Notifications.Success'))
-                    : $this->displayError($this->trans('Template could not be saved.', [], 'Modules.Mailsendvx.Admin'));
+                if ($saved) {
+                    $this->redirectTemplatesPage(['mailsendvx_notice' => 'saved']);
+                }
+
+                $output .= $this->displayError($this->trans('Template could not be saved.', [], 'Modules.Mailsendvx.Admin'));
             }
         }
 
         if (Tools::getValue('mailsendvx_delete_template')) {
             $deleted = $repository->delete((int) Tools::getValue('mailsendvx_delete_template'));
-            $output .= $deleted
-                ? $this->displayConfirmation($this->trans('Template deleted.', [], 'Admin.Notifications.Success'))
-                : $this->displayError($this->trans('Template could not be deleted.', [], 'Modules.Mailsendvx.Admin'));
+            if ($deleted) {
+                $this->redirectTemplatesPage(['mailsendvx_notice' => 'deleted']);
+            }
+
+            $output .= $this->displayError($this->trans('Template could not be deleted.', [], 'Modules.Mailsendvx.Admin'));
         }
 
         if (Tools::isSubmit(self::TEMPLATE_TEST_ACTION)) {
-            $output .= $this->sendTemplateTest($repository);
+            $testResult = $this->sendTemplateTest($repository);
+            if ($testResult === true) {
+                $this->redirectTemplatesPage(['mailsendvx_notice' => 'test_sent']);
+            }
+
+            $output .= is_string($testResult)
+                ? $testResult
+                : $this->displayError($this->trans('Test email was not sent. Check logs for details.', [], 'Modules.Mailsendvx.Admin'));
         }
 
         return $output;
     }
 
-    private function sendTemplateTest(MailSendVxTemplateRepository $repository): string
+    /**
+     * @return bool|string
+     */
+    private function sendTemplateTest(MailSendVxTemplateRepository $repository)
     {
         $idTemplate = (int) Tools::getValue('test_id_mailsendvx_template');
         $recipient = trim((string) Tools::getValue('test_email'));
@@ -587,7 +612,7 @@ class Mailsendvx extends Module
         );
 
         return $sent
-            ? $this->displayConfirmation($this->trans('Test email sent.', [], 'Admin.Notifications.Success'))
+            ? true
             : $this->displayError($this->trans('Test email was not sent. Check logs for details.', [], 'Modules.Mailsendvx.Admin'));
     }
 
@@ -757,6 +782,54 @@ class Mailsendvx extends Module
         }
 
         return "Hola {customer_name},\n\nTu pedido {order_reference} cambio al estado: {order_status}.\nTotal: {order_total}\n\n{shop_url}";
+    }
+
+    private function generateTextContentFromHtml(string $htmlContent): string
+    {
+        $text = preg_replace('/<\s*br\s*\/?>/i', "\n", $htmlContent) ?: $htmlContent;
+        $text = preg_replace('/<\s*\/p\s*>/i', "\n\n", $text) ?: $text;
+        $text = strip_tags($text);
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        $text = preg_replace("/\r\n|\r/", "\n", $text) ?: $text;
+        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?: $text;
+
+        $lines = array_map('trim', explode("\n", $text));
+        $lines = array_filter($lines, static function ($line) {
+            return $line !== '';
+        });
+
+        return trim(implode("\n", $lines));
+    }
+
+    /**
+     * @param array<string, string> $params
+     */
+    private function redirectTemplatesPage(array $params = []): void
+    {
+        $url = $this->context->link->getAdminLink(self::ADMIN_TEMPLATES_TAB_CLASS);
+        foreach ($params as $key => $value) {
+            $url .= '&' . urlencode($key) . '=' . urlencode($value);
+        }
+
+        Tools::redirectAdmin($url);
+    }
+
+    private function getTemplateFlashMessage(): string
+    {
+        $notice = (string) Tools::getValue('mailsendvx_notice');
+        if ($notice === 'saved') {
+            return $this->displayConfirmation($this->trans('Template saved.', [], 'Admin.Notifications.Success'));
+        }
+
+        if ($notice === 'deleted') {
+            return $this->displayConfirmation($this->trans('Template deleted.', [], 'Admin.Notifications.Success'));
+        }
+
+        if ($notice === 'test_sent') {
+            return $this->displayConfirmation($this->trans('Test email sent.', [], 'Admin.Notifications.Success'));
+        }
+
+        return '';
     }
 
     private function installDefaultConfiguration(bool $force = true): bool
