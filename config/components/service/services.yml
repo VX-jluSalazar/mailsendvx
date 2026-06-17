@@ -1,0 +1,24 @@
+services:
+  prestashop.module.mailsendvx.service.order_state_event:
+    class: Velox\MailSendVx\Service\OrderStateEventService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.template_content:
+    class: Velox\MailSendVx\Service\TemplateContentService
+    public: true
+
+  prestashop.module.mailsendvx.service.dashboard_view:
+    class: Velox\MailSendVx\Service\DashboardViewService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.template_admin:
+    class: Velox\MailSendVx\Service\TemplateAdminService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $templateContentService: '@prestashop.module.mailsendvx.service.template_content'

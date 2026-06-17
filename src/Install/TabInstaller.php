@@ -3,9 +3,9 @@
 namespace Velox\MailSendVx\Install;
 
 use Language;
-use Mailsendvx;
 use Tab;
 use Validate;
+use Velox\MailSendVx\ModuleConstants;
 
 class TabInstaller
 {
@@ -13,7 +13,7 @@ class TabInstaller
     {
         $idParent = $this->createOrUpdateAdminTab(
             $moduleName,
-            Mailsendvx::ADMIN_PARENT_TAB_CLASS,
+            ModuleConstants::ADMIN_PARENT_TAB_CLASS,
             'Mail Send VELOX',
             $this->getConfigureSectionTabId(),
             'markunread_mailbox'
@@ -25,19 +25,19 @@ class TabInstaller
 
         return $this->createOrUpdateAdminTab(
             $moduleName,
-            Mailsendvx::ADMIN_CONFIGURE_TAB_CLASS,
+            ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
             'Configuracion',
             $idParent,
             'settings'
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
-            Mailsendvx::ADMIN_TEMPLATES_TAB_CLASS,
+            ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
             'Templates',
             $idParent,
             'mail'
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
-            Mailsendvx::ADMIN_DASHBOARD_TAB_CLASS,
+            ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
             'Dashboard',
             $idParent,
             'dashboard'
@@ -47,10 +47,10 @@ class TabInstaller
     public function uninstall(): bool
     {
         $classes = [
-            Mailsendvx::ADMIN_CONFIGURE_TAB_CLASS,
-            Mailsendvx::ADMIN_TEMPLATES_TAB_CLASS,
-            Mailsendvx::ADMIN_DASHBOARD_TAB_CLASS,
-            Mailsendvx::ADMIN_PARENT_TAB_CLASS,
+            ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
+            ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
+            ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
+            ModuleConstants::ADMIN_PARENT_TAB_CLASS,
         ];
 
         foreach ($classes as $className) {
@@ -90,6 +90,6 @@ class TabInstaller
 
     private function getConfigureSectionTabId(): int
     {
-        return (int) Tab::getIdFromClassName(Mailsendvx::ADMIN_CONFIGURE_SECTION_CLASS);
+        return (int) Tab::getIdFromClassName(ModuleConstants::ADMIN_CONFIGURE_SECTION_CLASS);
     }
 }

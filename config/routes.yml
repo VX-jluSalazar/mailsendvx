@@ -1,0 +1,41 @@
+mailsendvx_configuration:
+  path: /mailsendvx/configuration
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\ConfigurationController::indexAction'
+    _legacy_controller: AdminMailsendvxConfigure
+    _legacy_link: AdminMailsendvxConfigure
+
+mailsendvx_templates:
+  path: /mailsendvx/templates
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::indexAction'
+    _legacy_controller: AdminMailsendvxTemplates
+    _legacy_link: AdminMailsendvxTemplates
+
+mailsendvx_template_delete:
+  path: /mailsendvx/templates/{idTemplate}/delete
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::deleteAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    idTemplate: \d+
+
+mailsendvx_template_test:
+  path: /mailsendvx/templates/{idTemplate}/test
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::sendTestAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    idTemplate: \d+
+
+mailsendvx_dashboard:
+  path: /mailsendvx/dashboard
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::indexAction'
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard

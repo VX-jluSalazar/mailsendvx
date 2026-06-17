@@ -1,0 +1,52 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">dashboard</i>
+      {{ 'Mail Send VX Dashboard'|trans({}, 'Modules.Mailsendvx.Admin') }}
+    </h3>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4"><strong>Templates:</strong> {{ templates_count }}</div>
+        <div class="col-md-4"><strong>Scheduled:</strong> {{ scheduled_count }}</div>
+        <div class="col-md-4"><strong>Pending:</strong> {{ pending_count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-3">
+    <h3 class="card-header">
+      <i class="material-icons">history</i>
+      {{ 'Recent logs'|trans({}, 'Modules.Mailsendvx.Admin') }}
+    </h3>
+    <div class="card-body">
+      {% if recent_logs %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'Date'|trans({}, 'Admin.Global') }}</th>
+              <th>Event</th>
+              <th>Status</th>
+              <th>{{ 'Recipient'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+              <th>{{ 'Message'|trans({}, 'Admin.Global') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in recent_logs %}
+              <tr>
+                <td>{{ log.date_add }}</td>
+                <td>{{ log.event_name }}</td>
+                <td>{{ log.status }}</td>
+                <td>{{ log.recipient }}</td>
+                <td>{{ log.message }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted">{{ 'No logs yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -4,18 +4,13 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+
 class AdminMailsendvxConfigureController extends ModuleAdminController
 {
-    public function __construct()
-    {
-        $this->bootstrap = true;
-        parent::__construct();
-    }
-
     public function initContent(): void
     {
-        $this->content .= $this->module->getContent();
-
-        parent::initContent();
+        $router = SymfonyContainer::getInstance()->get('router');
+        Tools::redirectAdmin($router->generate('mailsendvx_configuration'));
     }
 }

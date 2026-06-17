@@ -12,13 +12,14 @@ use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\Service\OrderStateEventService;
 use Velox\MailSendVx\Service\TemplateContentService;
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
 class Mailsendvx extends Module
 {
-    private const EVENT_ORDER_STATUS_CHANGED = 'order_status_changed';
-    private const EVENT_ORDER_STATUS_LEGACY = 'order_status_updated';
-    private const EVENT_CUSTOMER_REGISTERED = 'customer_registered';
-    private const EVENT_NEWSLETTER_REGISTERED = 'newsletter_registered';
+    public const EVENT_ORDER_STATUS_CHANGED = 'order_status_changed';
+    public const EVENT_ORDER_STATUS_LEGACY = 'order_status_updated';
+    public const EVENT_CUSTOMER_REGISTERED = 'customer_registered';
+    public const EVENT_NEWSLETTER_REGISTERED = 'newsletter_registered';
     public const CONFIG_ENABLED = 'MAILSENDVX_ENABLED';
     public const CONFIG_PROVIDER = 'MAILSENDVX_PROVIDER';
     public const CONFIG_DEBUG = 'MAILSENDVX_DEBUG';
@@ -111,17 +112,11 @@ class Mailsendvx extends Module
 
     public function getContent(): string
     {
-        $output = '';
         $this->getInstaller()->ensureRuntimeSchema();
+        $router = SymfonyContainer::getInstance()->get('router');
+        Tools::redirectAdmin($router->generate('mailsendvx_configuration'));
 
-        if (Tools::isSubmit(self::SUBMIT_ACTION)) {
-            Configuration::updateValue(self::CONFIG_ENABLED, (bool) Tools::getValue(self::CONFIG_ENABLED));
-            Configuration::updateValue(self::CONFIG_DEBUG, (bool) Tools::getValue(self::CONFIG_DEBUG));
-            Configuration::updateValue(self::CONFIG_PROVIDER, 'prestashop_mail');
-            $output .= $this->displayConfirmation($this->trans('Settings updated.', [], 'Admin.Notifications.Success'));
-        }
-
-        return $output . $this->renderConfigurationForm() . $this->renderStatusPanel();
+        return '';
     }
 
     public function getTemplatesContent(): string

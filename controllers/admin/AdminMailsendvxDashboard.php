@@ -4,31 +4,13 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-require_once dirname(__DIR__, 2) . '/classes/Repository/MailSendVxLogRepository.php';
-require_once dirname(__DIR__, 2) . '/classes/Repository/MailSendVxQueueRepository.php';
-require_once dirname(__DIR__, 2) . '/classes/Repository/MailSendVxTemplateRepository.php';
+use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
 class AdminMailsendvxDashboardController extends ModuleAdminController
 {
-    public function __construct()
-    {
-        $this->bootstrap = true;
-        parent::__construct();
-    }
-
     public function initContent(): void
     {
-        parent::initContent();
-
-        $this->context->smarty->assign([
-            'templates_count' => (new MailSendVxTemplateRepository())->countAll(),
-            'scheduled_count' => (new MailSendVxQueueRepository())->countByStatus('scheduled'),
-            'pending_count' => (new MailSendVxQueueRepository())->countByStatus('pending'),
-            'recent_logs' => (new MailSendVxLogRepository())->getRecent(20),
-            'configure_url' => $this->context->link->getAdminLink('AdminMailsendvxConfigure'),
-            'templates_url' => $this->context->link->getAdminLink('AdminMailsendvxTemplates'),
-        ]);
-
-        $this->setTemplate('dashboard.tpl');
+        $router = SymfonyContainer::getInstance()->get('router');
+        Tools::redirectAdmin($router->generate('mailsendvx_dashboard'));
     }
 }

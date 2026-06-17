@@ -1,0 +1,21 @@
+services:
+  Velox\MailSendVx\Controller\Admin\ConfigurationController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.form.configuration_data_handler'
+    tags:
+      - { name: controller.service_arguments }
+
+  Velox\MailSendVx\Controller\Admin\TemplatesController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.service.template_admin'
+    tags:
+      - { name: controller.service_arguments }
+
+  Velox\MailSendVx\Controller\Admin\DashboardController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.service.dashboard_view'
+    tags:
+      - { name: controller.service_arguments }

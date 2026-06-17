@@ -3,18 +3,18 @@
 namespace Velox\MailSendVx\Install;
 
 use Configuration;
-use Mailsendvx;
 use Tools;
+use Velox\MailSendVx\ModuleConstants;
 
 class ConfigurationInstaller
 {
     public function install(bool $force = true): bool
     {
         $values = [
-            Mailsendvx::CONFIG_ENABLED => '0',
-            Mailsendvx::CONFIG_DEBUG => '0',
-            Mailsendvx::CONFIG_PROVIDER => 'prestashop_mail',
-            Mailsendvx::CONFIG_CRON_TOKEN => Tools::passwdGen(32),
+            ModuleConstants::CONFIG_ENABLED => '0',
+            ModuleConstants::CONFIG_DEBUG => '0',
+            ModuleConstants::CONFIG_PROVIDER => 'prestashop_mail',
+            ModuleConstants::CONFIG_CRON_TOKEN => Tools::passwdGen(32),
         ];
 
         foreach ($values as $key => $value) {
@@ -30,9 +30,9 @@ class ConfigurationInstaller
 
     public function uninstall(): bool
     {
-        return Configuration::deleteByName(Mailsendvx::CONFIG_ENABLED)
-            && Configuration::deleteByName(Mailsendvx::CONFIG_DEBUG)
-            && Configuration::deleteByName(Mailsendvx::CONFIG_PROVIDER)
-            && Configuration::deleteByName(Mailsendvx::CONFIG_CRON_TOKEN);
+        return Configuration::deleteByName(ModuleConstants::CONFIG_ENABLED)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_DEBUG)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_PROVIDER)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_CRON_TOKEN);
     }
 }

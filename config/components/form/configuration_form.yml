@@ -1,0 +1,27 @@
+services:
+  prestashop.module.mailsendvx.form.configuration_data_configuration:
+    class: Velox\MailSendVx\Form\ConfigurationDataConfiguration
+    arguments:
+      - '@prestashop.adapter.legacy.configuration'
+
+  prestashop.module.mailsendvx.form.configuration_data_provider:
+    class: Velox\MailSendVx\Form\ConfigurationFormDataProvider
+    arguments:
+      - '@prestashop.module.mailsendvx.form.configuration_data_configuration'
+
+  prestashop.module.mailsendvx.form.type.configuration:
+    class: Velox\MailSendVx\Form\Type\ConfigurationFormType
+    parent: 'form.type.translatable.aware'
+    tags:
+      - { name: form.type }
+
+  prestashop.module.mailsendvx.form.configuration_data_handler:
+    class: 'PrestaShop\PrestaShop\Core\Form\FormHandler'
+    public: true
+    arguments:
+      $formBuilder: '@=service("form.factory").createBuilder()'
+      $hookDispatcher: '@prestashop.core.hook.dispatcher'
+      $formDataProvider: '@prestashop.module.mailsendvx.form.configuration_data_provider'
+      $formTypes:
+        mailsendvx_configuration: 'Velox\MailSendVx\Form\Type\ConfigurationFormType'
+      $hookName: 'AdminMailsendvxConfiguration'

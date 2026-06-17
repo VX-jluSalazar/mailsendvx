@@ -1,0 +1,86 @@
+{% form_theme templateForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  {{ form_start(templateForm) }}
+  <div class="card">
+    <h3 class="card-header">
+      <i class="material-icons">mail</i>
+      {{ 'Instant email templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
+    </h3>
+    <div class="card-body">
+      <div class="form-wrapper">
+        {{ form_widget(templateForm) }}
+      </div>
+    </div>
+    <div class="card-footer text-right">
+      <button type="submit" class="btn btn-primary">
+        {{ 'Save template'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </button>
+    </div>
+  </div>
+  {{ form_end(templateForm) }}
+
+  {% if preview %}
+    <div class="card mt-3">
+      <h3 class="card-header">
+        <i class="material-icons">visibility</i>
+        {{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
+      </h3>
+      <div class="card-body">
+        <p><strong>{{ 'Subject'|trans({}, 'Admin.Global') }}:</strong> {{ preview.subject }}</p>
+        <div class="border p-3 mb-3">{{ preview.html|raw }}</div>
+        <pre>{{ preview.text }}</pre>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="card mt-3">
+    <h3 class="card-header">
+      <i class="material-icons">list</i>
+      {{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
+    </h3>
+    <div class="card-body">
+      {% if templates %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th>{{ 'Name'|trans({}, 'Admin.Global') }}</th>
+              <th>Event</th>
+              <th>{{ 'Subject'|trans({}, 'Admin.Global') }}</th>
+              <th>{{ 'Language'|trans({}, 'Admin.Global') }}</th>
+              <th>Shop</th>
+              <th>{{ 'Active'|trans({}, 'Admin.Global') }}</th>
+              <th>{{ 'Actions'|trans({}, 'Admin.Actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for template in templates %}
+              <tr>
+                <td>{{ template.name }}</td>
+                <td><code>{{ template.event_name }}</code></td>
+                <td>{{ template.subject }}</td>
+                <td>{{ template.id_lang }}</td>
+                <td>{{ template.id_shop }}</td>
+                <td>{{ template.active ? 'Yes'|trans({}, 'Admin.Global') : 'No'|trans({}, 'Admin.Global') }}</td>
+                <td>
+                  <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {edit: template.id_mailsendvx_template}) }}">{{ 'Edit'|trans({}, 'Admin.Actions') }}</a>
+                  <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {preview: template.id_mailsendvx_template}) }}">{{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                  <form method="post" action="{{ path('mailsendvx_template_delete', {idTemplate: template.id_mailsendvx_template}) }}" style="display:inline-block">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Delete'|trans({}, 'Admin.Actions') }}</button>
+                  </form>
+                  <form method="post" action="{{ path('mailsendvx_template_test', {idTemplate: template.id_mailsendvx_template}) }}" style="display:inline-block">
+                    <input type="email" name="test_email" placeholder="Test email">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Send test'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-muted">{{ 'No templates yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
