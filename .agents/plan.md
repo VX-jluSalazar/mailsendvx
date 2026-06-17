@@ -45,51 +45,57 @@ La arquitectura recomendada combina:
 
 ## Estado actual observado
 
-El modulo ya incluye una base inicial:
+El modulo ya incluye la base de la Fase 0 y una implementacion funcional avanzada de la Fase 1:
 
 - Instalacion y desinstalacion.
 - Configuracion general en Back Office.
-- Tab de administracion `AdminMailsendvxDashboard`.
+- Tabs de administracion `AdminMailsendvxConfigure`, `AdminMailsendvxTemplates` y `AdminMailsendvxDashboard`.
 - Hooks `actionOrderStatusPostUpdate`, `actionCustomerAccountAdd` y `actionNewsletterRegistrationAfter`.
 - Tablas base para templates, eventos, flujos, cola y logs.
 - Repositorios, logger, renderer simple de variables y provider inicial con `Mail::Send()`.
+- Pantalla de templates con alta, edicion, preview, borrado y envio de prueba.
+- Envio instantaneo por eventos de pedido, registro de cliente y newsletter.
+- Logs funcionales con estados `sent`, `failed` y `skipped`.
 
-Las fases documentadas deben usarse como guia para completar, validar y ampliar esa base.
+Las fases documentadas deben usarse como guia para validar, cerrar brechas y ampliar la capacidad existente.
 
-## Ajuste de arquitectura pendiente
+## Ajuste de arquitectura ya aplicado
 
 ### Separacion de eventos por estado de pedido
 
 Revision del modulo en junio de 2026:
 
 - El hook `actionOrderStatusPostUpdate` existe y funciona.
-- La implementacion actual dispara siempre el mismo evento interno: `order_status_updated`.
-- Eso obliga a que todos los cambios de estado de pedido compartan la misma logica, la misma resolucion de plantilla y el mismo punto de entrada funcional.
-- El resultado es una granularidad insuficiente para casos como pago aceptado, pedido enviado, entregado, cancelado o estados personalizados.
+- La implementacion ya no depende solo de `order_status_updated`.
+- Hoy el modulo dispara un evento generico `order_status_changed`.
+- Tambien dispara un evento especifico por estado destino usando la forma `order_status_changed_{state_key}`.
+- El evento legado `order_status_updated` se conserva como compatibilidad temporal cuando existe una plantilla activa asociada.
 
-### Decision recomendada
+Esto deja una base suficiente para distinguir logica generica y logica especifica por estado sin bloquear la migracion de plantillas antiguas.
+
+### Decision aplicada
 
 Separar el hook tecnico del evento funcional:
 
 - Hook tecnico unico: `actionOrderStatusPostUpdate`.
 - Evento generico interno: `order_status_changed`.
-- Evento especifico interno por estado destino: `order_status_{state_key}`.
+- Evento especifico interno por estado destino: `order_status_changed_{state_key}`.
 
 Ejemplos:
 
 - `order_status_changed`
-- `order_status_payment_accepted`
-- `order_status_shipped`
-- `order_status_delivered`
-- `order_status_canceled`
+- `order_status_changed_payment_accepted`
+- `order_status_changed_shipped`
+- `order_status_changed_delivered`
+- `order_status_changed_canceled`
 
-### Reglas de implementacion recomendadas
+### Reglas de implementacion aplicadas
 
-1. Resolver un `state_key` estable desde `OrderState`.
-2. No usar directamente el nombre traducido del estado como identificador funcional.
+1. Resolver un `state_key` estable desde `OrderState`, priorizando `template` y usando nombre normalizado o fallback por ID cuando aplica.
+2. No usar directamente el nombre traducido del estado como identificador funcional principal cuando hay una clave mas estable disponible.
 3. Guardar en variables tanto el ID del estado como su clave normalizada y su nombre visible.
 4. Mantener compatibilidad temporal con `order_status_updated` mientras se migran plantillas existentes.
-5. Permitir que un mismo cambio de estado pueda activar una plantilla generica y otra especifica del estado final.
+5. Permitir que un mismo cambio de estado active una plantilla generica y otra especifica del estado final.
 
 ### Variables minimas nuevas para eventos de estado
 
@@ -102,6 +108,7 @@ Ejemplos:
 
 ### Impacto en el roadmap
 
-- Fase 1 debe refactorizar los emails instantaneos de estado para soportar eventos especificos.
-- Fase 2 debe construir sus flujos postcompra sobre esta taxonomia de eventos, no sobre un unico `order_status_updated`.
+- Fase 1 ya incorpora el refactor principal de eventos instantaneos de estado.
+- Fase 1 todavia requiere validacion funcional real, limpieza documental y pequenos ajustes de consistencia.
+- Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, no sobre un unico `order_status_updated`.
 - Fase 3 debe usar esta misma taxonomia para plantillas predisenadas y previews reales por estado.

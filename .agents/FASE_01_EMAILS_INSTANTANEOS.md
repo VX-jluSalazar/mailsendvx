@@ -2,23 +2,35 @@
 
 ## Estado
 
-Implementado en `modules/mailsendvx/mailsendvx.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php` y `views/templates/admin/configure.tpl`.
+Implementado en `modules/mailsendvx/mailsendvx.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php` y `views/templates/admin/templates.tpl`.
 
 La pantalla `Mail Send VELOX > Templates` permite crear plantillas por evento, editar asunto/HTML/texto, activar/desactivar, previsualizar con datos de prueba y enviar un email de prueba.
 
 La pantalla `Mail Send VELOX > Configuracion` muestra ajustes generales, diagnostico de correo y logs recientes.
 
-## Limitacion actual detectada
+El estado actual observado del codigo indica que la Fase 01 ya esta implementada en su base funcional y que los principales pendientes estan en validacion manual, consistencia de naming y documentacion.
 
-El cambio de estado del pedido hoy entra por `hookActionOrderStatusPostUpdate()` y siempre termina en el evento interno `order_status_updated`.
+## Estado real de la implementacion
 
-Eso introduce tres problemas:
+### Funcionalidad ya presente
 
-- Todas las plantillas de estados de pedido compiten sobre el mismo `event_name`.
-- No existe una separacion natural entre logica generica y logica especifica por estado.
-- Los flujos futuros de postcompra quedan acoplados a un evento demasiado amplio.
+- Cambio de estado de pedido con evento generico `order_status_changed`.
+- Cambio de estado de pedido con evento especifico `order_status_changed_{state_key}`.
+- Compatibilidad temporal con `order_status_updated` si existe una plantilla legacy activa.
+- Emails instantaneos por `customer_registered`.
+- Emails instantaneos por `newsletter_registered`.
+- Editor simple de plantillas.
+- Variables simples en asunto, HTML y texto.
+- Vista previa con datos de prueba.
+- Envio de prueba desde Back Office.
+- Logs de resultado con `sent`, `failed` y `skipped`.
 
-La siguiente iteracion de esta fase debe corregir esto antes de ampliar automatizaciones.
+### Pendientes observados
+
+- Ejecutar pruebas manuales reales en entorno con SMTP o proveedor configurado.
+- Alinear toda la documentacion con el naming real implementado.
+- Confirmar si el naming definitivo sera `order_status_changed_{state_key}` o si habra una futura migracion a otra variante.
+- Ajustar algunos datos de ejemplo para que reflejen exactamente el mapeo canonico actual de estados.
 
 ## Objetivo
 
@@ -37,31 +49,31 @@ Esta fase convierte la captura de eventos de la Fase 0 en acciones reales de env
 ### Eventos objetivo para pedido
 
 - `order_status_changed` como evento generico.
-- `order_status_{state_key}` como evento especifico por estado destino.
+- `order_status_changed_{state_key}` como evento especifico por estado destino.
 
 Ejemplos sugeridos:
 
-- `order_status_payment_accepted`
-- `order_status_shipped`
-- `order_status_delivered`
-- `order_status_canceled`
-- `order_status_refunded`
+- `order_status_changed_payment_accepted`
+- `order_status_changed_shipped`
+- `order_status_changed_delivered`
+- `order_status_changed_canceled`
+- `order_status_changed_refunded`
 
 ## Alcance funcional
 
 | Subfase | Objetivo | Complejidad |
 | --- | --- | --- |
-| 1.1 Emails por cambio de estado | Enviar un email cuando un pedido cambie de estado. | Media |
-| 1.1.1 Refactor de evento generico | Sustituir el uso exclusivo de `order_status_updated` por `order_status_changed`. | Media |
-| 1.1.2 Eventos especificos por estado | Disparar un evento derivado segun el estado destino del pedido. | Media-alta |
-| 1.1.3 Compatibilidad temporal | Mantener compatibilidad con plantillas viejas basadas en `order_status_updated`. | Media |
-| 1.2 Emails por registro de cliente | Enviar email de bienvenida al crear cuenta. | Baja-media |
-| 1.3 Emails por suscripcion newsletter | Enviar confirmacion o bienvenida al suscriptor. | Media |
-| 1.4 Editor simple de plantilla | Permitir crear asunto, template, HTML/texto y evento asociado. | Media |
-| 1.5 Variables simples | Soportar variables como `{customer_name}`, `{order_reference}`, `{shop_name}` y `{order_total}`. | Media |
-| 1.6 Vista previa | Previsualizar el email con datos de prueba. | Media |
-| 1.7 Envio de prueba | Enviar un email de prueba desde Back Office. | Baja-media |
-| 1.8 Logs por email enviado | Guardar resultado, destinatario, plantilla, error y fecha. | Baja-media |
+| 1.1 Emails por cambio de estado | Enviar un email cuando un pedido cambie de estado. | Implementado |
+| 1.1.1 Refactor de evento generico | Sustituir el uso exclusivo de `order_status_updated` por `order_status_changed`. | Implementado |
+| 1.1.2 Eventos especificos por estado | Disparar un evento derivado segun el estado destino del pedido. | Implementado |
+| 1.1.3 Compatibilidad temporal | Mantener compatibilidad con plantillas viejas basadas en `order_status_updated`. | Implementado |
+| 1.2 Emails por registro de cliente | Enviar email de bienvenida al crear cuenta. | Implementado |
+| 1.3 Emails por suscripcion newsletter | Enviar confirmacion o bienvenida al suscriptor. | Implementado |
+| 1.4 Editor simple de plantilla | Permitir crear asunto, template, HTML/texto y evento asociado. | Implementado |
+| 1.5 Variables simples | Soportar variables como `{customer_name}`, `{order_reference}`, `{shop_name}` y `{order_total}`. | Implementado |
+| 1.6 Vista previa | Previsualizar el email con datos de prueba. | Implementado |
+| 1.7 Envio de prueba | Enviar un email de prueba desde Back Office. | Implementado |
+| 1.8 Logs por email enviado | Guardar resultado, destinatario, plantilla, error y fecha. | Implementado |
 
 ## Flujo tecnico
 
@@ -87,10 +99,10 @@ Guardar log de resultado
 
 | Evento | Variables |
 | --- | --- |
-| `order_status_changed` | `customer_name`, `customer_email`, `order_reference`, `order_total`, `order_status`, `old_order_status`, `order_state_id`, `order_state_key`, `old_order_state_id`, `old_order_state_key`, `shop_name`, `shop_url` |
-| `order_status_{state_key}` | Las mismas variables del evento generico, orientadas al estado destino. |
+| `order_status_changed` | `customer_name`, `customer_email`, `order_reference`, `order_total`, `order_status`, `old_order_status`, `order_state_id`, `order_state_key`, `order_state_name`, `old_order_state_id`, `old_order_state_key`, `old_order_state_name`, `shop_name`, `shop_url` |
+| `order_status_changed_{state_key}` | Las mismas variables del evento generico, orientadas al estado destino. |
 | `customer_registered` | `customer_name`, `customer_email`, `shop_name`, `shop_url` |
-| `newsletter_registered` | `customer_email`, `shop_name`, `shop_url` |
+| `newsletter_registered` | `customer_email`, `newsletter_action`, `shop_name`, `shop_url` |
 
 ## Estrategia tecnica recomendada para estados de pedido
 
@@ -98,7 +110,7 @@ Guardar log de resultado
 
 - Hook origen: `actionOrderStatusPostUpdate`
 - Evento generico: `order_status_changed`
-- Evento especifico: `order_status_{state_key}`
+- Evento especifico: `order_status_changed_{state_key}`
 - Evento legado temporal: `order_status_updated`
 
 ### Regla para `state_key`
@@ -128,7 +140,7 @@ Se recomienda:
 
 1. Registrar captura del cambio de estado.
 2. Disparar `order_status_changed`.
-3. Disparar `order_status_{state_key}`.
+3. Disparar `order_status_changed_{state_key}`.
 4. Disparar `order_status_updated` solo como compatibilidad temporal si existe plantilla asociada o mientras dure la migracion.
 
 ## Patrones recomendados
@@ -154,7 +166,7 @@ Se recomienda:
 1. Crear o seleccionar un pedido de prueba.
 2. Ir a `Mail Send VELOX > Templates`.
 3. Crear una plantilla activa para el evento `order_status_changed`.
-4. Crear otra plantilla activa para un estado especifico, por ejemplo `order_status_shipped`.
+4. Crear otra plantilla activa para un estado especifico, por ejemplo `order_status_changed_shipped`.
 5. Usar un asunto con variables, por ejemplo: `Pedido {order_reference}: {order_status}`.
 5. Cambiar el estado del pedido desde Back Office.
 6. Confirmar que se ejecuta la plantilla generica.
@@ -223,6 +235,16 @@ LIMIT 30;
 - La pantalla admin permite crear, editar, previsualizar, eliminar y enviar prueba de plantillas.
 - El resultado del envio queda registrado en logs.
 - Los errores del provider quedan registrados sin romper el hook de PrestaShop.
+
+## Nota de cierre de estado
+
+La Fase 01 debe considerarse implementada a nivel de codigo base.
+
+Los siguientes pasos recomendados ya no son construir la funcionalidad principal, sino:
+
+- validar el comportamiento en entorno real,
+- ajustar documentacion y ejemplos,
+- preparar el puente hacia Fase 02 sobre la taxonomia `order_status_changed` y `order_status_changed_{state_key}`.
 
 ## Riesgos
 

@@ -428,7 +428,7 @@ class Mailsendvx extends Module
     private function resolveOrderStateKey($status, string $fallbackName, int $fallbackId): string
     {
         if ($status instanceof OrderState && Validate::isLoadedObject($status)) {
-            $template = isset($status->template) ? trim((string) $status->template) : '';
+            $template = $this->extractOrderStateTemplateValue($status->template ?? null);
             if ($template !== '') {
                 return $this->mapOrderStateTemplateToKey($template);
             }
@@ -466,6 +466,33 @@ class Mailsendvx extends Module
         ];
 
         return $map[$normalizedTemplate] ?? $normalizedTemplate;
+    }
+
+    /**
+     * @param mixed $template
+     */
+    private function extractOrderStateTemplateValue($template): string
+    {
+        if (is_string($template)) {
+            return trim($template);
+        }
+
+        if (!is_array($template)) {
+            return '';
+        }
+
+        $idLang = (int) $this->context->language->id;
+        if (isset($template[$idLang]) && is_string($template[$idLang])) {
+            return trim($template[$idLang]);
+        }
+
+        foreach ($template as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return '';
     }
 
     private function normalizeEventKey(string $value): string
