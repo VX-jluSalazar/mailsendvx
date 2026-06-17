@@ -4,6 +4,15 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Velox\MailSendVx\Install\ConfigurationInstaller;
+use Velox\MailSendVx\Install\DatabaseInstaller;
+use Velox\MailSendVx\Install\Installer;
+use Velox\MailSendVx\Install\TabInstaller;
+use Velox\MailSendVx\Service\OrderStateEventService;
+use Velox\MailSendVx\Service\TemplateContentService;
+
 class Mailsendvx extends Module
 {
     private const EVENT_ORDER_STATUS_CHANGED = 'order_status_changed';
@@ -18,11 +27,11 @@ class Mailsendvx extends Module
     private const SUBMIT_ACTION = 'submitMailsendvxConfig';
     private const TEMPLATE_SUBMIT_ACTION = 'submitMailsendvxTemplate';
     private const TEMPLATE_TEST_ACTION = 'submitMailsendvxTest';
-    private const ADMIN_PARENT_TAB_CLASS = 'AdminMailsendvx';
-    private const ADMIN_CONFIGURE_TAB_CLASS = 'AdminMailsendvxConfigure';
-    private const ADMIN_TEMPLATES_TAB_CLASS = 'AdminMailsendvxTemplates';
-    private const ADMIN_DASHBOARD_TAB_CLASS = 'AdminMailsendvxDashboard';
-    private const ADMIN_CONFIGURE_SECTION_CLASS = 'CONFIGURE';
+    public const ADMIN_PARENT_TAB_CLASS = 'AdminMailsendvx';
+    public const ADMIN_CONFIGURE_TAB_CLASS = 'AdminMailsendvxConfigure';
+    public const ADMIN_TEMPLATES_TAB_CLASS = 'AdminMailsendvxTemplates';
+    public const ADMIN_DASHBOARD_TAB_CLASS = 'AdminMailsendvxDashboard';
+    public const ADMIN_CONFIGURE_SECTION_CLASS = 'CONFIGURE';
 
     public function __construct()
     {
@@ -68,23 +77,16 @@ class Mailsendvx extends Module
 
     public function install(): bool
     {
-        return parent::install()
-            && $this->installDatabase()
-            && $this->installDefaultConfiguration()
-            && $this->installAdminTabs()
-            && $this->registerHook([
-                'displayBackOfficeHeader',
-                'actionOrderStatusPostUpdate',
-                'actionCustomerAccountAdd',
-                'actionNewsletterRegistrationAfter',
-            ]);
+        if (!parent::install()) {
+            return false;
+        }
+
+        return $this->getInstaller()->install($this);
     }
 
     public function uninstall(): bool
     {
-        return $this->uninstallAdminTabs()
-            && $this->uninstallDatabase()
-            && $this->deleteConfiguration()
+        return $this->getInstaller()->uninstall()
             && parent::uninstall();
     }
 
@@ -110,9 +112,7 @@ class Mailsendvx extends Module
     public function getContent(): string
     {
         $output = '';
-        $this->installDatabase();
-        $this->installDefaultConfiguration(false);
-        $this->installAdminTabs();
+        $this->getInstaller()->ensureRuntimeSchema();
 
         if (Tools::isSubmit(self::SUBMIT_ACTION)) {
             Configuration::updateValue(self::CONFIG_ENABLED, (bool) Tools::getValue(self::CONFIG_ENABLED));
@@ -126,9 +126,7 @@ class Mailsendvx extends Module
 
     public function getTemplatesContent(): string
     {
-        $this->installDatabase();
-        $this->installDefaultConfiguration(false);
-        $this->installAdminTabs();
+        $this->getInstaller()->ensureRuntimeSchema();
 
         return $this->handleTemplateActions() . $this->renderTemplatesPanel();
     }
@@ -174,21 +172,13 @@ class Mailsendvx extends Module
      */
     private function dispatchOrderStatusEmails(array $variables): void
     {
-        $eventNames = [
-            self::EVENT_ORDER_STATUS_CHANGED,
-        ];
-
-        if (!empty($variables['order_state_key'])) {
-            $eventNames[] = self::EVENT_ORDER_STATUS_CHANGED . '_' . $variables['order_state_key'];
-        }
-
         $templateRepository = new MailSendVxTemplateRepository();
-        $idLang = (int) ($variables['id_lang'] ?? $this->context->language->id);
-        $idShop = (int) ($variables['id_shop'] ?? $this->context->shop->id);
-
-        if ($templateRepository->hasActiveByEvent(self::EVENT_ORDER_STATUS_LEGACY, $idLang, $idShop)) {
-            $eventNames[] = self::EVENT_ORDER_STATUS_LEGACY;
-        }
+        $eventNames = $this->getOrderStateEventService()->buildDispatchEventNames(
+            $variables,
+            $templateRepository,
+            self::EVENT_ORDER_STATUS_CHANGED,
+            self::EVENT_ORDER_STATUS_LEGACY
+        );
 
         foreach (array_unique($eventNames) as $eventName) {
             $eventVariables = $variables;
@@ -331,10 +321,10 @@ class Mailsendvx extends Module
             'order_status' => $newStateName,
             'old_order_status' => $oldStateName,
             'order_state_id' => $newStateId,
-            'order_state_key' => $this->resolveOrderStateKey($newStatus, $newStateName, $newStateId),
+            'order_state_key' => $this->getOrderStateEventService()->resolveOrderStateKey($newStatus, $newStateName, $newStateId),
             'order_state_name' => $newStateName,
             'old_order_state_id' => $oldStateId,
-            'old_order_state_key' => $this->resolveOrderStateKey($oldStatus, $oldStateName, $oldStateId),
+            'old_order_state_key' => $this->getOrderStateEventService()->resolveOrderStateKey($oldStatus, $oldStateName, $oldStateId),
             'old_order_state_name' => $oldStateName,
         ]);
     }
@@ -420,97 +410,6 @@ class Mailsendvx extends Module
         }
 
         return 0;
-    }
-
-    /**
-     * @param mixed $status
-     */
-    private function resolveOrderStateKey($status, string $fallbackName, int $fallbackId): string
-    {
-        if ($status instanceof OrderState && Validate::isLoadedObject($status)) {
-            $template = $this->extractOrderStateTemplateValue($status->template ?? null);
-            if ($template !== '') {
-                return $this->mapOrderStateTemplateToKey($template);
-            }
-        }
-
-        $normalizedName = $this->normalizeEventKey($fallbackName);
-        if ($normalizedName !== '') {
-            return $normalizedName;
-        }
-
-        return $fallbackId > 0 ? 'state_' . $fallbackId : 'state_unknown';
-    }
-
-    private function mapOrderStateTemplateToKey(string $template): string
-    {
-        $normalizedTemplate = $this->normalizeEventKey($template);
-        $map = [
-            'payment' => 'payment_accepted',
-            'cheque' => 'payment_accepted',
-            'bankwire' => 'payment_accepted',
-            'preparation' => 'preparation_in_progress',
-            'in_transit' => 'shipped',
-            'shipped' => 'shipped',
-            'delivery' => 'delivered',
-            'delivered' => 'delivered',
-            'canceled' => 'canceled',
-            'cancelled' => 'canceled',
-            'refund' => 'refunded',
-            'refunded' => 'refunded',
-            'payment_error' => 'payment_error',
-            'outofstock' => 'out_of_stock',
-            'awaiting_bank_wire_payment' => 'awaiting_bank_wire_payment',
-            'awaiting_cheque_payment' => 'awaiting_cheque_payment',
-            'remote_payment_accepted' => 'payment_accepted',
-        ];
-
-        return $map[$normalizedTemplate] ?? $normalizedTemplate;
-    }
-
-    /**
-     * @param mixed $template
-     */
-    private function extractOrderStateTemplateValue($template): string
-    {
-        if (is_string($template)) {
-            return trim($template);
-        }
-
-        if (!is_array($template)) {
-            return '';
-        }
-
-        $idLang = (int) $this->context->language->id;
-        if (isset($template[$idLang]) && is_string($template[$idLang])) {
-            return trim($template[$idLang]);
-        }
-
-        foreach ($template as $value) {
-            if (is_string($value) && trim($value) !== '') {
-                return trim($value);
-            }
-        }
-
-        return '';
-    }
-
-    private function normalizeEventKey(string $value): string
-    {
-        $value = trim(Tools::strtolower($value));
-        if ($value === '') {
-            return '';
-        }
-
-        $transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
-        if (is_string($transliterated) && $transliterated !== '') {
-            $value = $transliterated;
-        }
-
-        $value = preg_replace('/[^a-z0-9]+/', '_', $value) ?: '';
-        $value = trim($value, '_');
-
-        return $value;
     }
 
     private function handleTemplateActions(): string
@@ -623,7 +522,9 @@ class Mailsendvx extends Module
     {
         return array_merge(
             $this->getBaseSupportedEvents(),
-            $this->getOrderStateSupportedEvents()
+            $this->getOrderStateEventService()->getSupportedEvents([
+                'generic' => self::EVENT_ORDER_STATUS_CHANGED,
+            ])
         );
     }
 
@@ -638,41 +539,6 @@ class Mailsendvx extends Module
             self::EVENT_CUSTOMER_REGISTERED => 'Registro de cliente',
             self::EVENT_NEWSLETTER_REGISTERED => 'Suscripcion newsletter',
         ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function getOrderStateSupportedEvents(): array
-    {
-        $events = [];
-        foreach (OrderState::getOrderStates((int) $this->context->language->id) as $state) {
-            $stateId = isset($state['id_order_state']) ? (int) $state['id_order_state'] : 0;
-            $stateName = isset($state['name']) ? (string) $state['name'] : '';
-            $template = isset($state['template']) ? (string) $state['template'] : '';
-            $stateKey = $this->resolveOrderStateKey(
-                $stateId > 0 ? new OrderState($stateId) : null,
-                $stateName,
-                $stateId
-            );
-
-            if ($stateKey === '') {
-                $stateKey = $this->normalizeEventKey($template ?: $stateName);
-            }
-
-            if ($stateKey === '') {
-                continue;
-            }
-
-            $events[self::EVENT_ORDER_STATUS_CHANGED . '_' . $stateKey] = sprintf(
-                'Cambio de estado: %s',
-                $stateName !== '' ? $stateName : ('Estado #' . $stateId)
-            );
-        }
-
-        ksort($events);
-
-        return $events;
     }
 
     /**
@@ -760,58 +626,25 @@ class Mailsendvx extends Module
 
     private function getDefaultHtmlContent(string $eventName): string
     {
-        if ($eventName === self::EVENT_CUSTOMER_REGISTERED) {
-            return '<p>Hola {customer_name},</p><p>Bienvenido a {shop_name}. Gracias por crear tu cuenta.</p><p><a href="{shop_url}">Visitar la tienda</a></p>';
-        }
-
-        if ($eventName === self::EVENT_NEWSLETTER_REGISTERED) {
-            return '<p>Hola,</p><p>Gracias por suscribirte al newsletter de {shop_name}.</p><p><a href="{shop_url}">Visitar la tienda</a></p>';
-        }
-
-        return '<p>Hola {customer_name},</p><p>Tu pedido {order_reference} cambio al estado: <strong>{order_status}</strong>.</p><p>Total: {order_total}</p><p><a href="{shop_url}">Visitar la tienda</a></p>';
+        return $this->getTemplateContentService()->getDefaultHtmlContent(
+            $eventName,
+            self::EVENT_CUSTOMER_REGISTERED,
+            self::EVENT_NEWSLETTER_REGISTERED
+        );
     }
 
     private function getDefaultTextContent(string $eventName): string
     {
-        if ($eventName === self::EVENT_CUSTOMER_REGISTERED) {
-            return "Hola {customer_name},\n\nBienvenido a {shop_name}. Gracias por crear tu cuenta.\n\n{shop_url}";
-        }
-
-        if ($eventName === self::EVENT_NEWSLETTER_REGISTERED) {
-            return "Hola,\n\nGracias por suscribirte al newsletter de {shop_name}.\n\n{shop_url}";
-        }
-
-        return "Hola {customer_name},\n\nTu pedido {order_reference} cambio al estado: {order_status}.\nTotal: {order_total}\n\n{shop_url}";
+        return $this->getTemplateContentService()->getDefaultTextContent(
+            $eventName,
+            self::EVENT_CUSTOMER_REGISTERED,
+            self::EVENT_NEWSLETTER_REGISTERED
+        );
     }
 
     private function generateTextContentFromHtml(string $htmlContent): string
     {
-        $text = preg_replace('/<\s*br\s*\/?>/i', "\n", $htmlContent) ?: $htmlContent;
-        $text = preg_replace('/<\s*\/p\s*>/i', "\n\n", $text) ?: $text;
-        $text = strip_tags($text);
-        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
-        $text = preg_replace("/\r\n|\r/", "\n", $text) ?: $text;
-        $text = preg_replace("/\n{3,}/", "\n\n", $text) ?: $text;
-
-        $lines = array_map('trim', explode("\n", $text));
-        $lines = array_filter($lines, static function ($line) {
-            return $line !== '';
-        });
-
-        return trim(implode("\n", $lines));
-    }
-
-    /**
-     * @param array<string, string> $params
-     */
-    private function redirectTemplatesPage(array $params = []): void
-    {
-        $url = $this->context->link->getAdminLink(self::ADMIN_TEMPLATES_TAB_CLASS);
-        foreach ($params as $key => $value) {
-            $url .= '&' . urlencode($key) . '=' . urlencode($value);
-        }
-
-        Tools::redirectAdmin($url);
+        return $this->getTemplateContentService()->generateTextContentFromHtml($htmlContent);
     }
 
     private function getTemplateFlashMessage(): string
@@ -832,227 +665,6 @@ class Mailsendvx extends Module
         return '';
     }
 
-    private function installDefaultConfiguration(bool $force = true): bool
-    {
-        $values = [
-            self::CONFIG_ENABLED => '0',
-            self::CONFIG_DEBUG => '0',
-            self::CONFIG_PROVIDER => 'prestashop_mail',
-            self::CONFIG_CRON_TOKEN => Tools::passwdGen(32),
-        ];
-
-        foreach ($values as $key => $value) {
-            if ($force || Configuration::get($key) === false) {
-                if (!Configuration::updateValue($key, $value)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
-    private function deleteConfiguration(): bool
-    {
-        return Configuration::deleteByName(self::CONFIG_ENABLED)
-            && Configuration::deleteByName(self::CONFIG_DEBUG)
-            && Configuration::deleteByName(self::CONFIG_PROVIDER)
-            && Configuration::deleteByName(self::CONFIG_CRON_TOKEN);
-    }
-
-    private function installDatabase(): bool
-    {
-        $engine = _MYSQL_ENGINE_;
-        $charset = 'DEFAULT CHARSET=utf8mb4';
-
-        $queries = [
-            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_template` (
-                `id_mailsendvx_template` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
-                `id_lang` INT UNSIGNED NOT NULL DEFAULT 0,
-                `event_name` VARCHAR(128) NOT NULL,
-                `name` VARCHAR(191) NOT NULL,
-                `subject` VARCHAR(191) NOT NULL,
-                `mail_template` VARCHAR(128) NOT NULL DEFAULT "mailsendvx_default",
-                `html_content` MEDIUMTEXT NULL,
-                `text_content` MEDIUMTEXT NULL,
-                `json_design` MEDIUMTEXT NULL,
-                `provider` VARCHAR(64) NOT NULL DEFAULT "prestashop_mail",
-                `active` TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
-                `date_add` DATETIME NOT NULL,
-                `date_upd` DATETIME NOT NULL,
-                PRIMARY KEY (`id_mailsendvx_template`),
-                KEY `event_lookup` (`event_name`, `id_shop`, `id_lang`, `active`)
-            ) ENGINE=' . $engine . ' ' . $charset,
-            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_event` (
-                `id_mailsendvx_event` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
-                `event_name` VARCHAR(128) NOT NULL,
-                `object_type` VARCHAR(64) NULL,
-                `object_id` VARCHAR(128) NULL,
-                `payload` MEDIUMTEXT NULL,
-                `status` VARCHAR(32) NOT NULL DEFAULT "captured",
-                `date_add` DATETIME NOT NULL,
-                PRIMARY KEY (`id_mailsendvx_event`),
-                KEY `event_name` (`event_name`),
-                KEY `object_lookup` (`object_type`, `object_id`)
-            ) ENGINE=' . $engine . ' ' . $charset,
-            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_flow` (
-                `id_mailsendvx_flow` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
-                `name` VARCHAR(191) NOT NULL,
-                `trigger_event` VARCHAR(128) NOT NULL,
-                `conditions_json` MEDIUMTEXT NULL,
-                `steps_json` MEDIUMTEXT NULL,
-                `active` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
-                `date_add` DATETIME NOT NULL,
-                `date_upd` DATETIME NOT NULL,
-                PRIMARY KEY (`id_mailsendvx_flow`),
-                KEY `trigger_event` (`trigger_event`, `active`)
-            ) ENGINE=' . $engine . ' ' . $charset,
-            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_queue` (
-                `id_mailsendvx_queue` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
-                `id_template` INT UNSIGNED NULL,
-                `id_flow` INT UNSIGNED NULL,
-                `event_name` VARCHAR(128) NOT NULL,
-                `recipient` VARCHAR(191) NOT NULL,
-                `payload` MEDIUMTEXT NULL,
-                `status` VARCHAR(32) NOT NULL DEFAULT "pending",
-                `attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-                `scheduled_at` DATETIME NOT NULL,
-                `processed_at` DATETIME NULL,
-                `last_error` TEXT NULL,
-                `date_add` DATETIME NOT NULL,
-                `date_upd` DATETIME NOT NULL,
-                PRIMARY KEY (`id_mailsendvx_queue`),
-                KEY `next_jobs` (`status`, `scheduled_at`),
-                KEY `recipient` (`recipient`)
-            ) ENGINE=' . $engine . ' ' . $charset,
-            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_log` (
-                `id_mailsendvx_log` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
-                `id_template` INT UNSIGNED NULL,
-                `id_queue` INT UNSIGNED NULL,
-                `event_name` VARCHAR(128) NOT NULL,
-                `recipient` VARCHAR(191) NULL,
-                `status` VARCHAR(32) NOT NULL,
-                `payload` MEDIUMTEXT NULL,
-                `message` TEXT NULL,
-                `date_add` DATETIME NOT NULL,
-                PRIMARY KEY (`id_mailsendvx_log`),
-                KEY `event_status` (`event_name`, `status`),
-                KEY `date_add` (`date_add`)
-            ) ENGINE=' . $engine . ' ' . $charset,
-        ];
-
-        foreach ($queries as $query) {
-            if (!Db::getInstance()->execute($query)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function uninstallDatabase(): bool
-    {
-        $tables = [
-            'mailsendvx_log',
-            'mailsendvx_queue',
-            'mailsendvx_flow',
-            'mailsendvx_event',
-            'mailsendvx_template',
-        ];
-
-        foreach ($tables as $table) {
-            if (!Db::getInstance()->execute('DROP TABLE IF EXISTS `' . _DB_PREFIX_ . bqSQL($table) . '`')) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private function installAdminTabs(): bool
-    {
-        $idParent = $this->createOrUpdateAdminTab(
-            self::ADMIN_PARENT_TAB_CLASS,
-            'Mail Send VELOX',
-            $this->getConfigureSectionTabId(),
-            'markunread_mailbox'
-        );
-
-        if (!$idParent) {
-            return false;
-        }
-
-        return $this->createOrUpdateAdminTab(
-            self::ADMIN_CONFIGURE_TAB_CLASS,
-            'Configuracion',
-            $idParent,
-            'settings'
-        ) && $this->createOrUpdateAdminTab(
-            self::ADMIN_TEMPLATES_TAB_CLASS,
-            'Templates',
-            $idParent,
-            'mail'
-        ) && $this->createOrUpdateAdminTab(
-            self::ADMIN_DASHBOARD_TAB_CLASS,
-            'Dashboard',
-            $idParent,
-            'dashboard'
-        );
-    }
-
-    private function createOrUpdateAdminTab(string $className, string $name, int $idParent, string $icon): int
-    {
-        $idTab = (int) Tab::getIdFromClassName($className);
-        $tab = $idTab ? new Tab($idTab) : new Tab();
-        $tab->active = 1;
-        $tab->enabled = 1;
-        $tab->class_name = $className;
-        $tab->module = $this->name;
-        $tab->id_parent = $idParent;
-        $tab->icon = $icon;
-
-        foreach (Language::getLanguages(false) as $language) {
-            $tab->name[(int) $language['id_lang']] = $name;
-        }
-
-        $saved = $idTab ? $tab->update() : $tab->add();
-
-        return $saved ? (int) $tab->id : 0;
-    }
-
-    private function getConfigureSectionTabId(): int
-    {
-        return (int) Tab::getIdFromClassName(self::ADMIN_CONFIGURE_SECTION_CLASS);
-    }
-
-    private function uninstallAdminTabs(): bool
-    {
-        $classes = [
-            self::ADMIN_CONFIGURE_TAB_CLASS,
-            self::ADMIN_TEMPLATES_TAB_CLASS,
-            self::ADMIN_DASHBOARD_TAB_CLASS,
-            self::ADMIN_PARENT_TAB_CLASS,
-        ];
-
-        foreach ($classes as $className) {
-            $idTab = (int) Tab::getIdFromClassName($className);
-            if (!$idTab) {
-                continue;
-            }
-
-            $tab = new Tab($idTab);
-            if (Validate::isLoadedObject($tab) && !$tab->delete()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     private function renderConfigurationForm(): string
     {
@@ -1183,5 +795,39 @@ class Mailsendvx extends Module
             'log_emails' => Configuration::get('PS_LOG_EMAILS') ? 'Yes' : 'No',
             'warning' => $warning,
         ];
+    }
+
+    public function isUsingNewTranslationSystem(): bool
+    {
+        return true;
+    }
+
+    private function redirectTemplatesPage(array $params = []): void
+    {
+        $url = $this->context->link->getAdminLink(self::ADMIN_TEMPLATES_TAB_CLASS);
+        foreach ($params as $key => $value) {
+            $url .= '&' . urlencode($key) . '=' . urlencode($value);
+        }
+
+        Tools::redirectAdmin($url);
+    }
+
+    private function getInstaller(): Installer
+    {
+        return new Installer(
+            new ConfigurationInstaller(),
+            new DatabaseInstaller(),
+            new TabInstaller()
+        );
+    }
+
+    private function getOrderStateEventService(): OrderStateEventService
+    {
+        return new OrderStateEventService($this->context);
+    }
+
+    private function getTemplateContentService(): TemplateContentService
+    {
+        return new TemplateContentService();
     }
 }

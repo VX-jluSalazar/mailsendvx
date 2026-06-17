@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "prestashop-module-development": {
+      "source": "jeffsenso/prestashop-skills",
+      "sourceType": "github",
+      "skillPath": "skills/prestashop-module-development/SKILL.md",
+      "computedHash": "20491e7ee390e2be1e77974137bc8b55b6ff70f9242a36a9216dea69caeac5b9"
+    }
+  }
+}
