@@ -11,7 +11,7 @@ Reducir el acoplamiento con clases globales legacy:
 
 ## Estado
 
-Pendiente.
+Pendiente. Esta fase ya es la siguiente prioridad tecnica natural tras cerrar la base moderna y el primer Back Office Symfony.
 
 ## Trabajo recomendado
 
@@ -21,7 +21,9 @@ Pendiente.
 - Migrar `MailSendVxQueueRepository`
 - Migrar `MailSendVxMailer`
 - Migrar `MailSendVxVariableRenderer`
+- Inyectar estas dependencias via contenedor en lugar de crearlas con `new ...` en servicios modernos.
 - Eliminar `LegacyClassLoader`
+- Eliminar llamadas nuevas a clases globales `MailSendVx*` desde servicios Symfony
 
 ## Criterio de salida
 

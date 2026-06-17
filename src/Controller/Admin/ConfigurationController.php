@@ -40,6 +40,8 @@ class ConfigurationController extends FrameworkBundleAdminController
 
         return $this->render('@Modules/mailsendvx/views/templates/admin/configuration.html.twig', [
             'configurationForm' => $form->createView(),
+            'configurationData' => (array) ($form->getData()['mailsendvx_configuration'] ?? []),
+            'shopName' => (string) $this->getContext()->shop->name,
         ]);
     }
 }

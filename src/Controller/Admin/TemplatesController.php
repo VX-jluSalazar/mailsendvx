@@ -25,9 +25,11 @@ class TemplatesController extends FrameworkBundleAdminController
     {
         $editId = $request->query->getInt('edit', 0) ?: null;
         $previewId = $request->query->getInt('preview', 0) ?: null;
+        $eventLabels = $this->templateAdminService->getSupportedEvents();
+        $languageChoices = $this->buildLanguageChoices();
         $form = $this->createForm(TemplateFormType::class, $this->templateAdminService->getFormData($editId), [
-            'event_choices' => array_flip($this->templateAdminService->getSupportedEvents()),
-            'language_choices' => $this->buildLanguageChoices(),
+            'event_choices' => array_flip($eventLabels),
+            'language_choices' => $languageChoices,
             'default_shop_id' => (int) $this->getContext()->shop->id,
         ]);
         $form->handleRequest($request);
@@ -43,15 +45,31 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->addFlash('danger', $this->trans('Template could not be saved.', 'Modules.Mailsendvx.Admin', []));
         }
 
+        $templates = $this->decorateTemplates(
+            $this->templateAdminService->getTemplates(),
+            $eventLabels,
+            $this->buildLanguageLabels($languageChoices)
+        );
+
         return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
             'templateForm' => $form->createView(),
-            'templates' => $this->templateAdminService->getTemplates(),
+            'templates' => $templates,
             'preview' => $this->templateAdminService->getPreviewData($previewId),
+            'currentEditTemplate' => $this->findTemplate($templates, $editId),
+            'activeTemplatesCount' => $this->countActiveTemplates($templates),
+            'defaultTestEmail' => (string) ($this->getContext()->employee->email ?? ''),
+            'shopName' => (string) $this->getContext()->shop->name,
         ]);
     }
 
-    public function deleteAction(int $idTemplate): Response
+    public function deleteAction(Request $request, int $idTemplate): Response
     {
+        if (!$this->isCsrfTokenValid('delete-template-' . $idTemplate, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', $this->trans('Security token is invalid. Please refresh and try again.', 'Admin.Notifications.Error', []));
+
+            return $this->redirectToRoute('mailsendvx_templates');
+        }
+
         if ($this->templateAdminService->deleteTemplate($idTemplate)) {
             $this->addFlash('success', $this->trans('Template deleted.', 'Admin.Notifications.Success', []));
         } else {
@@ -63,6 +81,12 @@ class TemplatesController extends FrameworkBundleAdminController
 
     public function sendTestAction(Request $request, int $idTemplate): Response
     {
+        if (!$this->isCsrfTokenValid('test-template-' . $idTemplate, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', $this->trans('Security token is invalid. Please refresh and try again.', 'Admin.Notifications.Error', []));
+
+            return $this->redirectToRoute('mailsendvx_templates');
+        }
+
         $result = $this->templateAdminService->sendTest($idTemplate, trim((string) $request->request->get('test_email')));
         if ($result === true) {
             $this->addFlash('success', $this->trans('Test email sent.', 'Admin.Notifications.Success', []));
@@ -84,5 +108,78 @@ class TemplatesController extends FrameworkBundleAdminController
         }
 
         return $choices;
+    }
+
+    /**
+     * @param array<string, int> $languageChoices
+     *
+     * @return array<int, string>
+     */
+    private function buildLanguageLabels(array $languageChoices): array
+    {
+        $labels = [];
+        foreach ($languageChoices as $label => $idLang) {
+            $labels[(int) $idLang] = (string) $label;
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $templates
+     * @param array<string, string> $eventLabels
+     * @param array<int, string> $languageLabels
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function decorateTemplates(array $templates, array $eventLabels, array $languageLabels): array
+    {
+        foreach ($templates as &$template) {
+            $idLang = (int) ($template['id_lang'] ?? 0);
+            $idShop = (int) ($template['id_shop'] ?? 0);
+            $eventName = (string) ($template['event_name'] ?? '');
+
+            $template['event_label'] = $eventLabels[$eventName] ?? $eventName;
+            $template['language_label'] = $languageLabels[$idLang] ?? ('#' . $idLang);
+            $template['shop_label'] = $idShop > 0 ? ('#' . $idShop) : 'All shops';
+        }
+        unset($template);
+
+        return $templates;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $templates
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findTemplate(array $templates, ?int $editId): ?array
+    {
+        if (!$editId) {
+            return null;
+        }
+
+        foreach ($templates as $template) {
+            if ((int) ($template['id_mailsendvx_template'] ?? 0) === $editId) {
+                return $template;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $templates
+     */
+    private function countActiveTemplates(array $templates): int
+    {
+        $count = 0;
+        foreach ($templates as $template) {
+            if (!empty($template['active'])) {
+                ++$count;
+            }
+        }
+
+        return $count;
     }
 }

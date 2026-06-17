@@ -2,11 +2,11 @@
 
 ## Estado
 
-Implementado en `modules/mailsendvx/mailsendvx.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php` y `views/templates/admin/templates.tpl`.
+Implementado en `modules/mailsendvx/mailsendvx.php`, `src/Service/InstantEmailHookService.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php`, `src/Controller/Admin/TemplatesController.php` y `views/templates/admin/templates.html.twig`.
 
-La pantalla `Mail Send VELOX > Templates` permite crear plantillas por evento, editar asunto/HTML/texto, activar/desactivar, previsualizar con datos de prueba y enviar un email de prueba.
+La pantalla `Mail Send VELOX > Templates` ya funciona sobre Symfony y Twig, y permite crear plantillas por evento, editar asunto/HTML/texto, activar/desactivar, previsualizar con datos de prueba y enviar un email de prueba.
 
-La pantalla `Mail Send VELOX > Configuracion` muestra ajustes generales, diagnostico de correo y logs recientes.
+La pantalla `Mail Send VELOX > Configuracion` ya funciona sobre Symfony y Twig, y muestra ajustes generales. El dashboard Symfony concentra el resumen operativo y logs recientes.
 
 El estado actual observado del codigo indica que la Fase 01 ya esta implementada en su base funcional y que los principales pendientes estan en validacion manual, consistencia de naming y documentacion.
 
@@ -28,9 +28,8 @@ El estado actual observado del codigo indica que la Fase 01 ya esta implementada
 ### Pendientes observados
 
 - Ejecutar pruebas manuales reales en entorno con SMTP o proveedor configurado.
-- Alinear toda la documentacion con el naming real implementado.
-- Confirmar si el naming definitivo sera `order_status_changed_{state_key}` o si habra una futura migracion a otra variante.
 - Ajustar algunos datos de ejemplo para que reflejen exactamente el mapeo canonico actual de estados.
+- Migrar repositorios y servicios legacy de `classes/` a `src/` en la fase arquitectonica siguiente.
 
 ## Objetivo
 

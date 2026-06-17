@@ -2,85 +2,164 @@
 {% extends '@PrestaShop/Admin/layout.html.twig' %}
 
 {% block content %}
-  {{ form_start(templateForm) }}
-  <div class="card">
-    <h3 class="card-header">
-      <i class="material-icons">mail</i>
-      {{ 'Instant email templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
-    </h3>
-    <div class="card-body">
-      <div class="form-wrapper">
-        {{ form_widget(templateForm) }}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Template studio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Instant email templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Prepare event-specific messages, preview rendered content, and keep one active template per event, language, and shop scope.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ templates|length }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Active'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ activeTemplatesCount }}</strong>
+        </div>
       </div>
     </div>
-    <div class="card-footer text-right">
-      <button type="submit" class="btn btn-primary">
-        {{ 'Save template'|trans({}, 'Modules.Mailsendvx.Admin') }}
-      </button>
-    </div>
-  </div>
-  {{ form_end(templateForm) }}
 
-  {% if preview %}
-    <div class="card mt-3">
+    <div class="row">
+      <div class="col-xl-7">
+        {{ form_start(templateForm, {attr: {class: 'mailsendvx-form'}}) }}
+        <div class="card mailsendvx-card">
+          <h3 class="card-header">
+            <i class="material-icons">mail</i>
+            {% if currentEditTemplate %}
+              {{ 'Edit template'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ currentEditTemplate.name }}
+            {% else %}
+              {{ 'Create template'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            {% endif %}
+          </h3>
+          <div class="card-body">
+            <div class="mailsendvx-inline-note">
+              {{ 'If another active template already exists for the same event, language, and shop scope, it will be deactivated automatically.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </div>
+            <div class="form-wrapper">
+              {{ form_widget(templateForm) }}
+            </div>
+          </div>
+          <div class="card-footer d-flex justify-content-between align-items-center">
+            <a class="btn btn-outline-secondary" href="{{ path('mailsendvx_templates') }}">
+              {{ 'Reset form'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </a>
+            <button type="submit" class="btn btn-primary">
+              {{ 'Save template'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </button>
+          </div>
+        </div>
+        {{ form_end(templateForm) }}
+      </div>
+
+      <div class="col-xl-5">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">rule</i>
+            {{ 'Writing checklist'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              <li>{{ 'Use direct subjects that match the event customers recognize.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Leave text content empty only when the HTML version can be converted safely to a plain text fallback.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Preview before activating any template that introduces event variables or translated copy.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+            </ul>
+          </div>
+        </div>
+
+        {% if preview %}
+          <div class="card mailsendvx-card mt-3">
+            <h3 class="card-header">
+              <i class="material-icons">visibility</i>
+              {{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-preview-subject">
+                <span>{{ 'Subject'|trans({}, 'Admin.Global') }}</span>
+                <strong>{{ preview.subject }}</strong>
+              </div>
+              <div class="mailsendvx-preview-frame">{{ preview.html|raw }}</div>
+              <pre class="mailsendvx-text-preview">{{ preview.text }}</pre>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card mailsendvx-card mt-3">
       <h3 class="card-header">
-        <i class="material-icons">visibility</i>
-        {{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
+        <i class="material-icons">list</i>
+        {{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
       </h3>
       <div class="card-body">
-        <p><strong>{{ 'Subject'|trans({}, 'Admin.Global') }}:</strong> {{ preview.subject }}</p>
-        <div class="border p-3 mb-3">{{ preview.html|raw }}</div>
-        <pre>{{ preview.text }}</pre>
+        {% if templates %}
+          <div class="table-responsive">
+            <table class="table mailsendvx-table">
+              <thead>
+                <tr>
+                  <th>{{ 'Name'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                  <th>{{ 'Subject'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Language'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Shop'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Status'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Actions'|trans({}, 'Admin.Actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for template in templates %}
+                  <tr>
+                    <td>
+                      <strong>{{ template.name }}</strong>
+                      <div class="mailsendvx-table-meta">#{{ template.id_mailsendvx_template }}</div>
+                    </td>
+                    <td>
+                      <span class="mailsendvx-badge mailsendvx-badge--event">{{ template.event_label }}</span>
+                      <div class="mailsendvx-table-meta"><code>{{ template.event_name }}</code></div>
+                    </td>
+                    <td>{{ template.subject }}</td>
+                    <td>{{ template.language_label }}</td>
+                    <td>{{ template.shop_label }}</td>
+                    <td>
+                      <span class="mailsendvx-badge {{ template.active ? 'mailsendvx-badge--success' : 'mailsendvx-badge--muted' }}">
+                        {{ template.active ? 'Active'|trans({}, 'Admin.Global') : 'Inactive'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                      </span>
+                    </td>
+                    <td class="mailsendvx-template-actions">
+                      <div class="mailsendvx-action-row">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {edit: template.id_mailsendvx_template}) }}">{{ 'Edit'|trans({}, 'Admin.Actions') }}</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {preview: template.id_mailsendvx_template}) }}">{{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                      </div>
+                      <div class="mailsendvx-action-row">
+                        <form method="post" action="{{ path('mailsendvx_template_delete', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-inline-form" onsubmit="return confirm('{{ 'Delete this template and remove it from this scope?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                          <input type="hidden" name="_token" value="{{ csrf_token('delete-template-' ~ template.id_mailsendvx_template) }}">
+                          <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Delete'|trans({}, 'Admin.Actions') }}</button>
+                        </form>
+                        <form method="post" action="{{ path('mailsendvx_template_test', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-test-form" onsubmit="return confirm('{{ 'Send a test email using the current rendered content?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                          <input type="hidden" name="_token" value="{{ csrf_token('test-template-' ~ template.id_mailsendvx_template) }}">
+                          <input type="email" name="test_email" class="form-control" value="{{ defaultTestEmail }}" placeholder="{{ 'Test email'|trans({}, 'Modules.Mailsendvx.Admin') }}" required>
+                          <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Send test'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="mailsendvx-empty-state">
+            <h3>{{ 'No templates yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+            <p>{{ 'Create the first template to start testing event-driven messages from this Back Office area.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+          </div>
+        {% endif %}
       </div>
     </div>
-  {% endif %}
-
-  <div class="card mt-3">
-    <h3 class="card-header">
-      <i class="material-icons">list</i>
-      {{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
-    </h3>
-    <div class="card-body">
-      {% if templates %}
-        <table class="table">
-          <thead>
-            <tr>
-              <th>{{ 'Name'|trans({}, 'Admin.Global') }}</th>
-              <th>Event</th>
-              <th>{{ 'Subject'|trans({}, 'Admin.Global') }}</th>
-              <th>{{ 'Language'|trans({}, 'Admin.Global') }}</th>
-              <th>Shop</th>
-              <th>{{ 'Active'|trans({}, 'Admin.Global') }}</th>
-              <th>{{ 'Actions'|trans({}, 'Admin.Actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for template in templates %}
-              <tr>
-                <td>{{ template.name }}</td>
-                <td><code>{{ template.event_name }}</code></td>
-                <td>{{ template.subject }}</td>
-                <td>{{ template.id_lang }}</td>
-                <td>{{ template.id_shop }}</td>
-                <td>{{ template.active ? 'Yes'|trans({}, 'Admin.Global') : 'No'|trans({}, 'Admin.Global') }}</td>
-                <td>
-                  <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {edit: template.id_mailsendvx_template}) }}">{{ 'Edit'|trans({}, 'Admin.Actions') }}</a>
-                  <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {preview: template.id_mailsendvx_template}) }}">{{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
-                  <form method="post" action="{{ path('mailsendvx_template_delete', {idTemplate: template.id_mailsendvx_template}) }}" style="display:inline-block">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Delete'|trans({}, 'Admin.Actions') }}</button>
-                  </form>
-                  <form method="post" action="{{ path('mailsendvx_template_test', {idTemplate: template.id_mailsendvx_template}) }}" style="display:inline-block">
-                    <input type="email" name="test_email" placeholder="Test email">
-                    <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Send test'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
-                  </form>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <p class="text-muted">{{ 'No templates yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
-      {% endif %}
-    </div>
-  </div>
+  </section>
 {% endblock %}
