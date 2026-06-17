@@ -8,6 +8,18 @@ La pantalla `Mail Send VELOX > Templates` permite crear plantillas por evento, e
 
 La pantalla `Mail Send VELOX > Configuracion` muestra ajustes generales, diagnostico de correo y logs recientes.
 
+## Limitacion actual detectada
+
+El cambio de estado del pedido hoy entra por `hookActionOrderStatusPostUpdate()` y siempre termina en el evento interno `order_status_updated`.
+
+Eso introduce tres problemas:
+
+- Todas las plantillas de estados de pedido compiten sobre el mismo `event_name`.
+- No existe una separacion natural entre logica generica y logica especifica por estado.
+- Los flujos futuros de postcompra quedan acoplados a un evento demasiado amplio.
+
+La siguiente iteracion de esta fase debe corregir esto antes de ampliar automatizaciones.
+
 ## Objetivo
 
 Enviar emails automaticamente cuando ocurren eventos inmediatos en PrestaShop, usando plantillas activas, variables simples y logs de resultado.
@@ -16,15 +28,33 @@ Esta fase convierte la captura de eventos de la Fase 0 en acciones reales de env
 
 ## Eventos cubiertos
 
+### Eventos actuales
+
 - Cambio de estado de pedido.
 - Registro de nuevo cliente.
 - Suscripcion a newsletter.
+
+### Eventos objetivo para pedido
+
+- `order_status_changed` como evento generico.
+- `order_status_{state_key}` como evento especifico por estado destino.
+
+Ejemplos sugeridos:
+
+- `order_status_payment_accepted`
+- `order_status_shipped`
+- `order_status_delivered`
+- `order_status_canceled`
+- `order_status_refunded`
 
 ## Alcance funcional
 
 | Subfase | Objetivo | Complejidad |
 | --- | --- | --- |
 | 1.1 Emails por cambio de estado | Enviar un email cuando un pedido cambie de estado. | Media |
+| 1.1.1 Refactor de evento generico | Sustituir el uso exclusivo de `order_status_updated` por `order_status_changed`. | Media |
+| 1.1.2 Eventos especificos por estado | Disparar un evento derivado segun el estado destino del pedido. | Media-alta |
+| 1.1.3 Compatibilidad temporal | Mantener compatibilidad con plantillas viejas basadas en `order_status_updated`. | Media |
 | 1.2 Emails por registro de cliente | Enviar email de bienvenida al crear cuenta. | Baja-media |
 | 1.3 Emails por suscripcion newsletter | Enviar confirmacion o bienvenida al suscriptor. | Media |
 | 1.4 Editor simple de plantilla | Permitir crear asunto, template, HTML/texto y evento asociado. | Media |
@@ -38,7 +68,9 @@ Esta fase convierte la captura de eventos de la Fase 0 en acciones reales de env
 ```txt
 Hook de PrestaShop
 |
-Evento interno
+Resolver estado origen/destino
+|
+Generar evento generico y evento especifico
 |
 Resolver destinatario y variables
 |
@@ -55,9 +87,49 @@ Guardar log de resultado
 
 | Evento | Variables |
 | --- | --- |
-| `order_status_updated` | `customer_name`, `customer_email`, `order_reference`, `order_total`, `order_status`, `shop_name`, `shop_url` |
+| `order_status_changed` | `customer_name`, `customer_email`, `order_reference`, `order_total`, `order_status`, `old_order_status`, `order_state_id`, `order_state_key`, `old_order_state_id`, `old_order_state_key`, `shop_name`, `shop_url` |
+| `order_status_{state_key}` | Las mismas variables del evento generico, orientadas al estado destino. |
 | `customer_registered` | `customer_name`, `customer_email`, `shop_name`, `shop_url` |
 | `newsletter_registered` | `customer_email`, `shop_name`, `shop_url` |
+
+## Estrategia tecnica recomendada para estados de pedido
+
+### Taxonomia de eventos
+
+- Hook origen: `actionOrderStatusPostUpdate`
+- Evento generico: `order_status_changed`
+- Evento especifico: `order_status_{state_key}`
+- Evento legado temporal: `order_status_updated`
+
+### Regla para `state_key`
+
+El identificador del estado no debe depender del nombre traducido mostrado al usuario.
+
+Se recomienda:
+
+1. Resolver el `id_order_state`.
+2. Intentar mapear estados nativos conocidos a claves canonicas.
+3. Para estados personalizados, generar una version slug estable.
+4. Guardar tanto clave como nombre visible en las variables.
+
+### Estados canonicos sugeridos
+
+| Caso | Event key sugerido |
+| --- | --- |
+| Pago aceptado | `payment_accepted` |
+| Preparacion en curso | `preparation_in_progress` |
+| Enviado | `shipped` |
+| Entregado | `delivered` |
+| Cancelado | `canceled` |
+| Reembolsado | `refunded` |
+| Error de pago | `payment_error` |
+
+### Orden de despacho sugerido
+
+1. Registrar captura del cambio de estado.
+2. Disparar `order_status_changed`.
+3. Disparar `order_status_{state_key}`.
+4. Disparar `order_status_updated` solo como compatibilidad temporal si existe plantilla asociada o mientras dure la migracion.
 
 ## Patrones recomendados
 
@@ -81,11 +153,13 @@ Guardar log de resultado
 
 1. Crear o seleccionar un pedido de prueba.
 2. Ir a `Mail Send VELOX > Templates`.
-3. Crear una plantilla activa para el evento `order_status_updated`.
-4. Usar un asunto con variables, por ejemplo: `Pedido {order_reference}: {order_status}`.
+3. Crear una plantilla activa para el evento `order_status_changed`.
+4. Crear otra plantilla activa para un estado especifico, por ejemplo `order_status_shipped`.
+5. Usar un asunto con variables, por ejemplo: `Pedido {order_reference}: {order_status}`.
 5. Cambiar el estado del pedido desde Back Office.
-6. Confirmar que el cliente recibe el email.
-7. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
+6. Confirmar que se ejecuta la plantilla generica.
+7. Confirmar que se ejecuta la plantilla especifica si el estado coincide.
+8. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
 
 ### Prueba 2: registro de cliente
 
@@ -119,6 +193,13 @@ Guardar log de resultado
 3. Confirmar que no se envia email.
 4. Confirmar que el log queda como `skipped` con mensaje similar a `No active template found.`
 
+### Prueba 6: compatibilidad con evento legado
+
+1. Mantener una plantilla activa solo para `order_status_updated`.
+2. Cambiar el estado de un pedido.
+3. Confirmar que el sistema sigue pudiendo resolver el envio legado mientras se completa la migracion.
+4. Confirmar que la documentacion y la UI indiquen que es compatibilidad temporal.
+
 ## Consultas utiles de validacion
 
 ```sql
@@ -135,6 +216,8 @@ LIMIT 30;
 ## Criterios de aceptacion
 
 - Cada evento configurado puede enviar un email real.
+- Un cambio de estado de pedido puede activar un evento generico y otro especifico.
+- Las plantillas pueden distinguir estados concretos sin mezclar toda la logica en `order_status_updated`.
 - Si no existe plantilla activa, el sistema registra `skipped`.
 - Las variables simples se reemplazan en el asunto y en las variables enviadas al template.
 - La pantalla admin permite crear, editar, previsualizar, eliminar y enviar prueba de plantillas.
@@ -145,4 +228,5 @@ LIMIT 30;
 
 - Los templates fisicos de PrestaShop deben existir en la ruta esperada por `Mail::Send()`.
 - La informacion disponible en cada hook puede variar segun el contexto.
+- Si el `state_key` depende de texto traducido, se rompera la estabilidad entre idiomas o tiendas.
 - Enviar correos desde hooks puede afectar la experiencia si el provider tarda demasiado; para volumen alto conviene mover el envio a cola en Fase 2.

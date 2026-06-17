@@ -6,6 +6,10 @@ if (!defined('_PS_VERSION_')) {
 
 class Mailsendvx extends Module
 {
+    private const EVENT_ORDER_STATUS_CHANGED = 'order_status_changed';
+    private const EVENT_ORDER_STATUS_LEGACY = 'order_status_updated';
+    private const EVENT_CUSTOMER_REGISTERED = 'customer_registered';
+    private const EVENT_NEWSLETTER_REGISTERED = 'newsletter_registered';
     public const CONFIG_ENABLED = 'MAILSENDVX_ENABLED';
     public const CONFIG_PROVIDER = 'MAILSENDVX_PROVIDER';
     public const CONFIG_DEBUG = 'MAILSENDVX_DEBUG';
@@ -132,23 +136,14 @@ class Mailsendvx extends Module
     public function hookActionOrderStatusPostUpdate(array $params): void
     {
         $variables = $this->buildOrderStatusVariables($params);
-        $this->sendInstantEmail(
-            'order_status_updated',
-            $variables,
-            $variables['customer_email'] ?? null,
-            $variables['customer_name'] ?? null,
-            $variables['id_lang'] ?? null,
-            $variables['id_shop'] ?? null,
-            'order',
-            $variables['order_id'] ?? null
-        );
+        $this->dispatchOrderStatusEmails($variables);
     }
 
     public function hookActionCustomerAccountAdd(array $params): void
     {
         $variables = $this->buildCustomerVariables($params);
         $this->sendInstantEmail(
-            'customer_registered',
+            self::EVENT_CUSTOMER_REGISTERED,
             $variables,
             $variables['customer_email'] ?? null,
             $variables['customer_name'] ?? null,
@@ -163,7 +158,7 @@ class Mailsendvx extends Module
     {
         $variables = $this->buildNewsletterVariables($params);
         $this->sendInstantEmail(
-            'newsletter_registered',
+            self::EVENT_NEWSLETTER_REGISTERED,
             $variables,
             $variables['customer_email'] ?? null,
             $variables['customer_name'] ?? null,
@@ -172,6 +167,43 @@ class Mailsendvx extends Module
             'newsletter',
             $variables['customer_email'] ?? null
         );
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function dispatchOrderStatusEmails(array $variables): void
+    {
+        $eventNames = [
+            self::EVENT_ORDER_STATUS_CHANGED,
+        ];
+
+        if (!empty($variables['order_state_key'])) {
+            $eventNames[] = self::EVENT_ORDER_STATUS_CHANGED . '_' . $variables['order_state_key'];
+        }
+
+        $templateRepository = new MailSendVxTemplateRepository();
+        $idLang = (int) ($variables['id_lang'] ?? $this->context->language->id);
+        $idShop = (int) ($variables['id_shop'] ?? $this->context->shop->id);
+
+        if ($templateRepository->hasActiveByEvent(self::EVENT_ORDER_STATUS_LEGACY, $idLang, $idShop)) {
+            $eventNames[] = self::EVENT_ORDER_STATUS_LEGACY;
+        }
+
+        foreach (array_unique($eventNames) as $eventName) {
+            $eventVariables = $variables;
+            $eventVariables['event_name'] = $eventName;
+            $this->sendInstantEmail(
+                $eventName,
+                $eventVariables,
+                $eventVariables['customer_email'] ?? null,
+                $eventVariables['customer_name'] ?? null,
+                $eventVariables['id_lang'] ?? null,
+                $eventVariables['id_shop'] ?? null,
+                'order',
+                $eventVariables['order_id'] ?? null
+            );
+        }
     }
 
     private function logBaseEvent(string $eventName, array $params): void
@@ -279,9 +311,13 @@ class Mailsendvx extends Module
         $oldStatus = $params['oldOrderStatus'] ?? null;
         $idLang = $customer && Validate::isLoadedObject($customer) ? (int) $customer->id_lang : (int) $this->context->language->id;
         $idShop = $order && Validate::isLoadedObject($order) ? (int) $order->id_shop : (int) $this->context->shop->id;
+        $newStateId = $this->getOrderStatusId($newStatus);
+        $oldStateId = $this->getOrderStatusId($oldStatus);
+        $newStateName = $this->getOrderStatusName($newStatus, $idLang);
+        $oldStateName = $this->getOrderStatusName($oldStatus, $idLang);
 
         return array_merge($this->getCommonVariables($idShop), [
-            'event_name' => 'order_status_updated',
+            'event_name' => self::EVENT_ORDER_STATUS_CHANGED,
             'id_lang' => $idLang,
             'id_shop' => $idShop,
             'customer_id' => $customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
@@ -292,8 +328,14 @@ class Mailsendvx extends Module
             'order_id' => $order && Validate::isLoadedObject($order) ? (int) $order->id : '',
             'order_reference' => $order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
             'order_total' => $order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency) : '',
-            'order_status' => $this->getOrderStatusName($newStatus, $idLang),
-            'old_order_status' => $this->getOrderStatusName($oldStatus, $idLang),
+            'order_status' => $newStateName,
+            'old_order_status' => $oldStateName,
+            'order_state_id' => $newStateId,
+            'order_state_key' => $this->resolveOrderStateKey($newStatus, $newStateName, $newStateId),
+            'order_state_name' => $newStateName,
+            'old_order_state_id' => $oldStateId,
+            'old_order_state_key' => $this->resolveOrderStateKey($oldStatus, $oldStateName, $oldStateId),
+            'old_order_state_name' => $oldStateName,
         ]);
     }
 
@@ -311,7 +353,7 @@ class Mailsendvx extends Module
         $idShop = (int) $this->context->shop->id;
 
         return array_merge($this->getCommonVariables($idShop), [
-            'event_name' => 'customer_registered',
+            'event_name' => self::EVENT_CUSTOMER_REGISTERED,
             'id_lang' => $idLang,
             'id_shop' => $idShop,
             'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
@@ -333,7 +375,7 @@ class Mailsendvx extends Module
         $idShop = (int) $this->context->shop->id;
 
         return array_merge($this->getCommonVariables($idShop), [
-            'event_name' => 'newsletter_registered',
+            'event_name' => self::EVENT_NEWSLETTER_REGISTERED,
             'id_lang' => (int) $this->context->language->id,
             'id_shop' => $idShop,
             'customer_name' => '',
@@ -366,6 +408,82 @@ class Mailsendvx extends Module
         }
 
         return '';
+    }
+
+    /**
+     * @param mixed $status
+     */
+    private function getOrderStatusId($status): int
+    {
+        if ($status instanceof OrderState && Validate::isLoadedObject($status)) {
+            return (int) $status->id;
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param mixed $status
+     */
+    private function resolveOrderStateKey($status, string $fallbackName, int $fallbackId): string
+    {
+        if ($status instanceof OrderState && Validate::isLoadedObject($status)) {
+            $template = isset($status->template) ? trim((string) $status->template) : '';
+            if ($template !== '') {
+                return $this->mapOrderStateTemplateToKey($template);
+            }
+        }
+
+        $normalizedName = $this->normalizeEventKey($fallbackName);
+        if ($normalizedName !== '') {
+            return $normalizedName;
+        }
+
+        return $fallbackId > 0 ? 'state_' . $fallbackId : 'state_unknown';
+    }
+
+    private function mapOrderStateTemplateToKey(string $template): string
+    {
+        $normalizedTemplate = $this->normalizeEventKey($template);
+        $map = [
+            'payment' => 'payment_accepted',
+            'cheque' => 'payment_accepted',
+            'bankwire' => 'payment_accepted',
+            'preparation' => 'preparation_in_progress',
+            'in_transit' => 'shipped',
+            'shipped' => 'shipped',
+            'delivery' => 'delivered',
+            'delivered' => 'delivered',
+            'canceled' => 'canceled',
+            'cancelled' => 'canceled',
+            'refund' => 'refunded',
+            'refunded' => 'refunded',
+            'payment_error' => 'payment_error',
+            'outofstock' => 'out_of_stock',
+            'awaiting_bank_wire_payment' => 'awaiting_bank_wire_payment',
+            'awaiting_cheque_payment' => 'awaiting_cheque_payment',
+            'remote_payment_accepted' => 'payment_accepted',
+        ];
+
+        return $map[$normalizedTemplate] ?? $normalizedTemplate;
+    }
+
+    private function normalizeEventKey(string $value): string
+    {
+        $value = trim(Tools::strtolower($value));
+        if ($value === '') {
+            return '';
+        }
+
+        $transliterated = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+        if (is_string($transliterated) && $transliterated !== '') {
+            $value = $transliterated;
+        }
+
+        $value = preg_replace('/[^a-z0-9]+/', '_', $value) ?: '';
+        $value = trim($value, '_');
+
+        return $value;
     }
 
     private function handleTemplateActions(): string
@@ -451,11 +569,58 @@ class Mailsendvx extends Module
      */
     private function getSupportedEvents(): array
     {
+        return array_merge(
+            $this->getBaseSupportedEvents(),
+            $this->getOrderStateSupportedEvents()
+        );
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getBaseSupportedEvents(): array
+    {
         return [
-            'order_status_updated' => 'Cambio de estado de pedido',
-            'customer_registered' => 'Registro de cliente',
-            'newsletter_registered' => 'Suscripcion newsletter',
+            self::EVENT_ORDER_STATUS_CHANGED => 'Cambio de estado de pedido',
+            self::EVENT_ORDER_STATUS_LEGACY => 'Cambio de estado de pedido (legado)',
+            self::EVENT_CUSTOMER_REGISTERED => 'Registro de cliente',
+            self::EVENT_NEWSLETTER_REGISTERED => 'Suscripcion newsletter',
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getOrderStateSupportedEvents(): array
+    {
+        $events = [];
+        foreach (OrderState::getOrderStates((int) $this->context->language->id) as $state) {
+            $stateId = isset($state['id_order_state']) ? (int) $state['id_order_state'] : 0;
+            $stateName = isset($state['name']) ? (string) $state['name'] : '';
+            $template = isset($state['template']) ? (string) $state['template'] : '';
+            $stateKey = $this->resolveOrderStateKey(
+                $stateId > 0 ? new OrderState($stateId) : null,
+                $stateName,
+                $stateId
+            );
+
+            if ($stateKey === '') {
+                $stateKey = $this->normalizeEventKey($template ?: $stateName);
+            }
+
+            if ($stateKey === '') {
+                continue;
+            }
+
+            $events[self::EVENT_ORDER_STATUS_CHANGED . '_' . $stateKey] = sprintf(
+                'Cambio de estado: %s',
+                $stateName !== '' ? $stateName : ('Estado #' . $stateId)
+            );
+        }
+
+        ksort($events);
+
+        return $events;
     }
 
     /**
@@ -468,7 +633,7 @@ class Mailsendvx extends Module
             $template = (new MailSendVxTemplateRepository())->findById((int) Tools::getValue('mailsendvx_edit_template'));
         }
 
-        $eventName = $template ? (string) $template['event_name'] : 'order_status_updated';
+        $eventName = $template ? (string) $template['event_name'] : self::EVENT_ORDER_STATUS_CHANGED;
 
         return [
             'id_mailsendvx_template' => $template ? (int) $template['id_mailsendvx_template'] : 0,
@@ -529,6 +694,12 @@ class Mailsendvx extends Module
             'order_total' => '$89.50',
             'order_status' => 'Pago aceptado',
             'old_order_status' => 'Pendiente',
+            'order_state_id' => 2,
+            'order_state_key' => 'payment',
+            'order_state_name' => 'Pago aceptado',
+            'old_order_state_id' => 1,
+            'old_order_state_key' => 'awaiting_bank_wire_payment',
+            'old_order_state_name' => 'Pendiente',
             'newsletter_action' => 'subscribe',
         ]);
 
@@ -537,11 +708,11 @@ class Mailsendvx extends Module
 
     private function getDefaultHtmlContent(string $eventName): string
     {
-        if ($eventName === 'customer_registered') {
+        if ($eventName === self::EVENT_CUSTOMER_REGISTERED) {
             return '<p>Hola {customer_name},</p><p>Bienvenido a {shop_name}. Gracias por crear tu cuenta.</p><p><a href="{shop_url}">Visitar la tienda</a></p>';
         }
 
-        if ($eventName === 'newsletter_registered') {
+        if ($eventName === self::EVENT_NEWSLETTER_REGISTERED) {
             return '<p>Hola,</p><p>Gracias por suscribirte al newsletter de {shop_name}.</p><p><a href="{shop_url}">Visitar la tienda</a></p>';
         }
 
@@ -550,11 +721,11 @@ class Mailsendvx extends Module
 
     private function getDefaultTextContent(string $eventName): string
     {
-        if ($eventName === 'customer_registered') {
+        if ($eventName === self::EVENT_CUSTOMER_REGISTERED) {
             return "Hola {customer_name},\n\nBienvenido a {shop_name}. Gracias por crear tu cuenta.\n\n{shop_url}";
         }
 
-        if ($eventName === 'newsletter_registered') {
+        if ($eventName === self::EVENT_NEWSLETTER_REGISTERED) {
             return "Hola,\n\nGracias por suscribirte al newsletter de {shop_name}.\n\n{shop_url}";
         }
 

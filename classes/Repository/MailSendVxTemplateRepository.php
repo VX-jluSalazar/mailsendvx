@@ -30,6 +30,11 @@ class MailSendVxTemplateRepository
         );
     }
 
+    public function hasActiveByEvent(string $eventName, int $idLang, int $idShop): bool
+    {
+        return (bool) $this->findActiveByEvent($eventName, $idLang, $idShop);
+    }
+
     /**
      * @return array<int, array<string, mixed>>
      */

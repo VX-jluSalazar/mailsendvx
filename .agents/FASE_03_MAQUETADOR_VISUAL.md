@@ -78,9 +78,19 @@ Y estructuras dinamicas para listas:
 ## Dependencias
 
 - Fase 0 completa.
-- Fase 1 funcional para plantillas, variables y envio.
+- Fase 1 funcional para plantillas, variables, envio y taxonomia de eventos por estado.
 - Fase 2 recomendada para probar bloques dinamicos con cola y flujos reales.
-- Definicion final de variables disponibles por evento.
+- Definicion final de variables disponibles por evento, incluyendo variables de estado de pedido.
+
+## Impacto de eventos por estado en el maquetador
+
+Las plantillas visuales de pedido no deben diseñarse solo para `order_status_updated`.
+
+El editor y las plantillas predisenadas deben contemplar:
+
+- una plantilla generica para `order_status_changed`;
+- plantillas especificas para `order_status_payment_accepted`, `order_status_shipped`, `order_status_delivered`, `order_status_canceled` y estados equivalentes;
+- previews que usen el `state_key` y el nombre visible del estado.
 
 ## Como probar la funcionalidad
 
@@ -109,7 +119,7 @@ Y estructuras dinamicas para listas:
 
 ### Prueba 4: bloques dinamicos
 
-1. Crear una plantilla para `order_status_updated` o flujo postcompra.
+1. Crear una plantilla para `order_status_changed`, `order_status_shipped` o un flujo postcompra.
 2. Agregar un bloque de productos del pedido.
 3. Previsualizar usando un pedido real.
 4. Confirmar que cada producto muestra nombre, cantidad, precio, imagen y URL si estan disponibles.

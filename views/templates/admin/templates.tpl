@@ -16,6 +16,7 @@
             </option>
           {/foreach}
         </select>
+        <p class="help-block">{l s='Use "order_status_changed" for any order status change, a specific "order_status_changed_*" event for one target status, or "order_status_updated" only for legacy compatibility.' mod='mailsendvx'}</p>
       </div>
     </div>
 
@@ -30,7 +31,7 @@
       <label class="control-label col-lg-3">{l s='Subject' mod='mailsendvx'}</label>
       <div class="col-lg-5">
         <input type="text" name="subject" class="form-control" value="{$mailsendvx_template_form.subject|escape:'html':'UTF-8'}">
-        <p class="help-block">{l s='You can use variables such as {customer_name}, {order_reference}, {order_status}, {shop_name}.' mod='mailsendvx'}</p>
+        <p class="help-block">{l s='You can use variables such as {customer_name}, {order_reference}, {order_status}, {order_state_key}, {old_order_status}, {shop_name}.' mod='mailsendvx'}</p>
       </div>
     </div>
 
