@@ -66,6 +66,7 @@ services:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
       $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
 
   prestashop.module.mailsendvx.service.template_admin:

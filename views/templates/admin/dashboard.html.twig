@@ -55,6 +55,63 @@
       </div>
 
       <div class="col-xl-8">
+        <div class="card mailsendvx-card mb-3">
+          <h3 class="card-header">
+            <i class="material-icons">bolt</i>
+            {{ 'Captured events'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if recent_events %}
+              <div class="table-responsive">
+                <table class="table mailsendvx-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Date'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Status'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Object type'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Object ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Shop'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Payload'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for event in recent_events %}
+                      <tr>
+                        <td>{{ event.date_add }}</td>
+                        <td><code>{{ event.event_name }}</code></td>
+                        <td>
+                          <span class="mailsendvx-badge {{ event.status in ['captured', 'sent', 'success'] ? 'mailsendvx-badge--success' : (event.status in ['pending', 'scheduled'] ? 'mailsendvx-badge--warning' : 'mailsendvx-badge--danger') }}">
+                            {{ event.status }}
+                          </span>
+                        </td>
+                        <td>{{ event.object_type ?: '-' }}</td>
+                        <td>{{ event.object_id ?: '-' }}</td>
+                        <td>{{ event.id_shop ?: '-' }}</td>
+                        <td>
+                          {% if event.payload %}
+                            <details>
+                              <summary>{{ 'View payload'|trans({}, 'Modules.Mailsendvx.Admin') }}</summary>
+                              <pre class="mailsendvx-payload">{{ event.payload }}</pre>
+                            </details>
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'No events captured yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Captured hook payloads will appear here after the first instant event reaches the module.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
         <div class="card mailsendvx-card">
           <h3 class="card-header">
             <i class="material-icons">history</i>

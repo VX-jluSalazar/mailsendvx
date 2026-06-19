@@ -4,6 +4,7 @@ namespace Velox\MailSendVx\Repository;
 
 use Context;
 use Db;
+use DbQuery;
 
 class MailSendVxEventRepository
 {
@@ -27,5 +28,19 @@ class MailSendVxEventRepository
             'status' => pSQL($status),
             'date_add' => date('Y-m-d H:i:s'),
         ]);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRecent(int $limit = 20): array
+    {
+        $sql = new DbQuery();
+        $sql->select('*');
+        $sql->from('mailsendvx_event');
+        $sql->orderBy('date_add DESC');
+        $sql->limit(max(1, min(100, $limit)));
+
+        return Db::getInstance()->executeS($sql) ?: [];
     }
 }
