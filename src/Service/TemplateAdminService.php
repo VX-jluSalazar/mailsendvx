@@ -7,6 +7,7 @@ use Language;
 use Validate;
 use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class TemplateAdminService
@@ -15,6 +16,11 @@ class TemplateAdminService
      * @var Context
      */
     private $context;
+
+    /**
+     * @var EventTemplateContextService
+     */
+    private $eventContextService;
 
     /**
      * @var OrderStateEventService
@@ -32,6 +38,16 @@ class TemplateAdminService
     private $templateRepository;
 
     /**
+     * @var MailSendVxEventRepository
+     */
+    private $eventRepository;
+
+    /**
+     * @var MailTemplateWrapperService
+     */
+    private $wrapperService;
+
+    /**
      * @var MailSendVxMailer
      */
     private $mailer;
@@ -43,16 +59,22 @@ class TemplateAdminService
 
     public function __construct(
         Context $context,
+        EventTemplateContextService $eventContextService,
         OrderStateEventService $orderStateEventService,
         TemplateContentService $templateContentService,
         MailSendVxTemplateRepository $templateRepository,
+        MailSendVxEventRepository $eventRepository,
+        MailTemplateWrapperService $wrapperService,
         MailSendVxMailer $mailer,
         MailSendVxTemplateRenderer $templateRenderer
     ) {
         $this->context = $context;
+        $this->eventContextService = $eventContextService;
         $this->orderStateEventService = $orderStateEventService;
         $this->templateContentService = $templateContentService;
         $this->templateRepository = $templateRepository;
+        $this->eventRepository = $eventRepository;
+        $this->wrapperService = $wrapperService;
         $this->mailer = $mailer;
         $this->templateRenderer = $templateRenderer;
     }
@@ -84,6 +106,19 @@ class TemplateAdminService
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function getWrapperChoices(): array
+    {
+        $wrappers = $this->wrapperService->getAvailableWrappers();
+        if (empty($wrappers)) {
+            return ['mailsendvx_default' => 'mailsendvx_default'];
+        }
+
+        return $wrappers;
+    }
+
+    /**
      * @return array<int, array<string, mixed>>
      */
     public function getLanguages(): array
@@ -98,15 +133,18 @@ class TemplateAdminService
     {
         $template = $idTemplate ? $this->templateRepository->findById($idTemplate) : null;
         $eventName = $template ? (string) $template['event_name'] : ModuleConstants::EVENT_ORDER_STATUS_CHANGED;
+        $idLang = $template ? (int) $template['id_lang'] : (int) $this->context->language->id;
+        $wrapperName = $template ? (string) $template['mail_template'] : 'mailsendvx_default';
+        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
 
         return [
             'id_mailsendvx_template' => $template ? (int) $template['id_mailsendvx_template'] : 0,
             'id_shop' => $template ? (int) $template['id_shop'] : (int) $this->context->shop->id,
-            'id_lang' => $template ? (int) $template['id_lang'] : (int) $this->context->language->id,
+            'id_lang' => $idLang,
             'event_name' => $eventName,
             'template_name' => $template ? (string) $template['name'] : '',
             'subject' => $template ? (string) $template['subject'] : '',
-            'mail_template' => $template ? (string) $template['mail_template'] : 'mailsendvx_default',
+            'mail_template' => $wrapperName,
             'html_content' => $template ? (string) $template['html_content'] : $this->templateContentService->getDefaultHtmlContent(
                 $eventName,
                 ModuleConstants::EVENT_ORDER_CREATED,
@@ -119,6 +157,9 @@ class TemplateAdminService
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED
             ),
+            'wrapper_html' => $wrapperContent['html'],
+            'wrapper_text' => $wrapperContent['text'],
+            'save_wrapper_changes' => false,
             'active' => $template ? (bool) $template['active'] : true,
         ];
     }
@@ -130,8 +171,22 @@ class TemplateAdminService
     {
         $htmlContent = (string) ($data['html_content'] ?? '');
         $textContent = trim((string) ($data['text_content'] ?? ''));
+        $wrapperName = trim((string) ($data['mail_template'] ?? 'mailsendvx_default'));
+        $wrapperHtml = (string) ($data['wrapper_html'] ?? '');
+        $wrapperText = trim((string) ($data['wrapper_text'] ?? ''));
         if ($textContent === '') {
             $textContent = $this->templateContentService->generateTextContentFromHtml($htmlContent);
+        }
+        if ($wrapperText === '' && $wrapperHtml !== '') {
+            $wrapperText = $this->templateContentService->generateTextContentFromHtml($wrapperHtml);
+        }
+
+        if ($wrapperName === '') {
+            $wrapperName = 'mailsendvx_default';
+        }
+
+        if (!empty($data['save_wrapper_changes']) || !$this->wrapperService->wrapperExists($wrapperName)) {
+            $this->wrapperService->saveWrapperContent($wrapperName, $wrapperHtml, $wrapperText);
         }
 
         return $this->templateRepository->save([
@@ -140,7 +195,7 @@ class TemplateAdminService
             'event_name' => (string) ($data['event_name'] ?? ''),
             'name' => (string) ($data['template_name'] ?? ''),
             'subject' => (string) ($data['subject'] ?? ''),
-            'mail_template' => (string) ($data['mail_template'] ?? 'mailsendvx_default'),
+            'mail_template' => $wrapperName,
             'html_content' => $htmlContent,
             'text_content' => $textContent,
             'json_design' => null,
@@ -171,7 +226,7 @@ class TemplateAdminService
         try {
             $this->templateRenderer->renderTemplate(
                 $template,
-                $this->getSampleVariables((string) $template['event_name'])
+                $this->getPreviewContext((string) $template['event_name'])
             );
         } catch (TwigError $exception) {
             return sprintf('Twig syntax error: %s', $exception->getMessage());
@@ -181,7 +236,7 @@ class TemplateAdminService
             $template,
             $recipient,
             null,
-            $this->getSampleVariables((string) $template['event_name']),
+            $this->getPreviewContext((string) $template['event_name']),
             (int) ($template['id_lang'] ?: $this->context->language->id),
             (int) ($template['id_shop'] ?: $this->context->shop->id)
         );
@@ -203,127 +258,170 @@ class TemplateAdminService
             return null;
         }
 
-        $variables = $this->getSampleVariables((string) $template['event_name']);
+        $variables = $this->getPreviewContext((string) $template['event_name']);
 
         return [
             'name' => (string) $template['name'],
             'subject' => $this->templateRenderer->renderSubject((string) $template['subject'], $variables),
             'html' => $this->templateRenderer->renderHtml((string) $template['html_content'], $variables),
             'text' => $this->templateRenderer->renderText((string) $template['text_content'], $variables),
+            'context_source' => !empty($variables['_preview_source']) ? (string) $variables['_preview_source'] : 'sample',
         ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function getSampleVariables(string $eventName): array
+    public function getEventGuideData(): array
     {
-        return [
-            'event_name' => $eventName,
-            'id_lang' => (int) $this->context->language->id,
-            'id_shop' => (int) $this->context->shop->id,
-            'customer_id' => 123,
-            'customer_name' => 'Cliente de prueba',
-            'customer_firstname' => 'Cliente',
-            'customer_lastname' => 'Prueba',
-            'customer_email' => 'cliente@example.com',
-            'order_id' => 456,
-            'order_reference' => 'VX123456',
-            'order_total' => '$89.50',
-            'order_status' => 'Pago aceptado',
-            'old_order_status' => 'Pendiente',
-            'order_state_id' => 2,
-            'order_state_key' => 'payment_accepted',
-            'order_state_name' => 'Pago aceptado',
-            'old_order_state_id' => 1,
-            'old_order_state_key' => 'awaiting_bank_wire_payment',
-            'old_order_state_name' => 'Pendiente',
-            'order_totals' => [
-                'paid' => '$89.50',
-                'products' => '$75.00',
-                'shipping' => '$9.50',
-                'discounts' => '$5.00',
-                'tax' => '$10.00',
-            ],
-            'billing_address' => [
-                'firstname' => 'Cliente',
-                'lastname' => 'Prueba',
-                'full_name' => 'Cliente Prueba',
-                'company' => 'Velox Labs',
-                'address1' => 'Av. Siempre Viva 123',
-                'address2' => 'Depto 4B',
-                'city' => 'Guayaquil',
-                'postcode' => '090101',
-                'country' => 'Ecuador',
-                'state' => 'Guayas',
-                'phone' => '+593999999999',
-                'phone_mobile' => '+593988888888',
-                'formatted' => "Cliente Prueba\nAv. Siempre Viva 123\nDepto 4B\nGuayaquil 090101\nEcuador",
-            ],
-            'shipping_address' => [
-                'firstname' => 'Cliente',
-                'lastname' => 'Prueba',
-                'full_name' => 'Cliente Prueba',
-                'company' => '',
-                'address1' => 'Calle Comercio 456',
-                'address2' => '',
-                'city' => 'Samborondon',
-                'postcode' => '092301',
-                'country' => 'Ecuador',
-                'state' => 'Guayas',
-                'phone' => '+593977777777',
-                'phone_mobile' => '',
-                'formatted' => "Cliente Prueba\nCalle Comercio 456\nSamborondon 092301\nEcuador",
-            ],
-            'shipping' => [
-                'carrier_name' => 'Envio express',
-                'cost' => '$9.50',
-                'tracking_url' => 'https://example.com/tracking/VX123456',
-            ],
-            'products' => [
-                [
-                    'id' => 10,
-                    'attribute_id' => 0,
-                    'name' => 'Camisa Azul',
-                    'reference' => 'CA-001',
-                    'quantity' => 2,
-                    'unit_price' => '$25.00',
-                    'total_price' => '$50.00',
-                    'url' => 'https://example.com/camisa-azul',
-                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Camisa+Azul',
-                ],
-                [
-                    'id' => 11,
-                    'attribute_id' => 0,
-                    'name' => 'Pantalon Negro',
-                    'reference' => 'PN-010',
-                    'quantity' => 1,
-                    'unit_price' => '$25.00',
-                    'total_price' => '$25.00',
-                    'url' => 'https://example.com/pantalon-negro',
-                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Pantalon+Negro',
-                ],
-            ],
-            'related_products' => [
-                [
-                    'id' => 21,
-                    'name' => 'Zapatos Urbanos',
-                    'price' => '$59.00',
-                    'url' => 'https://example.com/zapatos-urbanos',
-                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Zapatos',
-                ],
-            ],
-            'reviews' => [
-                [
-                    'author' => 'Maria',
-                    'rating' => 5,
-                    'title' => 'Excelente compra',
-                    'content' => 'Entrega rapida y producto en perfecto estado.',
-                ],
-            ],
-            'newsletter_action' => 'subscribe',
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
-        ];
+        $guides = [];
+        foreach ($this->getSupportedEvents() as $eventName => $label) {
+            $sample = $this->eventContextService->getSampleContext($eventName);
+            $guides[$eventName] = [
+                'label' => $label,
+                'scalar_attributes' => $this->flattenScalarAttributes($sample),
+                'collection_attributes' => $this->flattenCollectionAttributes($sample),
+                'subject_example' => $this->buildSubjectExample($eventName),
+            ];
+        }
+
+        return $guides;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getPreviewContext(string $eventName): array
+    {
+        $sample = $this->eventContextService->getSampleContext($eventName);
+        $event = $this->eventRepository->findLatestByEvent($eventName, (int) $this->context->shop->id);
+        if (!$event || empty($event['payload'])) {
+            $sample['_preview_source'] = 'sample';
+
+            return $sample;
+        }
+
+        $payload = json_decode((string) $event['payload'], true);
+        if (!is_array($payload)) {
+            $sample['_preview_source'] = 'sample';
+
+            return $sample;
+        }
+
+        $context = $this->mergePreviewContext($sample, $payload);
+        $context['_preview_source'] = 'historical';
+
+        return $context;
+    }
+
+    /**
+     * @param array<string, mixed> $base
+     * @param array<string, mixed> $payload
+     *
+     * @return array<string, mixed>
+     */
+    private function mergePreviewContext(array $base, array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            if (isset($base[$key]) && is_array($base[$key]) && is_array($value)) {
+                if ($this->isList($base[$key]) || $this->isList($value)) {
+                    $base[$key] = $value;
+
+                    continue;
+                }
+
+                $base[$key] = $this->mergePreviewContext($base[$key], $value);
+                continue;
+            }
+
+            $base[$key] = $value;
+        }
+
+        return $base;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function flattenScalarAttributes(array $context, string $prefix = ''): array
+    {
+        $rows = [];
+        foreach ($context as $key => $value) {
+            if ($key === '_preview_source') {
+                continue;
+            }
+
+            $path = $prefix === '' ? $key : $prefix . '.' . $key;
+            if (is_array($value)) {
+                if ($this->isList($value)) {
+                    continue;
+                }
+
+                $rows = array_merge($rows, $this->flattenScalarAttributes($value, $path));
+                continue;
+            }
+
+            $rows[] = [
+                'path' => $path,
+                'twig' => '{{ ' . $path . ' }}',
+                'legacy' => strpos($path, '.') === false ? '{' . $path . '}' : '',
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function flattenCollectionAttributes(array $context): array
+    {
+        $rows = [];
+        foreach ($context as $key => $value) {
+            if (!is_array($value) || !$this->isList($value) || empty($value) || !is_array($value[0])) {
+                continue;
+            }
+
+            $sampleItem = $value[0];
+            $fields = [];
+            foreach ($sampleItem as $field => $fieldValue) {
+                if (is_scalar($fieldValue) || $fieldValue === null) {
+                    $fields[] = '{{ item.' . $field . ' }}';
+                }
+            }
+
+            $rows[] = [
+                'path' => $key,
+                'twig' => "{% for item in " . $key . " %}\n  " . implode("\n  ", array_slice($fields, 0, 3)) . "\n{% endfor %}",
+                'legacy' => '',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function buildSubjectExample(string $eventName): string
+    {
+        if ($eventName === ModuleConstants::EVENT_CUSTOMER_REGISTERED) {
+            return '{{ customer_name }} - Bienvenido a {{ shop_name }}';
+        }
+
+        if ($eventName === ModuleConstants::EVENT_NEWSLETTER_REGISTERED) {
+            return '{{ shop_name }} - Confirmacion de suscripcion';
+        }
+
+        return '{{ order_reference }} - {{ order_status|default("Pedido creado") }}';
+    }
+
+    /**
+     * @param array<int|string, mixed> $value
+     */
+    private function isList(array $value): bool
+    {
+        return array_keys($value) === range(0, count($value) - 1);
     }
 }

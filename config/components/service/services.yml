@@ -71,11 +71,39 @@ services:
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
 
+  prestashop.module.mailsendvx.service.context_builder.order:
+    class: Velox\MailSendVx\Service\OrderTemplateContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+
+  prestashop.module.mailsendvx.service.context_builder.customer:
+    class: Velox\MailSendVx\Service\CustomerTemplateContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.context_builder.newsletter:
+    class: Velox\MailSendVx\Service\NewsletterTemplateContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.event_context:
+    class: Velox\MailSendVx\Service\EventTemplateContextService
+    public: true
+    arguments:
+      $orderBuilder: '@prestashop.module.mailsendvx.service.context_builder.order'
+      $customerBuilder: '@prestashop.module.mailsendvx.service.context_builder.customer'
+      $newsletterBuilder: '@prestashop.module.mailsendvx.service.context_builder.newsletter'
+
   prestashop.module.mailsendvx.service.instant_email_hook:
     class: Velox\MailSendVx\Service\InstantEmailHookService
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventContextService: '@prestashop.module.mailsendvx.service.event_context'
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
@@ -84,6 +112,10 @@ services:
 
   prestashop.module.mailsendvx.service.template_content:
     class: Velox\MailSendVx\Service\TemplateContentService
+    public: true
+
+  prestashop.module.mailsendvx.service.wrapper_manager:
+    class: Velox\MailSendVx\Service\MailTemplateWrapperService
     public: true
 
   prestashop.module.mailsendvx.service.dashboard_view:
@@ -101,8 +133,11 @@ services:
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventContextService: '@prestashop.module.mailsendvx.service.event_context'
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
       $templateContentService: '@prestashop.module.mailsendvx.service.template_content'
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
+      $wrapperService: '@prestashop.module.mailsendvx.service.wrapper_manager'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
       $templateRenderer: '@prestashop.module.mailsendvx.service.template_renderer'

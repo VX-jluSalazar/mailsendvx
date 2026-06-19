@@ -19,13 +19,17 @@ Por esta razon, la migracion a Twig debe ejecutarse como una fase intermedia ant
 - Validacion controlada de errores Twig en preview y envio de prueba.
 - Contexto de ejemplo estructurado con `products`, `related_products`, `reviews`, `billing_address`, `shipping_address`, `shipping` y `order_totals`.
 - Contexto real enriquecido para eventos de pedido con listas de productos, direcciones y totales.
+- Builders de contexto separados por dominio para pedido, cliente y newsletter.
+- Preview con payload historico cuando existe un evento capturado del mismo tipo.
+- Gestion editable de wrappers desde Back Office usando archivos fisicos del modulo.
+- Guia dinamica de atributos por evento dentro de la pantalla de creacion/edicion de templates.
 
 ### Pendiente recomendado
 
-- endurecer restricciones del entorno Twig si se quiere limitar aun mas la superficie disponible,
-- separar formalmente builders de contexto por dominio,
-- evolucionar wrappers hacia una gestion mas moderna y editable,
-- ampliar previews con datos reales desde payloads historicos.
+- endurecer aun mas el entorno Twig si en una iteracion futura se quiere reducir tags, filtros o expresiones permitidas,
+- evolucionar wrappers a gestion multilenguaje diferenciada si el negocio lo necesita,
+- ampliar previews con selector explicito de eventos historicos en lugar de usar solo el ultimo payload disponible,
+- separar recomendaciones y reviews reales por provider o fuente de datos cuando esas fuentes existan en Fase 02 o Fase 03.
 
 ## Objetivo
 
