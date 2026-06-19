@@ -2,8 +2,11 @@
 
 namespace Velox\MailSendVx\Service;
 
+use Address;
+use Carrier;
 use Configuration;
 use Context;
+use Country;
 use Currency;
 use Customer;
 use Module;
@@ -11,6 +14,7 @@ use Order;
 use OrderState;
 use PrestaShopLogger;
 use Shop;
+use State;
 use Tools;
 use Validate;
 use Velox\MailSendVx\ModuleConstants;
@@ -236,18 +240,8 @@ class InstantEmailHookService
         $newStateName = $this->getOrderStatusName($newStatus, $idLang);
         $oldStateName = $this->getOrderStatusName($oldStatus, $idLang);
 
-        return array_merge($this->getCommonVariables($idShop), [
+        return array_merge($this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop), [
             'event_name' => ModuleConstants::EVENT_ORDER_STATUS_CHANGED,
-            'id_lang' => $idLang,
-            'id_shop' => $idShop,
-            'customer_id' => $customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
-            'customer_name' => $customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
-            'customer_firstname' => $customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
-            'customer_lastname' => $customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
-            'customer_email' => $customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
-            'order_id' => $order && Validate::isLoadedObject($order) ? (int) $order->id : '',
-            'order_reference' => $order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
-            'order_total' => $order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency) : '',
             'order_status' => $newStateName,
             'old_order_status' => $oldStateName,
             'order_state_id' => $newStateId,
@@ -320,18 +314,8 @@ class InstantEmailHookService
         $currentStateId = $this->getOrderStatusId($currentStatus);
         $currentStateName = $this->getOrderStatusName($currentStatus, $idLang);
 
-        return array_merge($this->getCommonVariables($idShop), [
+        return array_merge($this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop), [
             'event_name' => ModuleConstants::EVENT_ORDER_CREATED,
-            'id_lang' => $idLang,
-            'id_shop' => $idShop,
-            'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
-            'customer_name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
-            'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
-            'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
-            'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
-            'order_id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : '',
-            'order_reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
-            'order_total' => $order instanceof Order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency instanceof Currency ? $currency : null) : '',
             'order_status' => $currentStateName,
             'order_state_id' => $currentStateId,
             'order_state_key' => $this->orderStateEventService->resolveOrderStateKey($currentStatus, $currentStateName, $currentStateId),
@@ -370,6 +354,208 @@ class InstantEmailHookService
             'shop_name' => Validate::isLoadedObject($shop) ? (string) $shop->name : (string) Configuration::get('PS_SHOP_NAME'),
             'shop_url' => $this->context->link->getBaseLink($idShop, true),
         ];
+    }
+
+    private function buildOrderCommonVariables(?Order $order, ?Customer $customer, ?Currency $currency, int $idLang, int $idShop): array
+    {
+        $billingAddress = $this->getOrderAddress($order, 'id_address_invoice');
+        $shippingAddress = $this->getOrderAddress($order, 'id_address_delivery');
+        $products = $this->getOrderProducts($order, $currency, $idLang);
+        $shipping = $this->getShippingContext($order, $currency);
+
+        return array_merge($this->getCommonVariables($idShop), [
+            'id_lang' => $idLang,
+            'id_shop' => $idShop,
+            'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
+            'customer_name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
+            'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
+            'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
+            'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+            'order_id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : '',
+            'order_reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
+            'order_total' => $order instanceof Order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency instanceof Currency ? $currency : null) : '',
+            'order_totals' => $this->getOrderTotalsContext($order, $currency),
+            'billing_address' => $billingAddress,
+            'shipping_address' => $shippingAddress,
+            'shipping' => $shipping,
+            'products' => $products,
+            'related_products' => [],
+            'reviews' => [],
+            'order' => [
+                'id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : 0,
+                'reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
+                'totals' => $this->getOrderTotalsContext($order, $currency),
+                'billing_address' => $billingAddress,
+                'shipping_address' => $shippingAddress,
+                'shipping' => $shipping,
+                'products' => $products,
+            ],
+        ]);
+    }
+
+    private function getOrderTotalsContext(?Order $order, ?Currency $currency): array
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+            return [
+                'paid' => '',
+                'products' => '',
+                'shipping' => '',
+                'discounts' => '',
+                'tax' => '',
+            ];
+        }
+
+        return [
+            'paid' => Tools::displayPrice((float) $order->total_paid, $currency),
+            'products' => Tools::displayPrice((float) $order->total_products_wt, $currency),
+            'shipping' => Tools::displayPrice((float) $order->total_shipping_tax_incl, $currency),
+            'discounts' => Tools::displayPrice((float) $order->total_discounts_tax_incl, $currency),
+            'tax' => Tools::displayPrice((float) $order->total_paid_tax_incl - (float) $order->total_paid_tax_excl, $currency),
+        ];
+    }
+
+    private function getOrderAddress(?Order $order, string $property): array
+    {
+        if (
+            !$order instanceof Order
+            || !Validate::isLoadedObject($order)
+            || empty($order->{$property})
+        ) {
+            return $this->getEmptyAddressContext();
+        }
+
+        $address = new Address((int) $order->{$property});
+        if (!Validate::isLoadedObject($address)) {
+            return $this->getEmptyAddressContext();
+        }
+
+        $countryName = '';
+        if (!empty($address->id_country)) {
+            $country = new Country((int) $address->id_country, (int) $this->context->language->id);
+            if (Validate::isLoadedObject($country)) {
+                $countryName = (string) $country->name;
+            }
+        }
+
+        $stateName = '';
+        if (!empty($address->id_state)) {
+            $state = new State((int) $address->id_state);
+            if (Validate::isLoadedObject($state)) {
+                $stateName = (string) $state->name;
+            }
+        }
+
+        $fullName = trim((string) $address->firstname . ' ' . (string) $address->lastname);
+        $lines = array_filter([
+            $fullName,
+            (string) $address->company,
+            trim((string) $address->address1),
+            trim((string) $address->address2),
+            trim((string) $address->city . ' ' . (string) $address->postcode),
+            $stateName,
+            $countryName,
+        ]);
+
+        return [
+            'firstname' => (string) $address->firstname,
+            'lastname' => (string) $address->lastname,
+            'full_name' => $fullName,
+            'company' => (string) $address->company,
+            'address1' => (string) $address->address1,
+            'address2' => (string) $address->address2,
+            'city' => (string) $address->city,
+            'postcode' => (string) $address->postcode,
+            'country' => $countryName,
+            'state' => $stateName,
+            'phone' => (string) $address->phone,
+            'phone_mobile' => (string) $address->phone_mobile,
+            'formatted' => implode("\n", $lines),
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getEmptyAddressContext(): array
+    {
+        return [
+            'firstname' => '',
+            'lastname' => '',
+            'full_name' => '',
+            'company' => '',
+            'address1' => '',
+            'address2' => '',
+            'city' => '',
+            'postcode' => '',
+            'country' => '',
+            'state' => '',
+            'phone' => '',
+            'phone_mobile' => '',
+            'formatted' => '',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getShippingContext(?Order $order, ?Currency $currency): array
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+            return [
+                'carrier_name' => '',
+                'cost' => '',
+                'tracking_url' => '',
+            ];
+        }
+
+        $carrierName = '';
+        if (!empty($order->id_carrier)) {
+            $carrier = new Carrier((int) $order->id_carrier);
+            if (Validate::isLoadedObject($carrier)) {
+                $carrierName = (string) $carrier->name;
+            }
+        }
+
+        return [
+            'carrier_name' => $carrierName,
+            'cost' => Tools::displayPrice((float) $order->total_shipping_tax_incl, $currency),
+            'tracking_url' => '',
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getOrderProducts(?Order $order, ?Currency $currency, int $idLang): array
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+            return [];
+        }
+
+        $products = [];
+        foreach ($order->getProducts() as $row) {
+            $idProduct = (int) ($row['product_id'] ?? $row['id_product'] ?? 0);
+            $idProductAttribute = (int) ($row['product_attribute_id'] ?? $row['id_product_attribute'] ?? 0);
+            $rewrite = isset($row['link_rewrite']) && is_string($row['link_rewrite']) ? $row['link_rewrite'] : null;
+
+            $products[] = [
+                'id' => $idProduct,
+                'attribute_id' => $idProductAttribute,
+                'name' => (string) ($row['product_name'] ?? ''),
+                'reference' => (string) ($row['product_reference'] ?? ''),
+                'quantity' => (int) ($row['product_quantity'] ?? 0),
+                'unit_price' => Tools::displayPrice((float) ($row['unit_price_tax_incl'] ?? 0), $currency),
+                'total_price' => Tools::displayPrice((float) ($row['total_price_tax_incl'] ?? 0), $currency),
+                'unit_price_tax_excl' => (float) ($row['unit_price_tax_excl'] ?? 0),
+                'unit_price_tax_incl' => (float) ($row['unit_price_tax_incl'] ?? 0),
+                'total_price_tax_excl' => (float) ($row['total_price_tax_excl'] ?? 0),
+                'total_price_tax_incl' => (float) ($row['total_price_tax_incl'] ?? 0),
+                'url' => $idProduct > 0 ? $this->context->link->getProductLink($idProduct, $rewrite, null, null, $idLang, (int) $order->id_shop, $idProductAttribute > 0 ? $idProductAttribute : 0) : '',
+                'image_url' => '',
+            ];
+        }
+
+        return $products;
     }
 
     /**

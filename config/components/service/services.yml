@@ -35,6 +35,21 @@ services:
     class: Velox\MailSendVx\Service\MailSendVxVariableRenderer
     public: true
 
+  prestashop.module.mailsendvx.service.template_engine.legacy:
+    class: Velox\MailSendVx\Service\LegacyPlaceholderTemplateEngine
+    public: true
+
+  prestashop.module.mailsendvx.service.template_engine.twig:
+    class: Velox\MailSendVx\Service\TwigTemplateEngine
+    public: true
+
+  prestashop.module.mailsendvx.service.template_renderer:
+    class: Velox\MailSendVx\Service\MailSendVxTemplateRenderer
+    public: true
+    arguments:
+      $legacyEngine: '@prestashop.module.mailsendvx.service.template_engine.legacy'
+      $twigEngine: '@prestashop.module.mailsendvx.service.template_engine.twig'
+
   prestashop.module.mailsendvx.service.logger:
     class: Velox\MailSendVx\Service\MailSendVxLogger
     public: true
@@ -48,7 +63,7 @@ services:
       $templates: '@prestashop.module.mailsendvx.repository.template'
       $logs: '@prestashop.module.mailsendvx.repository.log'
       $provider: '@prestashop.module.mailsendvx.provider.prestashop_mail'
-      $renderer: '@prestashop.module.mailsendvx.service.variable_renderer'
+      $renderer: '@prestashop.module.mailsendvx.service.template_renderer'
 
   prestashop.module.mailsendvx.service.order_state_event:
     class: Velox\MailSendVx\Service\OrderStateEventService
@@ -90,4 +105,4 @@ services:
       $templateContentService: '@prestashop.module.mailsendvx.service.template_content'
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
-      $variableRenderer: '@prestashop.module.mailsendvx.service.variable_renderer'
+      $templateRenderer: '@prestashop.module.mailsendvx.service.template_renderer'

@@ -10,11 +10,17 @@ Esta fase transforma Mail Send VX de un sistema de emails instantaneos en un mot
 
 Los flujos de postcompra no deben construirse sobre un unico evento `order_status_updated`.
 
+Tampoco conviene construir la capa de render de flujos sobre el motor MVP de placeholders simples.
+
 Antes o durante esta fase, la capa de eventos debe exponer:
 
 - `order_created` como trigger canonico de pedido confirmado.
 - `order_status_changed` como trigger generico.
 - `order_status_changed_{state_key}` como trigger especifico por estado destino.
+
+Y antes de implementar rendering avanzado de flows, debe estar resuelta la fase intermedia:
+
+- `modules/mailsendvx/.agents/FASE_01B_MOTOR_TWIG.md`
 
 Sin esta separacion, los flujos de confirmacion, entrega, envio, pago aceptado, cancelacion o reembolso quedan ambiguos y requieren condiciones excesivas para diferenciarse.
 
@@ -118,6 +124,7 @@ Actualiza estado y registra log
 
 - Fase 0 completa.
 - Fase 1 funcional para renderizado, plantillas y logs.
+- Fase 01B completada para usar Twig como motor de render.
 - Plantillas activas por evento/flujo.
 - Token de cron configurado.
 

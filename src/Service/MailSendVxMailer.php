@@ -25,7 +25,7 @@ class MailSendVxMailer
     private $provider;
 
     /**
-     * @var MailSendVxVariableRenderer
+     * @var MailSendVxTemplateRenderer
      */
     private $renderer;
 
@@ -33,7 +33,7 @@ class MailSendVxMailer
         MailSendVxTemplateRepository $templates,
         MailSendVxLogRepository $logs,
         MailSendVxMailProviderInterface $provider,
-        MailSendVxVariableRenderer $renderer
+        MailSendVxTemplateRenderer $renderer
     ) {
         $this->templates = $templates;
         $this->logs = $logs;
@@ -63,7 +63,8 @@ class MailSendVxMailer
     public function sendTemplate(array $template, string $recipient, ?string $recipientName, array $variables, int $idLang, int $idShop): bool
     {
         $eventName = (string) $template['event_name'];
-        $subject = $this->renderer->render((string) $template['subject'], $variables);
+        $renderedTemplate = $this->renderer->renderTemplate($template, $variables);
+        $subject = $renderedTemplate['subject'];
         $mailTemplate = (string) $template['mail_template'];
         $mailVars = [];
         foreach ($variables as $key => $value) {
@@ -71,8 +72,8 @@ class MailSendVxMailer
                 $mailVars['{' . $key . '}'] = (string) $value;
             }
         }
-        $mailVars['{mailsendvx_html_content}'] = $this->renderer->render((string) $template['html_content'], $variables);
-        $mailVars['{mailsendvx_text_content}'] = $this->renderer->render((string) $template['text_content'], $variables);
+        $mailVars['{mailsendvx_html_content}'] = $renderedTemplate['html'];
+        $mailVars['{mailsendvx_text_content}'] = $renderedTemplate['text'];
 
         try {
             $sent = $this->provider->send($idLang, $mailTemplate, $subject, $recipient, $recipientName, $mailVars, $idShop);

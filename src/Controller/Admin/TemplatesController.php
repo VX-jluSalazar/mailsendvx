@@ -4,6 +4,7 @@ namespace Velox\MailSendVx\Controller\Admin;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\Form\Type\TemplateFormType;
 use Velox\MailSendVx\Service\TemplateAdminService;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
@@ -51,10 +52,19 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->buildLanguageLabels($languageChoices)
         );
 
+        $preview = null;
+        if ($previewId) {
+            try {
+                $preview = $this->templateAdminService->getPreviewData($previewId);
+            } catch (TwigError $exception) {
+                $this->addFlash('danger', sprintf('Twig syntax error: %s', $exception->getMessage()));
+            }
+        }
+
         return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
             'templateForm' => $form->createView(),
             'templates' => $templates,
-            'preview' => $this->templateAdminService->getPreviewData($previewId),
+            'preview' => $preview,
             'currentEditTemplate' => $this->findTemplate($templates, $editId),
             'activeTemplatesCount' => $this->countActiveTemplates($templates),
             'defaultTestEmail' => (string) ($this->getContext()->employee->email ?? ''),

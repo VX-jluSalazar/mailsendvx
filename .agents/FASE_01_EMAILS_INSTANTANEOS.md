@@ -263,7 +263,8 @@ Los siguientes pasos recomendados ya no son construir la funcionalidad principal
 
 - validar el comportamiento en entorno real,
 - ajustar documentacion y ejemplos,
-- preparar el puente hacia Fase 02 sobre `order_created`, `order_status_changed` y `order_status_changed_{state_key}`.
+- completar la migracion intermedia a Twig en `modules/mailsendvx/.agents/FASE_01B_MOTOR_TWIG.md`,
+- preparar el puente hacia Fase 02 sobre `order_created`, `order_status_changed` y `order_status_changed_{state_key}` usando ya el nuevo motor.
 
 ## Riesgos
 

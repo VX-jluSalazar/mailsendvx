@@ -5,6 +5,7 @@ namespace Velox\MailSendVx\Service;
 use Context;
 use Language;
 use Validate;
+use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
@@ -36,9 +37,9 @@ class TemplateAdminService
     private $mailer;
 
     /**
-     * @var MailSendVxVariableRenderer
+     * @var MailSendVxTemplateRenderer
      */
-    private $variableRenderer;
+    private $templateRenderer;
 
     public function __construct(
         Context $context,
@@ -46,14 +47,14 @@ class TemplateAdminService
         TemplateContentService $templateContentService,
         MailSendVxTemplateRepository $templateRepository,
         MailSendVxMailer $mailer,
-        MailSendVxVariableRenderer $variableRenderer
+        MailSendVxTemplateRenderer $templateRenderer
     ) {
         $this->context = $context;
         $this->orderStateEventService = $orderStateEventService;
         $this->templateContentService = $templateContentService;
         $this->templateRepository = $templateRepository;
         $this->mailer = $mailer;
-        $this->variableRenderer = $variableRenderer;
+        $this->templateRenderer = $templateRenderer;
     }
 
     /**
@@ -167,6 +168,15 @@ class TemplateAdminService
             return 'Invalid test email.';
         }
 
+        try {
+            $this->templateRenderer->renderTemplate(
+                $template,
+                $this->getSampleVariables((string) $template['event_name'])
+            );
+        } catch (TwigError $exception) {
+            return sprintf('Twig syntax error: %s', $exception->getMessage());
+        }
+
         $sent = $this->mailer->sendTemplate(
             $template,
             $recipient,
@@ -197,9 +207,9 @@ class TemplateAdminService
 
         return [
             'name' => (string) $template['name'],
-            'subject' => $this->variableRenderer->render((string) $template['subject'], $variables),
-            'html' => $this->variableRenderer->render((string) $template['html_content'], $variables),
-            'text' => $this->variableRenderer->render((string) $template['text_content'], $variables),
+            'subject' => $this->templateRenderer->renderSubject((string) $template['subject'], $variables),
+            'html' => $this->templateRenderer->renderHtml((string) $template['html_content'], $variables),
+            'text' => $this->templateRenderer->renderText((string) $template['text_content'], $variables),
         ];
     }
 
@@ -228,6 +238,89 @@ class TemplateAdminService
             'old_order_state_id' => 1,
             'old_order_state_key' => 'awaiting_bank_wire_payment',
             'old_order_state_name' => 'Pendiente',
+            'order_totals' => [
+                'paid' => '$89.50',
+                'products' => '$75.00',
+                'shipping' => '$9.50',
+                'discounts' => '$5.00',
+                'tax' => '$10.00',
+            ],
+            'billing_address' => [
+                'firstname' => 'Cliente',
+                'lastname' => 'Prueba',
+                'full_name' => 'Cliente Prueba',
+                'company' => 'Velox Labs',
+                'address1' => 'Av. Siempre Viva 123',
+                'address2' => 'Depto 4B',
+                'city' => 'Guayaquil',
+                'postcode' => '090101',
+                'country' => 'Ecuador',
+                'state' => 'Guayas',
+                'phone' => '+593999999999',
+                'phone_mobile' => '+593988888888',
+                'formatted' => "Cliente Prueba\nAv. Siempre Viva 123\nDepto 4B\nGuayaquil 090101\nEcuador",
+            ],
+            'shipping_address' => [
+                'firstname' => 'Cliente',
+                'lastname' => 'Prueba',
+                'full_name' => 'Cliente Prueba',
+                'company' => '',
+                'address1' => 'Calle Comercio 456',
+                'address2' => '',
+                'city' => 'Samborondon',
+                'postcode' => '092301',
+                'country' => 'Ecuador',
+                'state' => 'Guayas',
+                'phone' => '+593977777777',
+                'phone_mobile' => '',
+                'formatted' => "Cliente Prueba\nCalle Comercio 456\nSamborondon 092301\nEcuador",
+            ],
+            'shipping' => [
+                'carrier_name' => 'Envio express',
+                'cost' => '$9.50',
+                'tracking_url' => 'https://example.com/tracking/VX123456',
+            ],
+            'products' => [
+                [
+                    'id' => 10,
+                    'attribute_id' => 0,
+                    'name' => 'Camisa Azul',
+                    'reference' => 'CA-001',
+                    'quantity' => 2,
+                    'unit_price' => '$25.00',
+                    'total_price' => '$50.00',
+                    'url' => 'https://example.com/camisa-azul',
+                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Camisa+Azul',
+                ],
+                [
+                    'id' => 11,
+                    'attribute_id' => 0,
+                    'name' => 'Pantalon Negro',
+                    'reference' => 'PN-010',
+                    'quantity' => 1,
+                    'unit_price' => '$25.00',
+                    'total_price' => '$25.00',
+                    'url' => 'https://example.com/pantalon-negro',
+                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Pantalon+Negro',
+                ],
+            ],
+            'related_products' => [
+                [
+                    'id' => 21,
+                    'name' => 'Zapatos Urbanos',
+                    'price' => '$59.00',
+                    'url' => 'https://example.com/zapatos-urbanos',
+                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Zapatos',
+                ],
+            ],
+            'reviews' => [
+                [
+                    'author' => 'Maria',
+                    'rating' => 5,
+                    'title' => 'Excelente compra',
+                    'content' => 'Entrega rapida y producto en perfecto estado.',
+                ],
+            ],
             'newsletter_action' => 'subscribe',
             'shop_name' => (string) $this->context->shop->name,
             'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),

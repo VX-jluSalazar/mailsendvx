@@ -27,6 +27,7 @@ class TemplateFormType extends TranslatorAwareType
             ])
             ->add('subject', TextType::class, [
                 'label' => $this->trans('Subject', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Supports legacy placeholders like {order_reference} and Twig expressions like {{ order_reference }}.', 'Modules.Mailsendvx.Admin'),
             ])
             ->add('mail_template', TextType::class, [
                 'label' => $this->trans('Mail wrapper', 'Modules.Mailsendvx.Admin'),
@@ -43,10 +44,12 @@ class TemplateFormType extends TranslatorAwareType
             ])
             ->add('html_content', TextareaType::class, [
                 'label' => $this->trans('HTML content', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Use Twig for loops and conditions, for example {% for product in products %}...{% endfor %}.', 'Modules.Mailsendvx.Admin'),
                 'attr' => ['rows' => 8],
             ])
             ->add('text_content', TextareaType::class, [
                 'label' => $this->trans('Text content', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Leave empty to auto-generate plain text, or write a Twig/text version manually.', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
                 'attr' => ['rows' => 5],
             ])

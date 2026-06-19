@@ -6,17 +6,25 @@ Construir un editor visual para crear emails profesionales sin editar HTML manua
 
 Esta fase debe iniciarse cuando el motor de envio, cola, logs y plantillas ya sea estable.
 
+El maquetador visual no debe construirse sobre el renderer MVP de placeholders simples. Debe apoyarse sobre Twig como capa intermedia de render.
+
+## Estado
+
+Pendiente.
+
+Antes de iniciar esta fase, debe completarse la fase intermedia `modules/mailsendvx/.agents/FASE_01B_MOTOR_TWIG.md`.
+
 ## Alcance funcional
 
 | Subfase | Objetivo | Complejidad |
 | --- | --- | --- |
-| 3.1 Editor HTML avanzado | Mejorar el editor simple con herramientas basicas de contenido. | Media |
+| 3.1 Editor HTML avanzado | Mejorar el editor simple sobre templates Twig ya funcionales. | Media |
 | 3.2 Sistema de bloques | Crear bloques de texto, imagen, boton, separador, footer, producto y resumen de pedido. | Alta |
-| 3.3 JSON estructurado | Guardar el diseno como JSON ademas del HTML final. | Alta |
-| 3.4 Renderizador de bloques | Convertir JSON del builder en HTML compatible con email. | Alta |
-| 3.5 Variables drag and drop | Insertar variables visualmente desde un panel. | Alta |
-| 3.6 Bloques dinamicos | Renderizar productos de pedido, carrito abandonado y recomendados. | Alta |
-| 3.7 Integracion externa | Evaluar GrapesJS, Unlayer o builder propio. | Alta |
+| 3.3 JSON estructurado | Guardar el diseno como JSON ademas del Twig o HTML final. | Alta |
+| 3.4 Compilador de bloques | Convertir JSON del builder a Twig y HTML compatible con email. | Alta |
+| 3.5 Variables drag and drop | Insertar variables y expresiones Twig soportadas desde un panel. | Alta |
+| 3.6 Bloques dinamicos | Renderizar productos de pedido, carrito abandonado, recomendados y reviews. | Alta |
+| 3.7 Integracion externa | Evaluar GrapesJS, Unlayer o builder propio sobre la capa Twig. | Alta |
 | 3.8 Responsive email | Asegurar compatibilidad movil y clientes de correo. | Alta |
 | 3.9 Plantillas predisenadas | Crear bases para carrito abandonado, postcompra, newsletter y estados de pedido. | Media-alta |
 | 3.10 Preview con datos reales | Previsualizar con pedido, carrito o cliente real. | Alta |
@@ -26,6 +34,7 @@ Esta fase debe iniciarse cuando el motor de envio, cola, logs y plantillas ya se
 Guardar cada plantilla en dos formatos:
 
 - `json_design`: estructura editable del builder.
+- `twig_content`: template fuente editable o compilado.
 - `html_content`: HTML final generado para envio.
 - `text_content`: version texto plano.
 - `mail_template`: wrapper compatible con `Mail::Send()` o provider futuro.
@@ -44,6 +53,8 @@ Guardar cada plantilla en dos formatos:
 | Lista dinamica | Loop de productos de carrito o pedido. |
 
 ## Variables dinamicas
+
+Las expresiones dinamicas deben apoyarse sobre la capa Twig definida en Fase 01B.
 
 El editor debe permitir variables simples:
 
@@ -79,6 +90,7 @@ Y estructuras dinamicas para listas:
 
 - Fase 0 completa.
 - Fase 1 funcional para plantillas, variables, envio y taxonomia de eventos por estado.
+- Fase 01B completada para disponer del motor Twig.
 - Fase 2 recomendada para probar bloques dinamicos con cola y flujos reales.
 - Definicion final de variables disponibles por evento, incluyendo variables de estado de pedido.
 
