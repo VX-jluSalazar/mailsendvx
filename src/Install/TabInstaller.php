@@ -16,7 +16,8 @@ class TabInstaller
             ModuleConstants::ADMIN_PARENT_TAB_CLASS,
             'Mail Send VELOX',
             $this->getConfigureSectionTabId(),
-            'markunread_mailbox'
+            'markunread_mailbox',
+            'mailsendvx_dashboard'
         );
 
         if (!$idParent) {
@@ -28,19 +29,22 @@ class TabInstaller
             ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
             'Configuracion',
             $idParent,
-            'settings'
+            'settings',
+            'mailsendvx_configuration'
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
             'Templates',
             $idParent,
-            'mail'
+            'mail',
+            'mailsendvx_templates'
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
             'Dashboard',
             $idParent,
-            'dashboard'
+            'dashboard',
+            'mailsendvx_dashboard'
         );
     }
 
@@ -68,13 +72,14 @@ class TabInstaller
         return true;
     }
 
-    private function createOrUpdateAdminTab(string $moduleName, string $className, string $name, int $idParent, string $icon): int
+    private function createOrUpdateAdminTab(string $moduleName, string $className, string $name, int $idParent, string $icon, ?string $routeName = null): int
     {
         $idTab = (int) Tab::getIdFromClassName($className);
         $tab = $idTab ? new Tab($idTab) : new Tab();
         $tab->active = 1;
         $tab->enabled = 1;
         $tab->class_name = $className;
+        $tab->route_name = $routeName;
         $tab->module = $moduleName;
         $tab->id_parent = $idParent;
         $tab->icon = $icon;

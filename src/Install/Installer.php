@@ -62,6 +62,11 @@ class Installer
             && $this->configurationInstaller->install(false);
     }
 
+    public function ensureAdminTabs(Module $module): bool
+    {
+        return $this->tabInstaller->install($module->name);
+    }
+
     private function registerHooks(Module $module): bool
     {
         return (bool) $module->registerHook($this->hooks);

@@ -2,18 +2,30 @@ services:
   prestashop.module.mailsendvx.repository.template:
     class: Velox\MailSendVx\Repository\MailSendVxTemplateRepository
     public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
 
   prestashop.module.mailsendvx.repository.log:
     class: Velox\MailSendVx\Repository\MailSendVxLogRepository
     public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
 
   prestashop.module.mailsendvx.repository.event:
     class: Velox\MailSendVx\Repository\MailSendVxEventRepository
     public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
 
   prestashop.module.mailsendvx.repository.queue:
     class: Velox\MailSendVx\Repository\MailSendVxQueueRepository
     public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
 
   prestashop.module.mailsendvx.provider.prestashop_mail:
     class: Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider

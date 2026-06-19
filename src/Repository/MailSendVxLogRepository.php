@@ -2,11 +2,7 @@
 
 namespace Velox\MailSendVx\Repository;
 
-use Context;
-use Db;
-use DbQuery;
-
-class MailSendVxLogRepository
+class MailSendVxLogRepository extends AbstractMailSendVxRepository
 {
     /**
      * @param array<string, mixed> $payload
@@ -21,17 +17,19 @@ class MailSendVxLogRepository
         ?string $message = null,
         ?int $idShop = null
     ): bool {
-        return Db::getInstance()->insert('mailsendvx_log', [
-            'id_shop' => (int) ($idShop ?: Context::getContext()->shop->id),
+        $this->connection->insert($this->getTableName('mailsendvx_log'), [
+            'id_shop' => (int) ($idShop ?: $this->getCurrentShopId()),
             'id_template' => $idTemplate ? (int) $idTemplate : null,
             'id_queue' => $idQueue ? (int) $idQueue : null,
-            'event_name' => pSQL($eventName),
-            'recipient' => $recipient ? pSQL($recipient) : null,
-            'status' => pSQL($status),
-            'payload' => pSQL((string) json_encode($payload)),
-            'message' => $message ? pSQL($message) : null,
+            'event_name' => $eventName,
+            'recipient' => $recipient,
+            'status' => $status,
+            'payload' => (string) json_encode($payload),
+            'message' => $message,
             'date_add' => date('Y-m-d H:i:s'),
         ]);
+
+        return true;
     }
 
     /**
@@ -39,12 +37,13 @@ class MailSendVxLogRepository
      */
     public function getRecent(int $limit = 10): array
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_log');
-        $sql->orderBy('date_add DESC');
-        $sql->limit(max(1, min(100, $limit)));
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_log'))
+            ->orderBy('date_add', 'DESC')
+            ->setMaxResults(max(1, min(100, $limit)));
 
-        return Db::getInstance()->executeS($sql) ?: [];
+        return $queryBuilder->execute()->fetchAllAssociative();
     }
 }

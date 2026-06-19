@@ -12,13 +12,6 @@ use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\InstantEmailHookService;
-use Velox\MailSendVx\Service\MailSendVxMailer;
-use Velox\MailSendVx\Service\MailSendVxVariableRenderer;
-use Velox\MailSendVx\Service\OrderStateEventService;
-use Velox\MailSendVx\Repository\MailSendVxEventRepository;
-use Velox\MailSendVx\Repository\MailSendVxLogRepository;
-use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
-use Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
 class Mailsendvx extends Module
@@ -32,9 +25,6 @@ class Mailsendvx extends Module
     public const CONFIG_DEBUG = ModuleConstants::CONFIG_DEBUG;
     public const CONFIG_CRON_TOKEN = ModuleConstants::CONFIG_CRON_TOKEN;
 
-    private const SUBMIT_ACTION = 'submitMailsendvxConfig';
-    private const TEMPLATE_SUBMIT_ACTION = 'submitMailsendvxTemplate';
-    private const TEMPLATE_TEST_ACTION = 'submitMailsendvxTest';
     public const ADMIN_PARENT_TAB_CLASS = ModuleConstants::ADMIN_PARENT_TAB_CLASS;
     public const ADMIN_CONFIGURE_TAB_CLASS = ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS;
     public const ADMIN_TEMPLATES_TAB_CLASS = ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS;
@@ -75,6 +65,8 @@ class Mailsendvx extends Module
 
     public function hookDisplayBackOfficeHeader(): void
     {
+        $this->getInstaller()->ensureAdminTabs($this);
+
         $controller = Tools::getValue('controller');
         $allowedControllers = [
             self::ADMIN_CONFIGURE_TAB_CLASS,
@@ -95,8 +87,8 @@ class Mailsendvx extends Module
     public function getContent(): string
     {
         $this->getInstaller()->ensureRuntimeSchema();
-        $router = SymfonyContainer::getInstance()->get('router');
-        Tools::redirectAdmin($router->generate('mailsendvx_configuration'));
+        $this->getInstaller()->ensureAdminTabs($this);
+        $this->redirectToAdminRoute('mailsendvx_configuration');
 
         return '';
     }
@@ -121,6 +113,16 @@ class Mailsendvx extends Module
         return true;
     }
 
+    public function getAdminRouteUrl(string $routeName): string
+    {
+        return SymfonyContainer::getInstance()->get('router')->generate($routeName);
+    }
+
+    public function redirectToAdminRoute(string $routeName): void
+    {
+        Tools::redirectAdmin($this->getAdminRouteUrl($routeName));
+    }
+
     private function getInstaller(): Installer
     {
         return new Installer(
@@ -137,18 +139,6 @@ class Mailsendvx extends Module
             return $service;
         }
 
-        return new InstantEmailHookService(
-            $this->context,
-            new OrderStateEventService($this->context),
-            new MailSendVxTemplateRepository(),
-            new MailSendVxEventRepository(),
-            new MailSendVxLogRepository(),
-            new MailSendVxMailer(
-                new MailSendVxTemplateRepository(),
-                new MailSendVxLogRepository(),
-                new MailSendVxPrestaShopMailProvider(),
-                new MailSendVxVariableRenderer()
-            )
-        );
+        throw new RuntimeException('Mail Send VX hook service is not available in the Symfony container.');
     }
 }

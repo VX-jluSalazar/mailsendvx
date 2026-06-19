@@ -2,30 +2,38 @@
 
 namespace Velox\MailSendVx\Repository;
 
-use Db;
-use DbQuery;
+use Doctrine\DBAL\ParameterType;
 
-class MailSendVxTemplateRepository
+class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
 {
     /**
      * @return array<string, mixed>|false
      */
     public function findByScope(string $eventName, int $idLang, int $idShop, ?int $excludeId = null)
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_template');
-        $sql->where('event_name = "' . pSQL($eventName) . '"');
-        $sql->where('id_lang = ' . (int) $idLang);
-        $sql->where('id_shop = ' . (int) $idShop);
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_template'))
+            ->where('event_name = :eventName')
+            ->andWhere('id_lang = :idLang')
+            ->andWhere('id_shop = :idShop')
+            ->setParameter('eventName', $eventName)
+            ->setParameter('idLang', $idLang, ParameterType::INTEGER)
+            ->setParameter('idShop', $idShop, ParameterType::INTEGER);
 
         if ($excludeId) {
-            $sql->where('id_mailsendvx_template != ' . (int) $excludeId);
+            $queryBuilder
+                ->andWhere('id_mailsendvx_template != :excludeId')
+                ->setParameter('excludeId', $excludeId, ParameterType::INTEGER);
         }
 
-        $sql->orderBy('date_upd DESC, id_mailsendvx_template DESC');
+        $queryBuilder->orderBy('date_upd', 'DESC')
+            ->addOrderBy('id_mailsendvx_template', 'DESC');
 
-        return Db::getInstance()->getRow($sql);
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
     }
 
     /**
@@ -33,23 +41,37 @@ class MailSendVxTemplateRepository
      */
     public function findActiveByEvent(string $eventName, int $idLang, int $idShop)
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_template');
-        $sql->where('event_name = "' . pSQL($eventName) . '"');
-        $sql->where('id_lang IN (0, ' . (int) $idLang . ')');
-        $sql->where('id_shop IN (0, ' . (int) $idShop . ')');
-        $sql->where('active = 1');
-        $sql->orderBy('id_lang DESC, id_shop DESC, date_upd DESC');
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_template'))
+            ->where('event_name = :eventName')
+            ->andWhere('id_lang IN (:allLanguages, :idLang)')
+            ->andWhere('id_shop IN (:allShops, :idShop)')
+            ->andWhere('active = :active')
+            ->orderBy('id_lang', 'DESC')
+            ->addOrderBy('id_shop', 'DESC')
+            ->addOrderBy('date_upd', 'DESC')
+            ->setParameter('eventName', $eventName)
+            ->setParameter('allLanguages', 0, ParameterType::INTEGER)
+            ->setParameter('idLang', $idLang, ParameterType::INTEGER)
+            ->setParameter('allShops', 0, ParameterType::INTEGER)
+            ->setParameter('idShop', $idShop, ParameterType::INTEGER)
+            ->setParameter('active', 1, ParameterType::INTEGER);
 
-        return Db::getInstance()->getRow($sql);
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
     }
 
     public function countAll(): int
     {
-        return (int) Db::getInstance()->getValue(
-            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'mailsendvx_template`'
-        );
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('COUNT(*)')
+            ->from($this->getTableName('mailsendvx_template'));
+
+        return (int) $queryBuilder->execute()->fetchOne();
     }
 
     public function hasActiveByEvent(string $eventName, int $idLang, int $idShop): bool
@@ -62,13 +84,14 @@ class MailSendVxTemplateRepository
      */
     public function getAll(int $limit = 100): array
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_template');
-        $sql->orderBy('date_upd DESC');
-        $sql->limit(max(1, min(500, $limit)));
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_template'))
+            ->orderBy('date_upd', 'DESC')
+            ->setMaxResults(max(1, min(500, $limit)));
 
-        return Db::getInstance()->executeS($sql) ?: [];
+        return $queryBuilder->execute()->fetchAllAssociative();
     }
 
     /**
@@ -76,12 +99,16 @@ class MailSendVxTemplateRepository
      */
     public function findById(int $idTemplate)
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_template');
-        $sql->where('id_mailsendvx_template = ' . (int) $idTemplate);
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_template'))
+            ->where('id_mailsendvx_template = :idTemplate')
+            ->setParameter('idTemplate', $idTemplate, ParameterType::INTEGER);
 
-        return Db::getInstance()->getRow($sql);
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
     }
 
     /**
@@ -104,62 +131,84 @@ class MailSendVxTemplateRepository
         $row = [
             'id_shop' => $idShop,
             'id_lang' => $idLang,
-            'event_name' => pSQL($eventName),
-            'name' => pSQL((string) $data['name']),
-            'subject' => pSQL((string) $data['subject']),
-            'mail_template' => pSQL((string) $data['mail_template']),
-            'html_content' => pSQL((string) $data['html_content'], true),
-            'text_content' => pSQL((string) $data['text_content'], true),
-            'json_design' => isset($data['json_design']) ? pSQL((string) $data['json_design'], true) : null,
-            'provider' => pSQL((string) $data['provider']),
+            'event_name' => $eventName,
+            'name' => (string) $data['name'],
+            'subject' => (string) $data['subject'],
+            'mail_template' => (string) $data['mail_template'],
+            'html_content' => (string) $data['html_content'],
+            'text_content' => (string) $data['text_content'],
+            'json_design' => $data['json_design'] ?? null,
+            'provider' => (string) $data['provider'],
             'active' => (int) !empty($data['active']),
             'date_upd' => $now,
         ];
 
-        if ($idTemplate) {
-            $updated = Db::getInstance()->update(
-                'mailsendvx_template',
-                $row,
-                'id_mailsendvx_template = ' . (int) $idTemplate
-            );
+        $this->connection->beginTransaction();
 
-            if ($updated && !empty($data['active'])) {
-                $this->deactivateByScope($eventName, $idLang, $idShop, (int) $idTemplate);
+        try {
+            if ($idTemplate) {
+                $this->connection->update(
+                    $this->getTableName('mailsendvx_template'),
+                    $row,
+                    ['id_mailsendvx_template' => $idTemplate]
+                );
+
+                if (!empty($data['active'])) {
+                    $this->deactivateByScope($eventName, $idLang, $idShop, (int) $idTemplate);
+                }
+
+                $this->connection->commit();
+
+                return true;
             }
 
-            return $updated;
+            $row['date_add'] = $now;
+            $this->connection->insert($this->getTableName('mailsendvx_template'), $row);
+            $insertedId = (int) $this->connection->lastInsertId();
+
+            if (!empty($data['active'])) {
+                $this->deactivateByScope($eventName, $idLang, $idShop, $insertedId);
+            }
+
+            $this->connection->commit();
+
+            return true;
+        } catch (\Throwable $exception) {
+            $this->connection->rollBack();
+
+            throw $exception;
         }
-
-        $row['date_add'] = $now;
-
-        $inserted = Db::getInstance()->insert('mailsendvx_template', $row);
-        if ($inserted && !empty($data['active'])) {
-            $this->deactivateByScope($eventName, $idLang, $idShop, (int) Db::getInstance()->Insert_ID());
-        }
-
-        return $inserted;
     }
 
     public function delete(int $idTemplate): bool
     {
-        return Db::getInstance()->delete(
-            'mailsendvx_template',
-            'id_mailsendvx_template = ' . (int) $idTemplate
+        $this->connection->delete(
+            $this->getTableName('mailsendvx_template'),
+            ['id_mailsendvx_template' => $idTemplate]
         );
+
+        return true;
     }
 
     private function deactivateByScope(string $eventName, int $idLang, int $idShop, int $excludeId): bool
     {
-        return Db::getInstance()->update(
-            'mailsendvx_template',
-            [
-                'active' => 0,
-                'date_upd' => date('Y-m-d H:i:s'),
-            ],
-            'event_name = "' . pSQL($eventName) . '"'
-            . ' AND id_lang = ' . (int) $idLang
-            . ' AND id_shop = ' . (int) $idShop
-            . ' AND id_mailsendvx_template != ' . (int) $excludeId
-        );
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->update($this->getTableName('mailsendvx_template'))
+            ->set('active', ':active')
+            ->set('date_upd', ':dateUpd')
+            ->where('event_name = :eventName')
+            ->andWhere('id_lang = :idLang')
+            ->andWhere('id_shop = :idShop')
+            ->andWhere('id_mailsendvx_template != :excludeId')
+            ->setParameter('active', 0, ParameterType::INTEGER)
+            ->setParameter('dateUpd', date('Y-m-d H:i:s'))
+            ->setParameter('eventName', $eventName)
+            ->setParameter('idLang', $idLang, ParameterType::INTEGER)
+            ->setParameter('idShop', $idShop, ParameterType::INTEGER)
+            ->setParameter('excludeId', $excludeId, ParameterType::INTEGER)
+            ->execute();
+
+        return true;
     }
 }

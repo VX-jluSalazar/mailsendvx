@@ -2,11 +2,7 @@
 
 namespace Velox\MailSendVx\Repository;
 
-use Context;
-use Db;
-use DbQuery;
-
-class MailSendVxEventRepository
+class MailSendVxEventRepository extends AbstractMailSendVxRepository
 {
     /**
      * @param array<string, mixed> $payload
@@ -19,15 +15,17 @@ class MailSendVxEventRepository
         string $status = 'captured',
         ?int $idShop = null
     ): bool {
-        return Db::getInstance()->insert('mailsendvx_event', [
-            'id_shop' => (int) ($idShop ?: Context::getContext()->shop->id),
-            'event_name' => pSQL($eventName),
-            'object_type' => $objectType ? pSQL($objectType) : null,
-            'object_id' => $objectId ? pSQL($objectId) : null,
-            'payload' => pSQL((string) json_encode($payload)),
-            'status' => pSQL($status),
+        $this->connection->insert($this->getTableName('mailsendvx_event'), [
+            'id_shop' => (int) ($idShop ?: $this->getCurrentShopId()),
+            'event_name' => $eventName,
+            'object_type' => $objectType,
+            'object_id' => $objectId,
+            'payload' => (string) json_encode($payload),
+            'status' => $status,
             'date_add' => date('Y-m-d H:i:s'),
         ]);
+
+        return true;
     }
 
     /**
@@ -35,12 +33,13 @@ class MailSendVxEventRepository
      */
     public function getRecent(int $limit = 20): array
     {
-        $sql = new DbQuery();
-        $sql->select('*');
-        $sql->from('mailsendvx_event');
-        $sql->orderBy('date_add DESC');
-        $sql->limit(max(1, min(100, $limit)));
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_event'))
+            ->orderBy('date_add', 'DESC')
+            ->setMaxResults(max(1, min(100, $limit)));
 
-        return Db::getInstance()->executeS($sql) ?: [];
+        return $queryBuilder->execute()->fetchAllAssociative();
     }
 }
