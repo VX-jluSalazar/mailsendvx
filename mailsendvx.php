@@ -16,6 +16,7 @@ use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
 class Mailsendvx extends Module
 {
+    public const EVENT_ORDER_CREATED = ModuleConstants::EVENT_ORDER_CREATED;
     public const EVENT_ORDER_STATUS_CHANGED = ModuleConstants::EVENT_ORDER_STATUS_CHANGED;
     public const EVENT_ORDER_STATUS_LEGACY = ModuleConstants::EVENT_ORDER_STATUS_LEGACY;
     public const EVENT_CUSTOMER_REGISTERED = ModuleConstants::EVENT_CUSTOMER_REGISTERED;
@@ -65,6 +66,7 @@ class Mailsendvx extends Module
 
     public function hookDisplayBackOfficeHeader(): void
     {
+        $this->getInstaller()->ensureHooks($this);
         $this->getInstaller()->ensureAdminTabs($this);
 
         $controller = Tools::getValue('controller');
@@ -87,6 +89,7 @@ class Mailsendvx extends Module
     public function getContent(): string
     {
         $this->getInstaller()->ensureRuntimeSchema();
+        $this->getInstaller()->ensureHooks($this);
         $this->getInstaller()->ensureAdminTabs($this);
         $this->redirectToAdminRoute('mailsendvx_configuration');
 
@@ -96,6 +99,11 @@ class Mailsendvx extends Module
     public function hookActionOrderStatusPostUpdate(array $params): void
     {
         $this->getInstantEmailHookService()->handleOrderStatusPostUpdate($params, $this);
+    }
+
+    public function hookActionValidateOrder(array $params): void
+    {
+        $this->getInstantEmailHookService()->handleValidateOrder($params, $this);
     }
 
     public function hookActionCustomerAccountAdd(array $params): void

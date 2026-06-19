@@ -4,6 +4,7 @@ namespace Velox\MailSendVx;
 
 final class ModuleConstants
 {
+    public const EVENT_ORDER_CREATED = 'order_created';
     public const EVENT_ORDER_STATUS_CHANGED = 'order_status_changed';
     public const EVENT_ORDER_STATUS_LEGACY = 'order_status_updated';
     public const EVENT_CUSTOMER_REGISTERED = 'customer_registered';

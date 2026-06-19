@@ -41,4 +41,4 @@ Completada en primera iteracion funcional.
 
 - dar por cerrada la migracion estructural del modulo
 - continuar con `modules/mailsendvx/.agents/FASE_02_FLUJOS_AUTOMATIZADOS.md`
-- antes de esa fase, aprovechar que ya existe `order_status_changed` y eventos especificos por estado para definir triggers de flows sin deuda de arquitectura
+- antes de esa fase, aprovechar que ya existen `order_created`, `order_status_changed` y eventos especificos por estado para definir triggers de flows sin deuda de arquitectura

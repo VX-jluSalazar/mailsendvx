@@ -73,6 +73,22 @@ class InstantEmailHookService
         $this->dispatchOrderStatusEmails($variables, $module);
     }
 
+    public function handleValidateOrder(array $params, Module $module): void
+    {
+        $variables = $this->buildOrderCreatedVariables($params);
+        $this->sendInstantEmail(
+            ModuleConstants::EVENT_ORDER_CREATED,
+            $variables,
+            $variables['customer_email'] ?? null,
+            $variables['customer_name'] ?? null,
+            $variables['id_lang'] ?? null,
+            $variables['id_shop'] ?? null,
+            'order',
+            $variables['order_id'] ?? null,
+            $module
+        );
+    }
+
     public function handleCustomerAccountAdd(array $params, Module $module): void
     {
         $variables = $this->buildCustomerVariables($params);
@@ -265,6 +281,61 @@ class InstantEmailHookService
             'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
             'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
             'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    private function buildOrderCreatedVariables(array $params): array
+    {
+        $order = $params['order'] ?? null;
+        if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+            $order = isset($params['id_order']) ? new Order((int) $params['id_order']) : null;
+        }
+
+        $customer = $params['customer'] ?? null;
+        if (!$customer instanceof Customer || !Validate::isLoadedObject($customer)) {
+            $customer = $order instanceof Order && Validate::isLoadedObject($order)
+                ? new Customer((int) $order->id_customer)
+                : null;
+        }
+
+        $currency = $params['currency'] ?? null;
+        if (!$currency instanceof Currency || !Validate::isLoadedObject($currency)) {
+            $currency = $order instanceof Order && Validate::isLoadedObject($order)
+                ? new Currency((int) $order->id_currency)
+                : null;
+        }
+
+        $idLang = $customer instanceof Customer && Validate::isLoadedObject($customer) && $customer->id_lang
+            ? (int) $customer->id_lang
+            : (int) $this->context->language->id;
+        $idShop = $order instanceof Order && Validate::isLoadedObject($order)
+            ? (int) $order->id_shop
+            : (int) $this->context->shop->id;
+        $currentStatus = $params['orderStatus'] ?? null;
+        $currentStateId = $this->getOrderStatusId($currentStatus);
+        $currentStateName = $this->getOrderStatusName($currentStatus, $idLang);
+
+        return array_merge($this->getCommonVariables($idShop), [
+            'event_name' => ModuleConstants::EVENT_ORDER_CREATED,
+            'id_lang' => $idLang,
+            'id_shop' => $idShop,
+            'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
+            'customer_name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
+            'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
+            'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
+            'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+            'order_id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : '',
+            'order_reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
+            'order_total' => $order instanceof Order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency instanceof Currency ? $currency : null) : '',
+            'order_status' => $currentStateName,
+            'order_state_id' => $currentStateId,
+            'order_state_key' => $this->orderStateEventService->resolveOrderStateKey($currentStatus, $currentStateName, $currentStateId),
+            'order_state_name' => $currentStateName,
         ]);
     }
 

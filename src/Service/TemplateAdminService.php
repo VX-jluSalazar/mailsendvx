@@ -71,8 +71,8 @@ class TemplateAdminService
     {
         return array_merge(
             [
+                ModuleConstants::EVENT_ORDER_CREATED => 'Pedido creado',
                 ModuleConstants::EVENT_ORDER_STATUS_CHANGED => 'Cambio de estado de pedido',
-                ModuleConstants::EVENT_ORDER_STATUS_LEGACY => 'Cambio de estado de pedido (legado)',
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED => 'Registro de cliente',
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED => 'Suscripcion newsletter',
             ],
@@ -108,11 +108,13 @@ class TemplateAdminService
             'mail_template' => $template ? (string) $template['mail_template'] : 'mailsendvx_default',
             'html_content' => $template ? (string) $template['html_content'] : $this->templateContentService->getDefaultHtmlContent(
                 $eventName,
+                ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED
             ),
             'text_content' => $template ? (string) $template['text_content'] : $this->templateContentService->getDefaultTextContent(
                 $eventName,
+                ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED
             ),

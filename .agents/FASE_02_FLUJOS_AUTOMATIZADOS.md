@@ -12,16 +12,17 @@ Los flujos de postcompra no deben construirse sobre un unico evento `order_statu
 
 Antes o durante esta fase, la capa de eventos debe exponer:
 
+- `order_created` como trigger canonico de pedido confirmado.
 - `order_status_changed` como trigger generico.
-- `order_status_{state_key}` como trigger especifico por estado destino.
+- `order_status_changed_{state_key}` como trigger especifico por estado destino.
 
-Sin esta separacion, los flujos de entrega, envio, pago aceptado, cancelacion o reembolso quedan ambiguos y requieren condiciones excesivas para diferenciarse.
+Sin esta separacion, los flujos de confirmacion, entrega, envio, pago aceptado, cancelacion o reembolso quedan ambiguos y requieren condiciones excesivas para diferenciarse.
 
 ## Alcance funcional
 
 | Subfase | Objetivo | Complejidad |
 | --- | --- | --- |
-| 2.1 Motor de eventos | Registrar eventos como `cart_abandoned`, `order_status_delivered` y `customer_registered`. | Media-alta |
+| 2.1 Motor de eventos | Registrar eventos como `cart_abandoned`, `order_created`, `order_status_changed_delivered` y `customer_registered`. | Media-alta |
 | 2.2 Motor de flujos | Crear flujos con pasos, delays, plantillas y condiciones. | Alta |
 | 2.3 Cola de envios | Programar emails para minutos, horas o dias posteriores. | Alta |
 | 2.4 Cron o comando | Procesar cola automaticamente. | Media-alta |
@@ -79,20 +80,22 @@ Actualiza estado y registra log
 
 ### Postcompra
 
-- Email de agradecimiento despues de `order_status_payment_accepted`.
-- Email de seguimiento cuando ocurra `order_status_shipped`.
-- Email de review cuando ocurra `order_status_delivered`.
+- Email de confirmacion inmediata al ocurrir `order_created`.
+- Email de agradecimiento despues de `order_status_changed_payment_accepted`.
+- Email de seguimiento cuando ocurra `order_status_changed_shipped`.
+- Email de review cuando ocurra `order_status_changed_delivered`.
 
 ## Triggers recomendados para flows
 
 | Tipo | Trigger |
 | --- | --- |
+| Canonico | `order_created` |
 | Generico | `order_status_changed` |
-| Especifico | `order_status_payment_accepted` |
-| Especifico | `order_status_shipped` |
-| Especifico | `order_status_delivered` |
-| Especifico | `order_status_canceled` |
-| Especifico | `order_status_refunded` |
+| Especifico | `order_status_changed_payment_accepted` |
+| Especifico | `order_status_changed_shipped` |
+| Especifico | `order_status_changed_delivered` |
+| Especifico | `order_status_changed_canceled` |
+| Especifico | `order_status_changed_refunded` |
 | Otros | `customer_registered`, `newsletter_registered`, `cart_abandoned` |
 
 ### Suscriptores
@@ -180,6 +183,7 @@ LIMIT 50;
 ## Criterios de aceptacion
 
 - Los eventos pueden activar flujos.
+- Los flujos pueden arrancar desde `order_created` para la confirmacion inicial del pedido.
 - Los flujos postcompra pueden apuntar a estados de pedido especificos sin depender de un filtro manual adicional sobre un evento global.
 - Los pasos de flujo crean jobs en cola con fechas correctas.
 - El cron procesa solo jobs vencidos y disponibles.

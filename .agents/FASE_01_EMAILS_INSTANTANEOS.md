@@ -14,9 +14,10 @@ El estado actual observado del codigo indica que la Fase 01 ya esta implementada
 
 ### Funcionalidad ya presente
 
+- Pedido creado con evento `order_created`.
 - Cambio de estado de pedido con evento generico `order_status_changed`.
 - Cambio de estado de pedido con evento especifico `order_status_changed_{state_key}`.
-- Compatibilidad temporal con `order_status_updated` si existe una plantilla legacy activa.
+- Compatibilidad interna temporal con `order_status_updated` si existe una plantilla legacy activa.
 - Emails instantaneos por `customer_registered`.
 - Emails instantaneos por `newsletter_registered`.
 - Editor simple de plantillas.
@@ -41,6 +42,7 @@ Esta fase convierte la captura de eventos de la Fase 0 en acciones reales de env
 
 ### Eventos actuales
 
+- Pedido creado.
 - Cambio de estado de pedido.
 - Registro de nuevo cliente.
 - Suscripcion a newsletter.
@@ -62,6 +64,7 @@ Ejemplos sugeridos:
 
 | Subfase | Objetivo | Complejidad |
 | --- | --- | --- |
+| 1.0 Email por pedido creado | Enviar un email cuando PrestaShop confirma la creacion del pedido. | Implementado |
 | 1.1 Emails por cambio de estado | Enviar un email cuando un pedido cambie de estado. | Implementado |
 | 1.1.1 Refactor de evento generico | Sustituir el uso exclusivo de `order_status_updated` por `order_status_changed`. | Implementado |
 | 1.1.2 Eventos especificos por estado | Disparar un evento derivado segun el estado destino del pedido. | Implementado |
@@ -79,9 +82,11 @@ Ejemplos sugeridos:
 ```txt
 Hook de PrestaShop
 |
-Resolver estado origen/destino
+Resolver pedido, cliente y estado disponible
 |
-Generar evento generico y evento especifico
+Generar evento canonico
+|
+Si aplica, derivar evento especifico por estado
 |
 Resolver destinatario y variables
 |
@@ -98,6 +103,7 @@ Guardar log de resultado
 
 | Evento | Variables |
 | --- | --- |
+| `order_created` | `customer_name`, `customer_firstname`, `customer_lastname`, `customer_email`, `order_id`, `order_reference`, `order_total`, `order_status`, `order_state_id`, `order_state_key`, `order_state_name`, `shop_name`, `shop_url` |
 | `order_status_changed` | `customer_name`, `customer_email`, `order_reference`, `order_total`, `order_status`, `old_order_status`, `order_state_id`, `order_state_key`, `order_state_name`, `old_order_state_id`, `old_order_state_key`, `old_order_state_name`, `shop_name`, `shop_url` |
 | `order_status_changed_{state_key}` | Las mismas variables del evento generico, orientadas al estado destino. |
 | `customer_registered` | `customer_name`, `customer_email`, `shop_name`, `shop_url` |
@@ -107,6 +113,8 @@ Guardar log de resultado
 
 ### Taxonomia de eventos
 
+- Hook origen de pedido creado: `actionValidateOrder`
+- Evento canonico de pedido creado: `order_created`
 - Hook origen: `actionOrderStatusPostUpdate`
 - Evento generico: `order_status_changed`
 - Evento especifico: `order_status_changed_{state_key}`
@@ -137,10 +145,11 @@ Se recomienda:
 
 ### Orden de despacho sugerido
 
-1. Registrar captura del cambio de estado.
-2. Disparar `order_status_changed`.
-3. Disparar `order_status_changed_{state_key}`.
-4. Disparar `order_status_updated` solo como compatibilidad temporal si existe plantilla asociada o mientras dure la migracion.
+1. Registrar captura del evento canonico.
+2. Disparar `order_created` cuando el pedido se valida.
+3. Disparar `order_status_changed` cuando el pedido cambia de estado.
+4. Disparar `order_status_changed_{state_key}` si existe estado destino resoluble.
+5. Disparar `order_status_updated` solo como compatibilidad temporal interna si existe plantilla asociada o mientras dure la migracion.
 
 ## Patrones recomendados
 
@@ -171,6 +180,16 @@ Se recomienda:
 6. Confirmar que se ejecuta la plantilla generica.
 7. Confirmar que se ejecuta la plantilla especifica si el estado coincide.
 8. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
+
+### Prueba 1.1: pedido creado
+
+1. Ir a `Mail Send VELOX > Templates`.
+2. Crear una plantilla activa para `order_created`.
+3. Usar un asunto como `Pedido {order_reference} creado`.
+4. Crear un pedido nuevo desde Front Office o desde un checkout real.
+5. Confirmar que se registra el evento `order_created`.
+6. Confirmar que se envia el correo al cliente.
+7. Revisar `PREFIX_mailsendvx_log` y confirmar estado `sent`.
 
 ### Prueba 2: registro de cliente
 
@@ -204,12 +223,12 @@ Se recomienda:
 3. Confirmar que no se envia email.
 4. Confirmar que el log queda como `skipped` con mensaje similar a `No active template found.`
 
-### Prueba 6: compatibilidad con evento legado
+### Prueba 6: compatibilidad interna con evento legado
 
 1. Mantener una plantilla activa solo para `order_status_updated`.
 2. Cambiar el estado de un pedido.
 3. Confirmar que el sistema sigue pudiendo resolver el envio legado mientras se completa la migracion.
-4. Confirmar que la documentacion y la UI indiquen que es compatibilidad temporal.
+4. Confirmar que la documentacion lo marque como compatibilidad temporal y que la UI moderna no lo exponga como opcion nueva.
 
 ## Consultas utiles de validacion
 
@@ -227,6 +246,7 @@ LIMIT 30;
 ## Criterios de aceptacion
 
 - Cada evento configurado puede enviar un email real.
+- `order_created` puede disparar una plantilla inmediata al validar el pedido.
 - Un cambio de estado de pedido puede activar un evento generico y otro especifico.
 - Las plantillas pueden distinguir estados concretos sin mezclar toda la logica en `order_status_updated`.
 - Si no existe plantilla activa, el sistema registra `skipped`.
@@ -243,7 +263,7 @@ Los siguientes pasos recomendados ya no son construir la funcionalidad principal
 
 - validar el comportamiento en entorno real,
 - ajustar documentacion y ejemplos,
-- preparar el puente hacia Fase 02 sobre la taxonomia `order_status_changed` y `order_status_changed_{state_key}`.
+- preparar el puente hacia Fase 02 sobre `order_created`, `order_status_changed` y `order_status_changed_{state_key}`.
 
 ## Riesgos
 

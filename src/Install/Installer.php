@@ -11,6 +11,7 @@ class Installer
      */
     private $hooks = [
         'displayBackOfficeHeader',
+        'actionValidateOrder',
         'actionOrderStatusPostUpdate',
         'actionCustomerAccountAdd',
         'actionNewsletterRegistrationAfter',
@@ -65,6 +66,21 @@ class Installer
     public function ensureAdminTabs(Module $module): bool
     {
         return $this->tabInstaller->install($module->name);
+    }
+
+    public function ensureHooks(Module $module): bool
+    {
+        foreach ($this->hooks as $hookName) {
+            if ($module->isRegisteredInHook($hookName)) {
+                continue;
+            }
+
+            if (!$module->registerHook($hookName)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function registerHooks(Module $module): bool
