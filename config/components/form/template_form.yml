@@ -1,0 +1,6 @@
+services:
+  prestashop.module.mailsendvx.form.type.template:
+    class: Velox\MailSendVx\Form\Type\TemplateFormType
+    parent: 'form.type.translatable.aware'
+    tags:
+      - { name: form.type }

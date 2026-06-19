@@ -1,0 +1,10 @@
+{
+  "name": "velox/mailsendvx",
+  "description": "Mail Send VX module for PrestaShop 8",
+  "type": "prestashop-module",
+  "autoload": {
+    "psr-4": {
+      "Velox\\MailSendVx\\": "src/"
+    }
+  }
+}

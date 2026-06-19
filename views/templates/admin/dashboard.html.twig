@@ -1,0 +1,161 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Monitoring view'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Mail Send VX Dashboard'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Track template readiness and queue pressure before reviewing individual delivery logs.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ templates_count }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Scheduled'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ scheduled_count }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Pending'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ pending_count }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-4">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">pulse_alert</i>
+            {{ 'Queue signal'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <div class="mailsendvx-signal {{ pending_count > 0 ? 'mailsendvx-signal--warning' : 'mailsendvx-signal--healthy' }}">
+              <strong>
+                {% if pending_count > 0 %}
+                  {{ 'Pending deliveries need review.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                {% else %}
+                  {{ 'No pending deliveries right now.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                {% endif %}
+              </strong>
+              <p>
+                {% if scheduled_count > 0 %}
+                  {{ 'There are queued emails scheduled for processing.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                {% else %}
+                  {{ 'The queue is quiet and no scheduled emails are waiting.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                {% endif %}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-8">
+        <div class="card mailsendvx-card mb-3">
+          <h3 class="card-header">
+            <i class="material-icons">bolt</i>
+            {{ 'Captured events'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if recent_events %}
+              <div class="table-responsive">
+                <table class="table mailsendvx-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Date'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Status'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Object type'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Object ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Shop'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Payload'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for event in recent_events %}
+                      <tr>
+                        <td>{{ event.date_add }}</td>
+                        <td><code>{{ event.event_name }}</code></td>
+                        <td>
+                          <span class="mailsendvx-badge {{ event.status in ['captured', 'sent', 'success'] ? 'mailsendvx-badge--success' : (event.status in ['pending', 'scheduled'] ? 'mailsendvx-badge--warning' : 'mailsendvx-badge--danger') }}">
+                            {{ event.status }}
+                          </span>
+                        </td>
+                        <td>{{ event.object_type ?: '-' }}</td>
+                        <td>{{ event.object_id ?: '-' }}</td>
+                        <td>{{ event.id_shop ?: '-' }}</td>
+                        <td>
+                          {% if event.payload %}
+                            <details>
+                              <summary>{{ 'View payload'|trans({}, 'Modules.Mailsendvx.Admin') }}</summary>
+                              <pre class="mailsendvx-payload">{{ event.payload }}</pre>
+                            </details>
+                          {% else %}
+                            -
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'No events captured yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Captured hook payloads will appear here after the first instant event reaches the module.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card">
+          <h3 class="card-header">
+            <i class="material-icons">history</i>
+            {{ 'Recent logs'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if recent_logs %}
+              <div class="table-responsive">
+                <table class="table mailsendvx-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Date'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Status'|trans({}, 'Admin.Global') }}</th>
+                      <th>{{ 'Recipient'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Message'|trans({}, 'Admin.Global') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for log in recent_logs %}
+                      <tr>
+                        <td>{{ log.date_add }}</td>
+                        <td><code>{{ log.event_name }}</code></td>
+                        <td>
+                          <span class="mailsendvx-badge {{ log.status in ['sent', 'success'] ? 'mailsendvx-badge--success' : (log.status in ['pending', 'scheduled'] ? 'mailsendvx-badge--warning' : 'mailsendvx-badge--danger') }}">
+                            {{ log.status }}
+                          </span>
+                        </td>
+                        <td>{{ log.recipient ?: '-' }}</td>
+                        <td>{{ log.message ?: '-' }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'No logs yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Recent delivery history will appear here after the first captured event or test send.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

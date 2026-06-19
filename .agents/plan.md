@@ -57,7 +57,27 @@ El modulo ya incluye la base de la Fase 0 y una implementacion funcional avanzad
 - Envio instantaneo por eventos de pedido, registro de cliente y newsletter.
 - Logs funcionales con estados `sent`, `failed` y `skipped`.
 
+Adicionalmente, desde la migracion iniciada en junio de 2026:
+
+- El modulo ya cuenta con una base moderna inicial en `composer.json`, `src/` y `config/`.
+- El autoload del modulo ya se genera con Composer y ya no depende de un `vendor/autoload.php` artesanal.
+- La instalacion, configuracion base, tablas y tabs ya delegan en instaladores dentro de `src/Install/`.
+- Los hooks instantaneos principales ya delegan en `src/Service/InstantEmailHookService.php`.
+- `Configuracion`, `Templates` y `Dashboard` ya tienen una primera version basada en Symfony con rutas, controllers, forms y vistas Twig.
+- Los controladores legacy de admin se mantienen solo como puente de compatibilidad hacia las rutas Symfony.
+- Las vistas Smarty legacy de esas pantallas fueron retiradas.
+
 Las fases documentadas deben usarse como guia para validar, cerrar brechas y ampliar la capacidad existente.
+
+## Seguimiento de migracion arquitectonica
+
+La migracion a arquitectura moderna se documenta en:
+
+- `modules/mailsendvx/.agents/migracion/README.md`
+- `modules/mailsendvx/.agents/migracion/FASE_01_BASE_MODERNA.md`
+- `modules/mailsendvx/.agents/migracion/FASE_02_BACKOFFICE_SYMFONY.md`
+- `modules/mailsendvx/.agents/migracion/FASE_03_DOMINIO_Y_REPOSITORIOS.md`
+- `modules/mailsendvx/.agents/migracion/FASE_04_CIERRE_Y_REMOCION_LEGACY.md`
 
 ## Ajuste de arquitectura ya aplicado
 
