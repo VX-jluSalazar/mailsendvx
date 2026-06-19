@@ -1,8 +1,13 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Provider;
+
+use Configuration;
+use Context;
+use Language;
+use Mail;
+use RuntimeException;
+use Validate;
 
 class MailSendVxPrestaShopMailProvider implements MailSendVxMailProviderInterface
 {

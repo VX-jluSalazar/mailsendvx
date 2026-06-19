@@ -6,6 +6,7 @@ use Context;
 use Language;
 use Validate;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class TemplateAdminService
 {
@@ -24,15 +25,35 @@ class TemplateAdminService
      */
     private $templateContentService;
 
+    /**
+     * @var MailSendVxTemplateRepository
+     */
+    private $templateRepository;
+
+    /**
+     * @var MailSendVxMailer
+     */
+    private $mailer;
+
+    /**
+     * @var MailSendVxVariableRenderer
+     */
+    private $variableRenderer;
+
     public function __construct(
         Context $context,
         OrderStateEventService $orderStateEventService,
-        TemplateContentService $templateContentService
+        TemplateContentService $templateContentService,
+        MailSendVxTemplateRepository $templateRepository,
+        MailSendVxMailer $mailer,
+        MailSendVxVariableRenderer $variableRenderer
     ) {
-        LegacyClassLoader::load();
         $this->context = $context;
         $this->orderStateEventService = $orderStateEventService;
         $this->templateContentService = $templateContentService;
+        $this->templateRepository = $templateRepository;
+        $this->mailer = $mailer;
+        $this->variableRenderer = $variableRenderer;
     }
 
     /**
@@ -40,7 +61,7 @@ class TemplateAdminService
      */
     public function getTemplates(): array
     {
-        return (new \MailSendVxTemplateRepository())->getAll();
+        return $this->templateRepository->getAll();
     }
 
     /**
@@ -74,7 +95,7 @@ class TemplateAdminService
      */
     public function getFormData(?int $idTemplate = null): array
     {
-        $template = $idTemplate ? (new \MailSendVxTemplateRepository())->findById($idTemplate) : null;
+        $template = $idTemplate ? $this->templateRepository->findById($idTemplate) : null;
         $eventName = $template ? (string) $template['event_name'] : ModuleConstants::EVENT_ORDER_STATUS_CHANGED;
 
         return [
@@ -110,7 +131,7 @@ class TemplateAdminService
             $textContent = $this->templateContentService->generateTextContentFromHtml($htmlContent);
         }
 
-        return (new \MailSendVxTemplateRepository())->save([
+        return $this->templateRepository->save([
             'id_shop' => (int) ($data['id_shop'] ?? $this->context->shop->id),
             'id_lang' => (int) ($data['id_lang'] ?? $this->context->language->id),
             'event_name' => (string) ($data['event_name'] ?? ''),
@@ -127,7 +148,7 @@ class TemplateAdminService
 
     public function deleteTemplate(int $idTemplate): bool
     {
-        return (new \MailSendVxTemplateRepository())->delete($idTemplate);
+        return $this->templateRepository->delete($idTemplate);
     }
 
     /**
@@ -135,7 +156,7 @@ class TemplateAdminService
      */
     public function sendTest(int $idTemplate, string $recipient)
     {
-        $template = (new \MailSendVxTemplateRepository())->findById($idTemplate);
+        $template = $this->templateRepository->findById($idTemplate);
         if (!$template) {
             return 'Template not found.';
         }
@@ -144,7 +165,7 @@ class TemplateAdminService
             return 'Invalid test email.';
         }
 
-        $sent = (new \MailSendVxMailer())->sendTemplate(
+        $sent = $this->mailer->sendTemplate(
             $template,
             $recipient,
             null,
@@ -165,19 +186,18 @@ class TemplateAdminService
             return null;
         }
 
-        $template = (new \MailSendVxTemplateRepository())->findById($idTemplate);
+        $template = $this->templateRepository->findById($idTemplate);
         if (!$template) {
             return null;
         }
 
         $variables = $this->getSampleVariables((string) $template['event_name']);
-        $renderer = new \MailSendVxVariableRenderer();
 
         return [
             'name' => (string) $template['name'],
-            'subject' => $renderer->render((string) $template['subject'], $variables),
-            'html' => $renderer->render((string) $template['html_content'], $variables),
-            'text' => $renderer->render((string) $template['text_content'], $variables),
+            'subject' => $this->variableRenderer->render((string) $template['subject'], $variables),
+            'html' => $this->variableRenderer->render((string) $template['html_content'], $variables),
+            'text' => $this->variableRenderer->render((string) $template['text_content'], $variables),
         ];
     }
 

@@ -1,33 +1,44 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Service;
+
+use Throwable;
+use Velox\MailSendVx\Provider\MailSendVxMailProviderInterface;
+use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class MailSendVxMailer
 {
-    /** @var MailSendVxTemplateRepository */
+    /**
+     * @var MailSendVxTemplateRepository
+     */
     private $templates;
 
-    /** @var MailSendVxLogRepository */
+    /**
+     * @var MailSendVxLogRepository
+     */
     private $logs;
 
-    /** @var MailSendVxMailProviderInterface */
+    /**
+     * @var MailSendVxMailProviderInterface
+     */
     private $provider;
 
-    /** @var MailSendVxVariableRenderer */
+    /**
+     * @var MailSendVxVariableRenderer
+     */
     private $renderer;
 
     public function __construct(
-        ?MailSendVxTemplateRepository $templates = null,
-        ?MailSendVxLogRepository $logs = null,
-        ?MailSendVxMailProviderInterface $provider = null,
-        ?MailSendVxVariableRenderer $renderer = null
+        MailSendVxTemplateRepository $templates,
+        MailSendVxLogRepository $logs,
+        MailSendVxMailProviderInterface $provider,
+        MailSendVxVariableRenderer $renderer
     ) {
-        $this->templates = $templates ?: new MailSendVxTemplateRepository();
-        $this->logs = $logs ?: new MailSendVxLogRepository();
-        $this->provider = $provider ?: new MailSendVxPrestaShopMailProvider();
-        $this->renderer = $renderer ?: new MailSendVxVariableRenderer();
+        $this->templates = $templates;
+        $this->logs = $logs;
+        $this->provider = $provider;
+        $this->renderer = $renderer;
     }
 
     /**

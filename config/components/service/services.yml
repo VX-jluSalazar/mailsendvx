@@ -1,4 +1,43 @@
 services:
+  prestashop.module.mailsendvx.repository.template:
+    class: Velox\MailSendVx\Repository\MailSendVxTemplateRepository
+    public: true
+
+  prestashop.module.mailsendvx.repository.log:
+    class: Velox\MailSendVx\Repository\MailSendVxLogRepository
+    public: true
+
+  prestashop.module.mailsendvx.repository.event:
+    class: Velox\MailSendVx\Repository\MailSendVxEventRepository
+    public: true
+
+  prestashop.module.mailsendvx.repository.queue:
+    class: Velox\MailSendVx\Repository\MailSendVxQueueRepository
+    public: true
+
+  prestashop.module.mailsendvx.provider.prestashop_mail:
+    class: Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider
+    public: true
+
+  prestashop.module.mailsendvx.service.variable_renderer:
+    class: Velox\MailSendVx\Service\MailSendVxVariableRenderer
+    public: true
+
+  prestashop.module.mailsendvx.service.logger:
+    class: Velox\MailSendVx\Service\MailSendVxLogger
+    public: true
+    arguments:
+      $repository: '@prestashop.module.mailsendvx.repository.log'
+
+  prestashop.module.mailsendvx.service.mailer:
+    class: Velox\MailSendVx\Service\MailSendVxMailer
+    public: true
+    arguments:
+      $templates: '@prestashop.module.mailsendvx.repository.template'
+      $logs: '@prestashop.module.mailsendvx.repository.log'
+      $provider: '@prestashop.module.mailsendvx.provider.prestashop_mail'
+      $renderer: '@prestashop.module.mailsendvx.service.variable_renderer'
+
   prestashop.module.mailsendvx.service.order_state_event:
     class: Velox\MailSendVx\Service\OrderStateEventService
     public: true
@@ -11,6 +50,10 @@ services:
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
 
   prestashop.module.mailsendvx.service.template_content:
     class: Velox\MailSendVx\Service\TemplateContentService
@@ -21,6 +64,9 @@ services:
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
 
   prestashop.module.mailsendvx.service.template_admin:
     class: Velox\MailSendVx\Service\TemplateAdminService
@@ -29,3 +75,6 @@ services:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
       $templateContentService: '@prestashop.module.mailsendvx.service.template_content'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $variableRenderer: '@prestashop.module.mailsendvx.service.variable_renderer'

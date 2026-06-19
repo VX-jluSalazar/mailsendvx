@@ -1,8 +1,9 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Repository;
+
+use Context;
+use Db;
 
 class MailSendVxQueueRepository
 {
@@ -24,7 +25,7 @@ class MailSendVxQueueRepository
             'id_flow' => $idFlow ? (int) $idFlow : null,
             'event_name' => pSQL($eventName),
             'recipient' => pSQL($recipient),
-            'payload' => pSQL(json_encode($payload)),
+            'payload' => pSQL((string) json_encode($payload)),
             'status' => 'scheduled',
             'attempts' => 0,
             'scheduled_at' => pSQL($scheduledAt),
@@ -40,4 +41,3 @@ class MailSendVxQueueRepository
         );
     }
 }
-

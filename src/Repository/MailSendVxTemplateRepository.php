@@ -1,8 +1,9 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Repository;
+
+use Db;
+use DbQuery;
 
 class MailSendVxTemplateRepository
 {

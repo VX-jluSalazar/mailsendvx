@@ -12,7 +12,13 @@ use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\InstantEmailHookService;
+use Velox\MailSendVx\Service\MailSendVxMailer;
+use Velox\MailSendVx\Service\MailSendVxVariableRenderer;
 use Velox\MailSendVx\Service\OrderStateEventService;
+use Velox\MailSendVx\Repository\MailSendVxEventRepository;
+use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
+use Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
 class Mailsendvx extends Module
@@ -37,8 +43,6 @@ class Mailsendvx extends Module
 
     public function __construct()
     {
-        $this->loadClasses();
-
         $this->name = 'mailsendvx';
         $this->tab = 'emailing';
         $this->version = '0.1.0';
@@ -52,29 +56,6 @@ class Mailsendvx extends Module
         $this->displayName = $this->trans('Mail Send VX', [], 'Modules.Mailsendvx.Admin');
         $this->description = $this->trans('Base module for transactional and automated email sending.', [], 'Modules.Mailsendvx.Admin');
         $this->confirmUninstall = $this->trans('Uninstalling will remove Mail Send VX tables and settings. Continue?', [], 'Modules.Mailsendvx.Admin');
-    }
-
-    private function loadClasses(): void
-    {
-        $basePath = __DIR__ . '/classes/';
-        $files = [
-            'Provider/MailSendVxMailProviderInterface.php',
-            'Provider/MailSendVxPrestaShopMailProvider.php',
-            'Repository/MailSendVxEventRepository.php',
-            'Repository/MailSendVxLogRepository.php',
-            'Repository/MailSendVxTemplateRepository.php',
-            'Repository/MailSendVxQueueRepository.php',
-            'Service/MailSendVxVariableRenderer.php',
-            'Service/MailSendVxLogger.php',
-            'Service/MailSendVxMailer.php',
-        ];
-
-        foreach ($files as $file) {
-            $path = $basePath . $file;
-            if (file_exists($path)) {
-                require_once $path;
-            }
-        }
     }
 
     public function install(): bool
@@ -158,7 +139,16 @@ class Mailsendvx extends Module
 
         return new InstantEmailHookService(
             $this->context,
-            new OrderStateEventService($this->context)
+            new OrderStateEventService($this->context),
+            new MailSendVxTemplateRepository(),
+            new MailSendVxEventRepository(),
+            new MailSendVxLogRepository(),
+            new MailSendVxMailer(
+                new MailSendVxTemplateRepository(),
+                new MailSendVxLogRepository(),
+                new MailSendVxPrestaShopMailProvider(),
+                new MailSendVxVariableRenderer()
+            )
         );
     }
 }

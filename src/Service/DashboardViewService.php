@@ -3,6 +3,9 @@
 namespace Velox\MailSendVx\Service;
 
 use Context;
+use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Repository\MailSendVxQueueRepository;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class DashboardViewService
 {
@@ -11,10 +14,32 @@ class DashboardViewService
      */
     private $context;
 
-    public function __construct(Context $context)
+    /**
+     * @var MailSendVxTemplateRepository
+     */
+    private $templateRepository;
+
+    /**
+     * @var MailSendVxQueueRepository
+     */
+    private $queueRepository;
+
+    /**
+     * @var MailSendVxLogRepository
+     */
+    private $logRepository;
+
+    public function __construct(
+        Context $context,
+        MailSendVxTemplateRepository $templateRepository,
+        MailSendVxQueueRepository $queueRepository,
+        MailSendVxLogRepository $logRepository
+    )
     {
-        LegacyClassLoader::load();
         $this->context = $context;
+        $this->templateRepository = $templateRepository;
+        $this->queueRepository = $queueRepository;
+        $this->logRepository = $logRepository;
     }
 
     /**
@@ -23,10 +48,10 @@ class DashboardViewService
     public function getViewData(): array
     {
         return [
-            'templates_count' => (new \MailSendVxTemplateRepository())->countAll(),
-            'scheduled_count' => (new \MailSendVxQueueRepository())->countByStatus('scheduled'),
-            'pending_count' => (new \MailSendVxQueueRepository())->countByStatus('pending'),
-            'recent_logs' => (new \MailSendVxLogRepository())->getRecent(20),
+            'templates_count' => $this->templateRepository->countAll(),
+            'scheduled_count' => $this->queueRepository->countByStatus('scheduled'),
+            'pending_count' => $this->queueRepository->countByStatus('pending'),
+            'recent_logs' => $this->logRepository->getRecent(20),
         ];
     }
 }

@@ -1,8 +1,6 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Provider;
 
 interface MailSendVxMailProviderInterface
 {
@@ -19,4 +17,3 @@ interface MailSendVxMailProviderInterface
         ?int $idShop = null
     ): bool;
 }
-

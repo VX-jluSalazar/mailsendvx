@@ -1,8 +1,9 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Repository;
+
+use Context;
+use Db;
 
 class MailSendVxEventRepository
 {
@@ -22,10 +23,9 @@ class MailSendVxEventRepository
             'event_name' => pSQL($eventName),
             'object_type' => $objectType ? pSQL($objectType) : null,
             'object_id' => $objectId ? pSQL($objectId) : null,
-            'payload' => pSQL(json_encode($payload)),
+            'payload' => pSQL((string) json_encode($payload)),
             'status' => pSQL($status),
             'date_add' => date('Y-m-d H:i:s'),
         ]);
     }
 }
-

@@ -1,17 +1,19 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Service;
+
+use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 
 class MailSendVxLogger
 {
-    /** @var MailSendVxLogRepository */
+    /**
+     * @var MailSendVxLogRepository
+     */
     private $repository;
 
-    public function __construct(?MailSendVxLogRepository $repository = null)
+    public function __construct(MailSendVxLogRepository $repository)
     {
-        $this->repository = $repository ?: new MailSendVxLogRepository();
+        $this->repository = $repository;
     }
 
     /**
@@ -30,4 +32,3 @@ class MailSendVxLogger
         $this->repository->add($eventName, 'failed', $recipient, null, null, $payload, $message);
     }
 }
-

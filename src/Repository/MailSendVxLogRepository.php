@@ -1,8 +1,10 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Repository;
+
+use Context;
+use Db;
+use DbQuery;
 
 class MailSendVxLogRepository
 {
@@ -26,7 +28,7 @@ class MailSendVxLogRepository
             'event_name' => pSQL($eventName),
             'recipient' => $recipient ? pSQL($recipient) : null,
             'status' => pSQL($status),
-            'payload' => pSQL(json_encode($payload)),
+            'payload' => pSQL((string) json_encode($payload)),
             'message' => $message ? pSQL($message) : null,
             'date_add' => date('Y-m-d H:i:s'),
         ]);
@@ -46,4 +48,3 @@ class MailSendVxLogRepository
         return Db::getInstance()->executeS($sql) ?: [];
     }
 }
-

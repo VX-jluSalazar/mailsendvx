@@ -6,11 +6,6 @@ use Configuration;
 use Context;
 use Currency;
 use Customer;
-use MailSendVxEventRepository;
-use MailSendVxLogRepository;
-use MailSendVxLogger;
-use MailSendVxMailer;
-use MailSendVxTemplateRepository;
 use Module;
 use Order;
 use OrderState;
@@ -19,6 +14,9 @@ use Shop;
 use Tools;
 use Validate;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Repository\MailSendVxEventRepository;
+use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class InstantEmailHookService
 {
@@ -32,11 +30,41 @@ class InstantEmailHookService
      */
     private $orderStateEventService;
 
-    public function __construct(Context $context, OrderStateEventService $orderStateEventService)
+    /**
+     * @var MailSendVxTemplateRepository
+     */
+    private $templateRepository;
+
+    /**
+     * @var MailSendVxEventRepository
+     */
+    private $eventRepository;
+
+    /**
+     * @var MailSendVxLogRepository
+     */
+    private $logRepository;
+
+    /**
+     * @var MailSendVxMailer
+     */
+    private $mailer;
+
+    public function __construct(
+        Context $context,
+        OrderStateEventService $orderStateEventService,
+        MailSendVxTemplateRepository $templateRepository,
+        MailSendVxEventRepository $eventRepository,
+        MailSendVxLogRepository $logRepository,
+        MailSendVxMailer $mailer
+    )
     {
-        LegacyClassLoader::load();
         $this->context = $context;
         $this->orderStateEventService = $orderStateEventService;
+        $this->templateRepository = $templateRepository;
+        $this->eventRepository = $eventRepository;
+        $this->logRepository = $logRepository;
+        $this->mailer = $mailer;
     }
 
     public function handleOrderStatusPostUpdate(array $params, Module $module): void
@@ -82,10 +110,9 @@ class InstantEmailHookService
      */
     private function dispatchOrderStatusEmails(array $variables, Module $module): void
     {
-        $templateRepository = new MailSendVxTemplateRepository();
         $eventNames = $this->orderStateEventService->buildDispatchEventNames(
             $variables,
-            $templateRepository,
+            $this->templateRepository,
             ModuleConstants::EVENT_ORDER_STATUS_CHANGED,
             ModuleConstants::EVENT_ORDER_STATUS_LEGACY
         );
@@ -130,7 +157,7 @@ class InstantEmailHookService
         $idShop = (int) ($idShop ?: $this->context->shop->id);
 
         try {
-            (new MailSendVxEventRepository())->add(
+            $this->eventRepository->add(
                 $eventName,
                 $variables,
                 $objectType,
@@ -140,7 +167,7 @@ class InstantEmailHookService
             );
 
             if (!$recipient || !Validate::isEmail($recipient)) {
-                (new MailSendVxLogRepository())->add(
+                $this->logRepository->add(
                     $eventName,
                     'skipped',
                     $recipient,
@@ -154,7 +181,7 @@ class InstantEmailHookService
                 return;
             }
 
-            (new MailSendVxMailer())->sendEvent(
+            $this->mailer->sendEvent(
                 $eventName,
                 $recipient,
                 $recipientName,

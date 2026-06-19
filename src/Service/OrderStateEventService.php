@@ -3,10 +3,10 @@
 namespace Velox\MailSendVx\Service;
 
 use Context;
-use MailSendVxTemplateRepository;
 use OrderState;
 use Tools;
 use Validate;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 
 class OrderStateEventService
 {

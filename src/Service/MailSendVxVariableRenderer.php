@@ -1,8 +1,6 @@
 <?php
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
+namespace Velox\MailSendVx\Service;
 
 class MailSendVxVariableRenderer
 {
@@ -21,4 +19,3 @@ class MailSendVxVariableRenderer
         return strtr($content, $replace);
     }
 }
-
