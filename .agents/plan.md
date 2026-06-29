@@ -10,6 +10,7 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | --- | --- | --- |
 | `FASE_00_BASE_MODULO.md` | Fase 0 | Diseno tecnico, instalacion, hooks, tablas, servicios base, configuracion y logs. |
 | `FASE_01_EMAILS_INSTANTANEOS.md` | Fase 1 | Correos disparados por eventos inmediatos como cambio de estado, registro de cliente y newsletter. |
+| `FASE_01C_ABANDONED_CART.md` | Fase 1C | Deteccion de carrito abandonado, dedupe por ciclo, evento `cart_abandoned` y uso inmediato en templates. |
 | `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Motor de eventos, flujos, cola, cron, carrito abandonado, postcompra, condiciones y reintentos. |
 | `FASE_03_MAQUETADOR_VISUAL.md` | Fase 3 | Editor visual, bloques, JSON de diseno, renderizado responsive y previews con datos reales. |
 
@@ -20,11 +21,12 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | 1 | Fase 0 completa | Modulo instalable, configurable y con base tecnica lista. |
 | 2 | Fase 1.1 a 1.3 | Primeros eventos capturados y emails instantaneos funcionales. |
 | 3 | Fase 1.4 a 1.8 | Plantillas simples, variables, preview, prueba de envio y logs. |
-| 4 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
-| 5 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
-| 6 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
-| 7 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
-| 8 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
+| 4 | Fase 01C | Evento `cart_abandoned`, criterio de abandono y dedupe por cron. |
+| 5 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
+| 6 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
+| 7 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
+| 8 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
+| 9 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
 
 ## Arquitectura objetivo
 
@@ -130,5 +132,6 @@ Ejemplos:
 
 - Fase 1 ya incorpora el refactor principal de eventos instantaneos de estado.
 - Fase 1 todavia requiere validacion funcional real, limpieza documental y pequenos ajustes de consistencia.
-- Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, no sobre un unico `order_status_updated`.
+- Fase 01C debe introducir `cart_abandoned` como evento estable y deduplicado antes de usarlo en automatizaciones.
+- Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, y debe consumir `cart_abandoned` desde Fase 01C en lugar de redefinirlo.
 - Fase 3 debe usar esta misma taxonomia para plantillas predisenadas y previews reales por estado.
