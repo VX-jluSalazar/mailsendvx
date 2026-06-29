@@ -98,6 +98,7 @@ class TemplateAdminService
                 ModuleConstants::EVENT_ORDER_STATUS_CHANGED => 'Cambio de estado de pedido',
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED => 'Registro de cliente',
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED => 'Suscripcion newsletter',
+                ModuleConstants::EVENT_CART_ABANDONED => 'Carrito abandonado',
             ],
             $this->orderStateEventService->getSupportedEvents([
                 'generic' => ModuleConstants::EVENT_ORDER_STATUS_CHANGED,
@@ -149,13 +150,15 @@ class TemplateAdminService
                 $eventName,
                 ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
-                ModuleConstants::EVENT_NEWSLETTER_REGISTERED
+                ModuleConstants::EVENT_NEWSLETTER_REGISTERED,
+                ModuleConstants::EVENT_CART_ABANDONED
             ),
             'text_content' => $template ? (string) $template['text_content'] : $this->templateContentService->getDefaultTextContent(
                 $eventName,
                 ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
-                ModuleConstants::EVENT_NEWSLETTER_REGISTERED
+                ModuleConstants::EVENT_NEWSLETTER_REGISTERED,
+                ModuleConstants::EVENT_CART_ABANDONED
             ),
             'wrapper_html' => $wrapperContent['html'],
             'wrapper_text' => $wrapperContent['text'],

@@ -27,6 +27,13 @@ services:
       $connection: '@doctrine.dbal.default_connection'
       $databasePrefix: '%database_prefix%'
 
+  prestashop.module.mailsendvx.repository.abandoned_cart:
+    class: Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository
+    public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
+
   prestashop.module.mailsendvx.provider.prestashop_mail:
     class: Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider
     public: true
@@ -90,6 +97,12 @@ services:
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
 
+  prestashop.module.mailsendvx.service.context_builder.cart:
+    class: Velox\MailSendVx\Service\CartTemplateContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
   prestashop.module.mailsendvx.service.event_context:
     class: Velox\MailSendVx\Service\EventTemplateContextService
     public: true
@@ -97,6 +110,7 @@ services:
       $orderBuilder: '@prestashop.module.mailsendvx.service.context_builder.order'
       $customerBuilder: '@prestashop.module.mailsendvx.service.context_builder.customer'
       $newsletterBuilder: '@prestashop.module.mailsendvx.service.context_builder.newsletter'
+      $cartBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
 
   prestashop.module.mailsendvx.service.instant_email_hook:
     class: Velox\MailSendVx\Service\InstantEmailHookService
@@ -106,6 +120,17 @@ services:
       $eventContextService: '@prestashop.module.mailsendvx.service.event_context'
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
+
+  prestashop.module.mailsendvx.service.abandoned_cart:
+    class: Velox\MailSendVx\Service\AbandonedCartService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $cartContextBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
+      $repository: '@prestashop.module.mailsendvx.repository.abandoned_cart'
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'

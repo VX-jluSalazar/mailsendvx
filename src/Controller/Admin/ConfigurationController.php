@@ -4,8 +4,10 @@ namespace Velox\MailSendVx\Controller\Admin;
 
 use PrestaShop\PrestaShop\Core\Form\FormHandlerInterface;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use Configuration;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Velox\MailSendVx\ModuleConstants;
 
 class ConfigurationController extends FrameworkBundleAdminController
 {
@@ -42,6 +44,9 @@ class ConfigurationController extends FrameworkBundleAdminController
             'configurationForm' => $form->createView(),
             'configurationData' => (array) ($form->getData()['mailsendvx_configuration'] ?? []),
             'shopName' => (string) $this->getContext()->shop->name,
+            'abandonedCartCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'abandonedcartcron', [
+                'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),
+            ], true),
         ]);
     }
 }

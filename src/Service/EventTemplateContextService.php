@@ -21,14 +21,21 @@ class EventTemplateContextService
      */
     private $newsletterBuilder;
 
+    /**
+     * @var CartTemplateContextBuilder
+     */
+    private $cartBuilder;
+
     public function __construct(
         OrderTemplateContextBuilder $orderBuilder,
         CustomerTemplateContextBuilder $customerBuilder,
-        NewsletterTemplateContextBuilder $newsletterBuilder
+        NewsletterTemplateContextBuilder $newsletterBuilder,
+        CartTemplateContextBuilder $cartBuilder
     ) {
         $this->orderBuilder = $orderBuilder;
         $this->customerBuilder = $customerBuilder;
         $this->newsletterBuilder = $newsletterBuilder;
+        $this->cartBuilder = $cartBuilder;
     }
 
     /**
@@ -72,6 +79,16 @@ class EventTemplateContextService
     }
 
     /**
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    public function buildCartAbandonedContext(array $params): array
+    {
+        return $this->cartBuilder->buildHookContext(ModuleConstants::EVENT_CART_ABANDONED, $params);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function getSampleContext(string $eventName): array
@@ -86,6 +103,10 @@ class EventTemplateContextService
 
         if ($this->newsletterBuilder->supportsEvent($eventName)) {
             return $this->newsletterBuilder->buildSampleContext($eventName);
+        }
+
+        if ($this->cartBuilder->supportsEvent($eventName)) {
+            return $this->cartBuilder->buildSampleContext($eventName);
         }
 
         return [];

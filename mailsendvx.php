@@ -11,6 +11,7 @@ use Velox\MailSendVx\Install\DatabaseInstaller;
 use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\AbandonedCartService;
 use Velox\MailSendVx\Service\InstantEmailHookService;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
 
@@ -21,10 +22,17 @@ class Mailsendvx extends Module
     public const EVENT_ORDER_STATUS_LEGACY = ModuleConstants::EVENT_ORDER_STATUS_LEGACY;
     public const EVENT_CUSTOMER_REGISTERED = ModuleConstants::EVENT_CUSTOMER_REGISTERED;
     public const EVENT_NEWSLETTER_REGISTERED = ModuleConstants::EVENT_NEWSLETTER_REGISTERED;
+    public const EVENT_CART_ABANDONED = ModuleConstants::EVENT_CART_ABANDONED;
     public const CONFIG_ENABLED = ModuleConstants::CONFIG_ENABLED;
     public const CONFIG_PROVIDER = ModuleConstants::CONFIG_PROVIDER;
     public const CONFIG_DEBUG = ModuleConstants::CONFIG_DEBUG;
     public const CONFIG_CRON_TOKEN = ModuleConstants::CONFIG_CRON_TOKEN;
+    public const CONFIG_ABANDONED_CART_ENABLED = ModuleConstants::CONFIG_ABANDONED_CART_ENABLED;
+    public const CONFIG_ABANDONED_CART_DELAY_VALUE = ModuleConstants::CONFIG_ABANDONED_CART_DELAY_VALUE;
+    public const CONFIG_ABANDONED_CART_DELAY_UNIT = ModuleConstants::CONFIG_ABANDONED_CART_DELAY_UNIT;
+    public const CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER = ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER;
+    public const CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS = ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS;
+    public const CONFIG_ABANDONED_CART_CRON_BATCH_SIZE = ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE;
 
     public const ADMIN_PARENT_TAB_CLASS = ModuleConstants::ADMIN_PARENT_TAB_CLASS;
     public const ADMIN_CONFIGURE_TAB_CLASS = ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS;
@@ -103,6 +111,7 @@ class Mailsendvx extends Module
 
     public function hookActionValidateOrder(array $params): void
     {
+        $this->getAbandonedCartService()->markRecoveredFromOrderParams($params);
         $this->getInstantEmailHookService()->handleValidateOrder($params, $this);
     }
 
@@ -148,5 +157,15 @@ class Mailsendvx extends Module
         }
 
         throw new RuntimeException('Mail Send VX hook service is not available in the Symfony container.');
+    }
+
+    private function getAbandonedCartService(): AbandonedCartService
+    {
+        $service = $this->get('prestashop.module.mailsendvx.service.abandoned_cart');
+        if ($service instanceof AbandonedCartService) {
+            return $service;
+        }
+
+        throw new RuntimeException('Mail Send VX abandoned cart service is not available in the Symfony container.');
     }
 }

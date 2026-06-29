@@ -75,6 +75,26 @@ class DatabaseInstaller
                 KEY `next_jobs` (`status`, `scheduled_at`),
                 KEY `recipient` (`recipient`)
             ) ENGINE=' . $engine . ' ' . $charset,
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_abandoned_cart` (
+                `id_mailsendvx_abandoned_cart` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `id_cart` INT UNSIGNED NOT NULL,
+                `id_customer` INT UNSIGNED NOT NULL DEFAULT 0,
+                `email` VARCHAR(191) NULL,
+                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
+                `id_lang` INT UNSIGNED NOT NULL DEFAULT 0,
+                `status` VARCHAR(32) NOT NULL DEFAULT "active",
+                `cart_snapshot` MEDIUMTEXT NULL,
+                `last_activity_at` DATETIME NULL,
+                `abandoned_at` DATETIME NULL,
+                `recovered_at` DATETIME NULL,
+                `last_event_hash` VARCHAR(191) NULL,
+                `date_add` DATETIME NOT NULL,
+                `date_upd` DATETIME NOT NULL,
+                PRIMARY KEY (`id_mailsendvx_abandoned_cart`),
+                UNIQUE KEY `uniq_cart` (`id_cart`),
+                KEY `status_shop` (`status`, `id_shop`),
+                KEY `abandoned_at` (`abandoned_at`)
+            ) ENGINE=' . $engine . ' ' . $charset,
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_log` (
                 `id_mailsendvx_log` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -108,6 +128,7 @@ class DatabaseInstaller
             'mailsendvx_queue',
             'mailsendvx_flow',
             'mailsendvx_event',
+            'mailsendvx_abandoned_cart',
             'mailsendvx_template',
         ];
 
