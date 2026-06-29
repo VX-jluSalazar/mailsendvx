@@ -68,9 +68,58 @@
           <div class="card-body">
             <ul class="mailsendvx-note-list">
               <li>{{ 'Use direct subjects that match the event customers recognize.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Twig is available for new templates, including loops on products and simple if conditions.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li>{{ 'Leave text content empty only when the HTML version can be converted safely to a plain text fallback.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li>{{ 'Preview before activating any template that introduces event variables or translated copy.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
             </ul>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">code</i>
+            {{ 'Variables guide'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <p class="mb-2">{{ 'The guide changes according to the selected event. Use Twig for advanced templates and legacy placeholders only for top-level simple variables.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+            {% for eventName, guide in eventGuides %}
+              <div class="mailsendvx-event-guide" data-event-guide="{{ eventName }}" {% if eventName != selectedEventName %}style="display:none"{% endif %}>
+                <h4>{{ guide.label }}</h4>
+                <p><strong>{{ 'Subject example'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong> <code>{{ guide.subject_example }}</code></p>
+                <p><strong>{{ 'Scalar attributes'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
+                <ul class="mailsendvx-note-list">
+                  {% for item in guide.scalar_attributes %}
+                    <li><code>{{ item.path }}</code> -> <code>{{ item.twig }}</code>{% if item.legacy %} / <code>{{ item.legacy }}</code>{% endif %}</li>
+                  {% endfor %}
+                </ul>
+                {% if guide.collection_attributes %}
+                  <p class="mt-2"><strong>{{ 'Collections and loops'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
+                  <ul class="mailsendvx-note-list">
+                    {% for item in guide.collection_attributes %}
+                      <li><code>{{ item.path }}</code>
+                        <pre class="mailsendvx-text-preview">{{ item.twig }}</pre>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">layers</i>
+            {{ 'Wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <p>{{ 'Available wrapper keys detected in the module:'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+            <ul class="mailsendvx-note-list">
+              {% for wrapperName, wrapperLabel in wrapperChoices %}
+                <li><code>{{ wrapperName }}</code></li>
+              {% endfor %}
+            </ul>
+            <p class="mb-0">{{ 'When editing a wrapper, include {mailsendvx_html_content} in HTML and {mailsendvx_text_content} in text.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
           </div>
         </div>
 
@@ -81,6 +130,9 @@
               {{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
             </h3>
             <div class="card-body">
+              <div class="mailsendvx-inline-note">
+                {{ preview.context_source == 'historical' ? 'Preview rendered with the latest captured payload for this event.'|trans({}, 'Modules.Mailsendvx.Admin') : 'Preview rendered with sample data for this event.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </div>
               <div class="mailsendvx-preview-subject">
                 <span>{{ 'Subject'|trans({}, 'Admin.Global') }}</span>
                 <strong>{{ preview.subject }}</strong>
@@ -162,4 +214,25 @@
       </div>
     </div>
   </section>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var eventField = document.getElementById('template_form_event_name');
+      if (!eventField) {
+        eventField = document.querySelector('select[name$="[event_name]"]');
+      }
+      if (!eventField) {
+        return;
+      }
+
+      var guides = document.querySelectorAll('[data-event-guide]');
+      var updateGuide = function () {
+        guides.forEach(function (guide) {
+          guide.style.display = guide.getAttribute('data-event-guide') === eventField.value ? '' : 'none';
+        });
+      };
+
+      eventField.addEventListener('change', updateGuide);
+      updateGuide();
+    });
+  </script>
 {% endblock %}

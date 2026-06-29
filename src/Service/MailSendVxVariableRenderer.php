@@ -9,13 +9,8 @@ class MailSendVxVariableRenderer
      */
     public function render(string $content, array $variables): string
     {
-        $replace = [];
-        foreach ($variables as $key => $value) {
-            if (is_scalar($value) || $value === null) {
-                $replace['{' . $key . '}'] = (string) $value;
-            }
-        }
+        $engine = new LegacyPlaceholderTemplateEngine();
 
-        return strtr($content, $replace);
+        return $engine->renderHtml($content, $variables);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Velox\MailSendVx\Repository;
 
+use Doctrine\DBAL\ParameterType;
+
 class MailSendVxEventRepository extends AbstractMailSendVxRepository
 {
     /**
@@ -41,5 +43,31 @@ class MailSendVxEventRepository extends AbstractMailSendVxRepository
             ->setMaxResults(max(1, min(100, $limit)));
 
         return $queryBuilder->execute()->fetchAllAssociative();
+    }
+
+    /**
+     * @return array<string, mixed>|false
+     */
+    public function findLatestByEvent(string $eventName, ?int $idShop = null)
+    {
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_event'))
+            ->where('event_name = :eventName')
+            ->orderBy('date_add', 'DESC')
+            ->addOrderBy('id_mailsendvx_event', 'DESC')
+            ->setMaxResults(1)
+            ->setParameter('eventName', $eventName);
+
+        if ($idShop !== null) {
+            $queryBuilder
+                ->andWhere('id_shop = :idShop')
+                ->setParameter('idShop', $idShop, ParameterType::INTEGER);
+        }
+
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
     }
 }

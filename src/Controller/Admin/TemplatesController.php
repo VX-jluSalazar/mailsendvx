@@ -4,7 +4,9 @@ namespace Velox\MailSendVx\Controller\Admin;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\Form\Type\TemplateFormType;
+use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\TemplateAdminService;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 
@@ -29,20 +31,25 @@ class TemplatesController extends FrameworkBundleAdminController
         $languageChoices = $this->buildLanguageChoices();
         $form = $this->createForm(TemplateFormType::class, $this->templateAdminService->getFormData($editId), [
             'event_choices' => array_flip($eventLabels),
+            'wrapper_choices' => array_flip($this->templateAdminService->getWrapperChoices()),
             'language_choices' => $languageChoices,
             'default_shop_id' => (int) $this->getContext()->shop->id,
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $saved = $this->templateAdminService->saveTemplate($form->getData());
-            if ($saved) {
-                $this->addFlash('success', $this->trans('Template saved.', 'Admin.Notifications.Success', []));
+            try {
+                $saved = $this->templateAdminService->saveTemplate($form->getData());
+                if ($saved) {
+                    $this->addFlash('success', $this->trans('Template saved.', 'Admin.Notifications.Success', []));
 
-                return $this->redirectToRoute('mailsendvx_templates');
+                    return $this->redirectToRoute('mailsendvx_templates');
+                }
+
+                $this->addFlash('danger', $this->trans('Template could not be saved.', 'Modules.Mailsendvx.Admin', []));
+            } catch (\Throwable $exception) {
+                $this->addFlash('danger', (string) $exception->getMessage());
             }
-
-            $this->addFlash('danger', $this->trans('Template could not be saved.', 'Modules.Mailsendvx.Admin', []));
         }
 
         $templates = $this->decorateTemplates(
@@ -51,10 +58,24 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->buildLanguageLabels($languageChoices)
         );
 
+        $preview = null;
+        if ($previewId) {
+            try {
+                $preview = $this->templateAdminService->getPreviewData($previewId);
+            } catch (TwigError $exception) {
+                $this->addFlash('danger', sprintf('Twig syntax error: %s', $exception->getMessage()));
+            }
+        }
+
+        $selectedEventName = (string) ($form->get('event_name')->getData() ?? ModuleConstants::EVENT_ORDER_STATUS_CHANGED);
+
         return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
             'templateForm' => $form->createView(),
             'templates' => $templates,
-            'preview' => $this->templateAdminService->getPreviewData($previewId),
+            'preview' => $preview,
+            'eventGuides' => $this->templateAdminService->getEventGuideData(),
+            'wrapperChoices' => $this->templateAdminService->getWrapperChoices(),
+            'selectedEventName' => $selectedEventName,
             'currentEditTemplate' => $this->findTemplate($templates, $editId),
             'activeTemplatesCount' => $this->countActiveTemplates($templates),
             'defaultTestEmail' => (string) ($this->getContext()->employee->email ?? ''),

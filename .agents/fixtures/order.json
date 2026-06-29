@@ -1,0 +1,357 @@
+{
+    "customer": {
+        "email": "jonathan@velox.ec",
+        "firstname": "Jonathan",
+        "id": 10,
+        "is_customer": true,
+        "lastname": "Salazar"
+    },
+    "misc": {
+        "contact_url": "https://api.whatsapp.com/send/?phone=593123456789",
+        "reorder_url": "https://hemp.desarrollovelox.com/pedido?submitReorder=1&id_order=10",
+        "shop_review_url": "https://hemp.desarrollovelox.com/shop-reviews-add"
+    },
+    "order": {
+        "date": "2026-05-22T23:35:19+02:00",
+        "date_formatted": "22 mayo, 2026",
+        "id": 10,
+        "items": [
+            {
+                "category_id": 3,
+                "category_name": "SALUD",
+                "id_product": 3,
+                "id_product_attribute": 0,
+                "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
+                "is_variant": true,
+                "attributes": [
+                    {
+                        "label": "Color",
+                        "value": "red"
+                    },
+                    {
+                        "label": "Size",
+                        "value": "Medium"
+                    }
+                ],
+                "name": "SUENOS",
+                "product_url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
+                "quantity": 1,
+                "reference": "Dulces Sueñozzz 30ml",
+                "tax_name": "IVA EC 15%",
+                "tax_rate": 15,
+                "total_price": 58.65,
+                "total_price_tax_amount": 7.65,
+                "total_price_tax_excl": 51,
+                "total_price_tax_incl": 58.65,
+                "unit_price": 58.65,
+                "unit_price_tax_amount": 7.65,
+                "unit_price_tax_excl": 51,
+                "unit_price_tax_incl": 58.65
+            },
+            {
+                "category_id": 3,
+                "category_name": "SALUD",
+                "id_product": 2,
+                "id_product_attribute": 0,
+                "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
+                "is_variant": false,
+                "name": "FOCUS",
+                "product_url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
+                "quantity": 1,
+                "reference": "Focus 30ml",
+                "tax_name": "IVA EC 15%",
+                "tax_rate": 15,
+                "total_price": 58.65,
+                "total_price_tax_amount": 7.65,
+                "total_price_tax_excl": 51,
+                "total_price_tax_incl": 58.65,
+                "unit_price": 58.65,
+                "unit_price_tax_amount": 7.65,
+                "unit_price_tax_excl": 51,
+                "unit_price_tax_incl": 58.65
+            }
+        ],
+        "reference": "RSTIQXSIH",
+        "status": "processing",
+        "status_id": 3,
+        "totals": {
+            "discounts": 0,
+            "discounts_tax_amount": 0,
+            "discounts_tax_excl": 0,
+            "discounts_tax_incl": 0,
+            "paid": 117.3,
+            "paid_tax_excl": 102,
+            "paid_tax_incl": 117.3,
+            "products": 102,
+            "products_tax_amount": 15.3,
+            "products_tax_excl": 102,
+            "products_tax_incl": 117.3,
+            "shipping": 0,
+            "shipping_tax_amount": 0,
+            "shipping_tax_excl": 0,
+            "shipping_tax_incl": 0,
+            "tax_amount": 15.3
+        }
+    },
+    "payment": {
+        "method": "Pagos por transferencia bancaria",
+        "method_id": 68,
+        "module": "ps_wirepayment"
+    },
+    "related_products": [
+        {
+            "category_id": 3,
+            "category_name": "SALUD",
+            "currency": "USD",
+            "id_product": 16,
+            "image_url": "https://hemp.desarrollovelox.com/16-home_default/gomcbd.jpg",
+            "name": "GOMCBD",
+            "price": 24.44,
+            "product_url": "https://hemp.desarrollovelox.com/salud/16-gomcbd.html"
+        },
+        {
+            "category_id": 3,
+            "category_name": "SALUD",
+            "currency": "USD",
+            "id_product": 10,
+            "image_url": "https://hemp.desarrollovelox.com/10-home_default/minisuenos.jpg",
+            "name": "MINISUENOS",
+            "price": 29.33,
+            "product_url": "https://hemp.desarrollovelox.com/salud/10-minisuenos.html"
+        },
+        {
+            "category_id": 3,
+            "category_name": "SALUD",
+            "currency": "USD",
+            "id_product": 24,
+            "image_url": "https://hemp.desarrollovelox.com/23-home_default/colageno.jpg",
+            "name": "COLAGENO",
+            "price": 43.99,
+            "product_url": "https://hemp.desarrollovelox.com/salud/24-colageno.html"
+        }
+    ],
+    "shipping": {
+        "address": {
+            "address1": "Quito",
+            "address2": "",
+            "city": "Quito",
+            "country": "Ecuador",
+            "dni": 1234567890,
+            "firstname": "Jonathan",
+            "lastname": "Salazar",
+            "phone": "0987654321",
+            "state": "Azuay"
+        },
+        "carrier": {
+            "id": 39,
+            "name": "Recoger en la tienda",
+            "reference_id": 1
+        },
+        "tracking_code": "",
+        "tracking_url": ""
+    },
+    "shop_reviews": [
+        {
+            "created_at": "2025-09-10 14:48:42",
+            "customer_firstname": "Erick",
+            "customer_initials": "EP",
+            "customer_lastname": "Palomo",
+            "customer_name": "Erick Palomo",
+            "id_customer": 7,
+            "id_lang": 1,
+            "id_order": 11,
+            "id_review": 6,
+            "id_shop": 1,
+            "rating": 5,
+            "review_status": 1,
+            "summary": "SMARTSTORE me sorprendió por lo fácil e intuitiva que es su página. Todo está bien organizado y con mucha información clara, lo que hace que la compra sea rápida y sin complicaciones.",
+            "title": "La mejor experiencia de compra online",
+            "updated_at": "2025-09-10 14:50:18"
+        },
+        {
+            "created_at": "2025-07-11 12:07:00",
+            "customer_firstname": "Carlos",
+            "customer_initials": "CF",
+            "customer_lastname": "Flores",
+            "customer_name": "Carlos Flores",
+            "id_customer": 6,
+            "id_lang": 1,
+            "id_order": 0,
+            "id_review": 5,
+            "id_shop": 1,
+            "rating": 5,
+            "review_status": 1,
+            "summary": "El smartwatch que pedí llegó en caja sellada y con garantía. Muy confiables.",
+            "title": "Smartwatch sellado y con garantía, ¡total confianza!",
+            "updated_at": "2025-07-11 16:35:33"
+        },
+        {
+            "created_at": "2025-09-10 14:49:23",
+            "customer_firstname": "Erick",
+            "customer_initials": "EP",
+            "customer_lastname": "Palomo",
+            "customer_name": "Erick Palomo",
+            "id_customer": 7,
+            "id_lang": 1,
+            "id_order": 11,
+            "id_review": 7,
+            "id_shop": 1,
+            "rating": 5,
+            "review_status": 1,
+            "summary": "Tuve una consulta sobre un producto y me respondieron enseguida por WhatsApp. Me ayudaron a elegir lo que realmente necesitaba, se nota que se preocupan por sus clientes.",
+            "title": "Atención rápida y personalizada",
+            "updated_at": "2025-09-10 14:50:19"
+        },
+        {
+            "created_at": "2025-07-11 12:07:00",
+            "customer_firstname": "Pablo",
+            "customer_initials": "PR",
+            "customer_lastname": "Reyes",
+            "customer_name": "Pablo Reyes",
+            "id_customer": 4,
+            "id_lang": 1,
+            "id_order": 0,
+            "id_review": 2,
+            "id_shop": 1,
+            "rating": 5,
+            "review_status": 1,
+            "summary": "Todo llegó perfecto y rápido. ¡Los recomiendo sin duda!",
+            "title": "Entrega exprés sin fallos, ¡quedé encantado!",
+            "updated_at": "2025-07-11 16:32:26"
+        },
+        {
+            "created_at": "2025-07-01 12:07:00",
+            "customer_firstname": "Carlos",
+            "customer_initials": "CT",
+            "customer_lastname": "Torres",
+            "customer_name": "Carlos Torres",
+            "id_customer": 5,
+            "id_lang": 1,
+            "id_order": 0,
+            "id_review": 4,
+            "id_shop": 1,
+            "rating": 5,
+            "review_status": 1,
+            "summary": "Compré desde Quito y recibí en 2 días. Súper fácil el proceso.",
+            "title": "De Quito a mi puerta en 48 h, ¡increíble!",
+            "updated_at": "2025-07-11 16:34:52"
+        }
+    ],
+    "shop_url": "https://hemp.desarrollovelox.com"
+}
+
+
+{
+  "customer_email": "jonathan@velox.ec",
+  "customer_firstname": "Jonathan",
+  "customer_id": 10,
+  "customer_is_customer": true,
+  "customer_lastname": "Salazar",
+
+  "misc_contact_url": "https://api.whatsapp.com/send/?phone=593123456789",
+  "misc_reorder_url": "https://hemp.desarrollovelox.com/pedido?submitReorder=1&id_order=10",
+  "misc_shop_review_url": "https://hemp.desarrollovelox.com/shop-reviews-add",
+
+  "order_date": "2026-05-22T23:35:19+02:00",
+  "order_date_formatted": "22 mayo, 2026",
+  "order_id": 10,
+  "order_reference": "RSTIQXSIH",
+  "order_status": "processing",
+  "order_status_id": 3,
+
+  "order_total_discounts": 0,
+  "order_total_discounts_tax_amount": 0,
+  "order_total_discounts_tax_excl": 0,
+  "order_total_discounts_tax_incl": 0,
+  "order_total_paid": 117.3,
+  "order_total_paid_tax_excl": 102,
+  "order_total_paid_tax_incl": 117.3,
+  "order_total_products": 102,
+  "order_total_products_tax_amount": 15.3,
+  "order_total_products_tax_excl": 102,
+  "order_total_products_tax_incl": 117.3,
+  "order_total_shipping": 0,
+  "order_total_shipping_tax_amount": 0,
+  "order_total_shipping_tax_excl": 0,
+  "order_total_shipping_tax_incl": 0,
+  "order_total_tax_amount": 15.3,
+
+  "payment_method": "Pagos por transferencia bancaria",
+  "payment_method_id": 68,
+  "payment_module": "ps_wirepayment",
+
+  "shipping_address1": "Quito",
+  "shipping_address2": "",
+  "shipping_city": "Quito",
+  "shipping_country": "Ecuador",
+  "shipping_dni": 1234567890,
+  "shipping_firstname": "Jonathan",
+  "shipping_lastname": "Salazar",
+  "shipping_phone": "0987654321",
+  "shipping_state": "Azuay",
+
+  "shipping_carrier_id": 39,
+  "shipping_carrier_name": "Recoger en la tienda",
+  "shipping_carrier_reference_id": 1,
+  "shipping_tracking_code": "",
+  "shipping_tracking_url": "",
+
+  "shop_url": "https://hemp.desarrollovelox.com",
+
+  "items": [
+        {
+            "category_id": 3,
+            "category_name": "SALUD",
+            "id_product": 3,
+            "id_product_attribute": 0,
+            "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
+            "is_variant": true,
+            "attributes": [
+                {
+                    "label": "Color",
+                    "value": "red"
+                },
+                {
+                    "label": "Size",
+                    "value": "Medium"
+                }
+            ],
+            "name": "SUENOS",
+            "product_url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
+            "quantity": 1,
+            "reference": "Dulces Sueñozzz 30ml",
+            "tax_name": "IVA EC 15%",
+            "tax_rate": 15,
+            "total_price": 58.65,
+            "total_price_tax_amount": 7.65,
+            "total_price_tax_excl": 51,
+            "total_price_tax_incl": 58.65,
+            "unit_price": 58.65,
+            "unit_price_tax_amount": 7.65,
+            "unit_price_tax_excl": 51,
+            "unit_price_tax_incl": 58.65
+        },
+        {
+            "category_id": 3,
+            "category_name": "SALUD",
+            "id_product": 2,
+            "id_product_attribute": 0,
+            "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
+            "is_variant": false,
+            "name": "FOCUS",
+            "product_url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
+            "quantity": 1,
+            "reference": "Focus 30ml",
+            "tax_name": "IVA EC 15%",
+            "tax_rate": 15,
+            "total_price": 58.65,
+            "total_price_tax_amount": 7.65,
+            "total_price_tax_excl": 51,
+            "total_price_tax_incl": 58.65,
+            "unit_price": 58.65,
+            "unit_price_tax_amount": 7.65,
+            "unit_price_tax_excl": 51,
+            "unit_price_tax_incl": 58.65
+        }
+    ],
+}

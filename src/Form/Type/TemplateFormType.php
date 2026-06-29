@@ -27,10 +27,12 @@ class TemplateFormType extends TranslatorAwareType
             ])
             ->add('subject', TextType::class, [
                 'label' => $this->trans('Subject', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Supports legacy placeholders like {order_reference} and Twig expressions like {{ order_reference }}.', 'Modules.Mailsendvx.Admin'),
             ])
             ->add('mail_template', TextType::class, [
                 'label' => $this->trans('Mail wrapper', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
+                'help' => $this->trans('Use an existing wrapper key or write a new one and enable wrapper save to create/update it.', 'Modules.Mailsendvx.Admin'),
             ])
             ->add('id_lang', ChoiceType::class, [
                 'label' => $this->trans('Language', 'Modules.Mailsendvx.Admin'),
@@ -43,12 +45,31 @@ class TemplateFormType extends TranslatorAwareType
             ])
             ->add('html_content', TextareaType::class, [
                 'label' => $this->trans('HTML content', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Use Twig for loops and conditions, for example {% for product in products %}...{% endfor %}.', 'Modules.Mailsendvx.Admin'),
                 'attr' => ['rows' => 8],
             ])
             ->add('text_content', TextareaType::class, [
                 'label' => $this->trans('Text content', 'Modules.Mailsendvx.Admin'),
+                'help' => $this->trans('Leave empty to auto-generate plain text, or write a Twig/text version manually.', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
                 'attr' => ['rows' => 5],
+            ])
+            ->add('wrapper_html', TextareaType::class, [
+                'label' => $this->trans('Wrapper HTML', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'help' => $this->trans('The wrapper must include {mailsendvx_html_content}. You can also use Twig here.', 'Modules.Mailsendvx.Admin'),
+                'attr' => ['rows' => 8],
+            ])
+            ->add('wrapper_text', TextareaType::class, [
+                'label' => $this->trans('Wrapper text', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'help' => $this->trans('The wrapper text must include {mailsendvx_text_content}.', 'Modules.Mailsendvx.Admin'),
+                'attr' => ['rows' => 5],
+            ])
+            ->add('save_wrapper_changes', SwitchType::class, [
+                'label' => $this->trans('Save wrapper changes', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'help' => $this->trans('Enable this when you want to create or update the wrapper files from Back Office.', 'Modules.Mailsendvx.Admin'),
             ])
             ->add('active', SwitchType::class, [
                 'label' => $this->trans('Active', 'Modules.Mailsendvx.Admin'),
@@ -62,6 +83,7 @@ class TemplateFormType extends TranslatorAwareType
         $resolver->setDefaults([
             'data_class' => null,
             'event_choices' => [],
+            'wrapper_choices' => [],
             'language_choices' => [],
             'default_shop_id' => 1,
             'form_theme' => '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig',
