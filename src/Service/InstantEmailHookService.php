@@ -81,12 +81,12 @@ class InstantEmailHookService
         $this->sendInstantEmail(
             ModuleConstants::EVENT_ORDER_CREATED,
             $variables,
-            $variables['customer_email'] ?? null,
-            $variables['customer_name'] ?? null,
-            $variables['id_lang'] ?? null,
-            $variables['id_shop'] ?? null,
+            $this->getCustomerEmail($variables),
+            $this->getCustomerName($variables),
+            $this->getShopLanguageId($variables),
+            $this->getShopId($variables),
             'order',
-            $variables['order_id'] ?? null,
+            $variables['order']['id'] ?? null,
             $module
         );
     }
@@ -97,12 +97,12 @@ class InstantEmailHookService
         $this->sendInstantEmail(
             ModuleConstants::EVENT_CUSTOMER_REGISTERED,
             $variables,
-            $variables['customer_email'] ?? null,
-            $variables['customer_name'] ?? null,
-            $variables['id_lang'] ?? null,
-            $variables['id_shop'] ?? null,
+            $this->getCustomerEmail($variables),
+            $this->getCustomerName($variables),
+            $this->getShopLanguageId($variables),
+            $this->getShopId($variables),
             'customer',
-            $variables['customer_id'] ?? null,
+            $variables['customer']['id'] ?? null,
             $module
         );
     }
@@ -113,12 +113,12 @@ class InstantEmailHookService
         $this->sendInstantEmail(
             ModuleConstants::EVENT_NEWSLETTER_REGISTERED,
             $variables,
-            $variables['customer_email'] ?? null,
-            $variables['customer_name'] ?? null,
-            $variables['id_lang'] ?? null,
-            $variables['id_shop'] ?? null,
+            $this->getCustomerEmail($variables),
+            $this->getCustomerName($variables),
+            $this->getShopLanguageId($variables),
+            $this->getShopId($variables),
             'newsletter',
-            $variables['customer_email'] ?? null,
+            $this->getCustomerEmail($variables),
             $module
         );
     }
@@ -137,19 +137,61 @@ class InstantEmailHookService
 
         foreach (array_unique($eventNames) as $eventName) {
             $eventVariables = $variables;
-            $eventVariables['event_name'] = $eventName;
+            if (isset($eventVariables['event']) && is_array($eventVariables['event'])) {
+                $eventVariables['event']['name'] = $eventName;
+            }
             $this->sendInstantEmail(
                 $eventName,
                 $eventVariables,
-                $eventVariables['customer_email'] ?? null,
-                $eventVariables['customer_name'] ?? null,
-                $eventVariables['id_lang'] ?? null,
-                $eventVariables['id_shop'] ?? null,
+                $this->getCustomerEmail($eventVariables),
+                $this->getCustomerName($eventVariables),
+                $this->getShopLanguageId($eventVariables),
+                $this->getShopId($eventVariables),
                 'order',
-                $eventVariables['order_id'] ?? null,
+                $eventVariables['order']['id'] ?? null,
                 $module
             );
         }
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function getCustomerEmail(array $variables): ?string
+    {
+        $email = $variables['customer']['email'] ?? null;
+
+        return is_string($email) && $email !== '' ? $email : null;
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function getCustomerName(array $variables): ?string
+    {
+        $name = $variables['customer']['name'] ?? null;
+
+        return is_string($name) && $name !== '' ? $name : null;
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function getShopId(array $variables): ?int
+    {
+        $id = $variables['shop']['id'] ?? null;
+
+        return is_numeric($id) ? (int) $id : null;
+    }
+
+    /**
+     * @param array<string, mixed> $variables
+     */
+    private function getShopLanguageId(array $variables): ?int
+    {
+        $idLang = $variables['shop']['id_lang'] ?? null;
+
+        return is_numeric($idLang) ? (int) $idLang : null;
     }
 
     /**

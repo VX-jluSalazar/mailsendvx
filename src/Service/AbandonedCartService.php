@@ -255,9 +255,9 @@ class AbandonedCartService
             $this->repository->saveState([
                 'id_cart' => (int) $candidate['id_cart'],
                 'id_customer' => (int) ($candidate['id_customer'] ?? 0),
-                'email' => $variables['customer_email'] ?? ($candidate['email'] ?? null),
+                'email' => $variables['customer']['email'] ?? ($candidate['email'] ?? null),
                 'id_shop' => (int) ($candidate['id_shop'] ?? $this->context->shop->id),
-                'id_lang' => (int) ($candidate['id_lang'] ?? $this->context->language->id),
+                'id_lang' => (int) ($candidate['id_lang'] ?? ($variables['shop']['id_lang'] ?? $this->context->language->id)),
                 'status' => 'abandoned',
                 'cart_snapshot' => $variables,
                 'last_activity_at' => (string) ($candidate['date_upd'] ?? date('Y-m-d H:i:s')),
@@ -275,7 +275,7 @@ class AbandonedCartService
                 (int) ($candidate['id_shop'] ?? $this->context->shop->id)
             );
 
-            $recipient = isset($variables['customer_email']) ? (string) $variables['customer_email'] : null;
+            $recipient = isset($variables['customer']['email']) ? (string) $variables['customer']['email'] : null;
             if (!$recipient || !Validate::isEmail($recipient)) {
                 $this->logRepository->add(
                     ModuleConstants::EVENT_CART_ABANDONED,
@@ -294,10 +294,10 @@ class AbandonedCartService
             $this->mailer->sendEvent(
                 ModuleConstants::EVENT_CART_ABANDONED,
                 $recipient,
-                !empty($variables['customer_name']) ? (string) $variables['customer_name'] : null,
+                !empty($variables['customer']['name']) ? (string) $variables['customer']['name'] : null,
                 $variables,
-                (int) ($variables['id_lang'] ?? $this->context->language->id),
-                (int) ($variables['id_shop'] ?? $this->context->shop->id)
+                (int) ($variables['shop']['id_lang'] ?? $this->context->language->id),
+                (int) ($variables['shop']['id'] ?? $this->context->shop->id)
             );
 
             return true;

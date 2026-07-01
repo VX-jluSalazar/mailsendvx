@@ -55,96 +55,113 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
     public function buildSampleContext(string $eventName): array
     {
         $context = [
-            'event_name' => $eventName,
-            'id_lang' => (int) $this->context->language->id,
-            'id_shop' => (int) $this->context->shop->id,
-            'customer_id' => 123,
-            'customer_name' => 'Cliente de prueba',
-            'customer_firstname' => 'Cliente',
-            'customer_lastname' => 'Prueba',
-            'customer_email' => 'cliente@example.com',
-            'order_id' => 456,
-            'order_reference' => 'VX123456',
-            'order_total' => '$89.50',
-            'order_status' => 'Pago aceptado',
-            'old_order_status' => 'Pendiente',
-            'order_state_id' => 2,
-            'order_state_key' => 'payment_accepted',
-            'order_state_name' => 'Pago aceptado',
-            'old_order_state_id' => 1,
-            'old_order_state_key' => 'awaiting_bank_wire_payment',
-            'old_order_state_name' => 'Pendiente',
-            'order_totals' => [
-                'paid' => '$89.50',
-                'products' => '$75.00',
-                'shipping' => '$9.50',
-                'discounts' => '$5.00',
-                'tax' => '$10.00',
+            'event' => [
+                'name' => $eventName,
             ],
-            'billing_address' => [
+            'shop' => [
+                'id' => (int) $this->context->shop->id,
+                'id_lang' => (int) $this->context->language->id,
+                'name' => (string) $this->context->shop->name,
+                'url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            ],
+            'customer' => [
+                'id' => 123,
+                'name' => 'Cliente de prueba',
                 'firstname' => 'Cliente',
                 'lastname' => 'Prueba',
-                'full_name' => 'Cliente Prueba',
-                'company' => 'Velox Labs',
-                'address1' => 'Av. Siempre Viva 123',
-                'address2' => 'Depto 4B',
-                'city' => 'Guayaquil',
-                'postcode' => '090101',
-                'country' => 'Ecuador',
-                'state' => 'Guayas',
-                'phone' => '+593999999999',
-                'phone_mobile' => '+593988888888',
-                'formatted' => "Cliente Prueba\nAv. Siempre Viva 123\nDepto 4B\nGuayaquil 090101\nEcuador",
+                'email' => 'cliente@example.com',
             ],
-            'shipping_address' => [
-                'firstname' => 'Cliente',
-                'lastname' => 'Prueba',
-                'full_name' => 'Cliente Prueba',
-                'company' => '',
-                'address1' => 'Calle Comercio 456',
-                'address2' => '',
-                'city' => 'Samborondon',
-                'postcode' => '092301',
-                'country' => 'Ecuador',
-                'state' => 'Guayas',
-                'phone' => '+593977777777',
-                'phone_mobile' => '',
-                'formatted' => "Cliente Prueba\nCalle Comercio 456\nSamborondon 092301\nEcuador",
-            ],
-            'shipping' => [
-                'carrier_name' => 'Envio express',
-                'cost' => '$9.50',
-                'tracking_url' => 'https://example.com/tracking/VX123456',
-            ],
-            'products' => [
-                [
-                    'id' => 10,
-                    'attribute_id' => 0,
-                    'name' => 'Camisa Azul',
-                    'reference' => 'CA-001',
-                    'quantity' => 2,
-                    'unit_price' => '$25.00',
-                    'total_price' => '$50.00',
-                    'url' => 'https://example.com/camisa-azul',
-                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Camisa+Azul',
+            'order' => [
+                'id' => 456,
+                'reference' => 'VX123456',
+                'total' => 89.50,
+                'date' => '2026-07-01 10:30:00',
+                'formated_date' => '01 de Julio, 2026',
+                'status' => 'Pago aceptado',
+                'old_status' => 'Pendiente',
+                'payment_method' => 'Transferencia bancaria',
+                'shipping_method' => 'Envio express',
+                'state' => [
+                    'id' => 2,
+                    'key' => 'payment_accepted',
+                    'name' => 'Pago aceptado',
                 ],
-                [
-                    'id' => 11,
-                    'attribute_id' => 0,
-                    'name' => 'Pantalon Negro',
-                    'reference' => 'PN-010',
-                    'quantity' => 1,
-                    'unit_price' => '$25.00',
-                    'total_price' => '$25.00',
-                    'url' => 'https://example.com/pantalon-negro',
-                    'image_url' => 'https://via.placeholder.com/120x120.png?text=Pantalon+Negro',
+                'old_state' => [
+                    'id' => 1,
+                    'key' => 'awaiting_bank_wire_payment',
+                    'name' => 'Pendiente',
+                ],
+                'totals' => [
+                    'paid' => 89.50,
+                    'products' => 75.00,
+                    'shipping' => 9.50,
+                    'discounts' => 5.00,
+                    'tax' => 10.00,
+                ],
+                'billing_address' => [
+                    'firstname' => 'Cliente',
+                    'lastname' => 'Prueba',
+                    'full_name' => 'Cliente Prueba',
+                    'company' => 'Velox Labs',
+                    'address1' => 'Av. Siempre Viva 123',
+                    'address2' => 'Depto 4B',
+                    'city' => 'Guayaquil',
+                    'postcode' => '090101',
+                    'country' => 'Ecuador',
+                    'state' => 'Guayas',
+                    'phone' => '+593999999999',
+                    'phone_mobile' => '+593988888888',
+                    'formatted' => "Cliente Prueba\nAv. Siempre Viva 123\nDepto 4B\nGuayaquil 090101\nEcuador",
+                ],
+                'shipping_address' => [
+                    'firstname' => 'Cliente',
+                    'lastname' => 'Prueba',
+                    'full_name' => 'Cliente Prueba',
+                    'company' => '',
+                    'address1' => 'Calle Comercio 456',
+                    'address2' => '',
+                    'city' => 'Samborondon',
+                    'postcode' => '092301',
+                    'country' => 'Ecuador',
+                    'state' => 'Guayas',
+                    'phone' => '+593977777777',
+                    'phone_mobile' => '',
+                    'formatted' => "Cliente Prueba\nCalle Comercio 456\nSamborondon 092301\nEcuador",
+                ],
+                'shipping' => [
+                    'carrier_name' => 'Envio express',
+                    'cost' => 9.50,
+                    'tracking_url' => 'https://example.com/tracking/VX123456',
+                ],
+                'products' => [
+                    [
+                        'id' => 10,
+                        'attribute_id' => 0,
+                        'name' => 'Camisa Azul',
+                        'reference' => 'CA-001',
+                        'quantity' => 2,
+                        'unit_price' => 25.00,
+                        'total_price' => 50.00,
+                        'unit_price_tax_excl' => 21.74,
+                        'unit_price_tax_incl' => 25.00,
+                        'total_price_tax_excl' => 43.48,
+                        'total_price_tax_incl' => 50.00,
+                        'url' => 'https://example.com/camisa-azul',
+                        'image_url' => 'https://via.placeholder.com/120x120.png?text=Camisa+Azul',
+                        'attributes' => [
+                            [
+                                'label' => 'Color',
+                                'value' => 'Azul',
+                            ],
+                        ],
+                    ],
                 ],
             ],
             'related_products' => [
                 [
                     'id' => 21,
                     'name' => 'Zapatos Urbanos',
-                    'price' => '$59.00',
+                    'price' => 59.00,
                     'url' => 'https://example.com/zapatos-urbanos',
                     'image_url' => 'https://via.placeholder.com/120x120.png?text=Zapatos',
                 ],
@@ -157,18 +174,6 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                     'content' => 'Entrega rapida y producto en perfecto estado.',
                 ],
             ],
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
-        ];
-
-        $context['order'] = [
-            'id' => $context['order_id'],
-            'reference' => $context['order_reference'],
-            'totals' => $context['order_totals'],
-            'billing_address' => $context['billing_address'],
-            'shipping_address' => $context['shipping_address'],
-            'shipping' => $context['shipping'],
-            'products' => $context['products'],
         ];
 
         return $context;
@@ -193,17 +198,20 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
         $newStateName = $this->getOrderStatusName($newStatus, $idLang);
         $oldStateName = $this->getOrderStatusName($oldStatus, $idLang);
 
-        return array_merge($this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop), [
-            'event_name' => ModuleConstants::EVENT_ORDER_STATUS_CHANGED,
-            'order_status' => $newStateName,
-            'old_order_status' => $oldStateName,
-            'order_state_id' => $newStateId,
-            'order_state_key' => $this->orderStateEventService->resolveOrderStateKey($newStatus, $newStateName, $newStateId),
-            'order_state_name' => $newStateName,
-            'old_order_state_id' => $oldStateId,
-            'old_order_state_key' => $this->orderStateEventService->resolveOrderStateKey($oldStatus, $oldStateName, $oldStateId),
-            'old_order_state_name' => $oldStateName,
-        ]);
+        return $this->enrichOrderStateVariables(
+            $this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop),
+            ModuleConstants::EVENT_ORDER_STATUS_CHANGED,
+            [
+                'id' => $newStateId,
+                'key' => $this->orderStateEventService->resolveOrderStateKey($newStatus, $newStateName, $newStateId),
+                'name' => $newStateName,
+            ],
+            [
+                'id' => $oldStateId,
+                'key' => $this->orderStateEventService->resolveOrderStateKey($oldStatus, $oldStateName, $oldStateId),
+                'name' => $oldStateName,
+            ]
+        );
     }
 
     /**
@@ -242,13 +250,15 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
         $currentStateId = $this->getOrderStatusId($currentStatus);
         $currentStateName = $this->getOrderStatusName($currentStatus, $idLang);
 
-        return array_merge($this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop), [
-            'event_name' => ModuleConstants::EVENT_ORDER_CREATED,
-            'order_status' => $currentStateName,
-            'order_state_id' => $currentStateId,
-            'order_state_key' => $this->orderStateEventService->resolveOrderStateKey($currentStatus, $currentStateName, $currentStateId),
-            'order_state_name' => $currentStateName,
-        ]);
+        return $this->enrichOrderStateVariables(
+            $this->buildOrderCommonVariables($order, $customer, $currency, $idLang, $idShop),
+            ModuleConstants::EVENT_ORDER_CREATED,
+            [
+                'id' => $currentStateId,
+                'key' => $this->orderStateEventService->resolveOrderStateKey($currentStatus, $currentStateName, $currentStateId),
+                'name' => $currentStateName,
+            ]
+        );
     }
 
     private function buildOrderCommonVariables(?Order $order, ?Customer $customer, ?Currency $currency, int $idLang, int $idShop): array
@@ -256,70 +266,85 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
         $billingAddress = $this->getOrderAddress($order, 'id_address_invoice');
         $shippingAddress = $this->getOrderAddress($order, 'id_address_delivery');
         $products = $this->getOrderProducts($order, $currency, $idLang);
-        $shipping = $this->getShippingContext($order, $currency);
-        $totals = $this->getOrderTotalsContext($order, $currency);
-
-        return array_merge($this->getCommonVariables($idShop), [
+        $shipping = $this->getShippingContext($order);
+        $numericTotals = $this->getOrderTotalsNumericContext($order);
+        $paymentMethod = $this->getPaymentMethod($order);
+        $shippingMethod = (string) ($shipping['carrier_name'] ?? '');
+        $orderDate = $this->getOrderDate($order);
+        $formattedOrderDate = $this->getFormattedOrderDate($order, $idLang);
+        $numericOrderTotal = $order instanceof Order && Validate::isLoadedObject($order)
+            ? (float) $order->total_paid
+            : 0.0;
+        $event = [
+            'name' => '',
+        ];
+        $shop = [
+            'id' => $idShop,
             'id_lang' => $idLang,
-            'id_shop' => $idShop,
-            'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
-            'customer_name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
-            'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
-            'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
-            'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
-            'order_id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : '',
-            'order_reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
-            'order_total' => $order instanceof Order && Validate::isLoadedObject($order) ? Tools::displayPrice((float) $order->total_paid, $currency instanceof Currency ? $currency : null) : '',
-            'order_totals' => $totals,
-            'billing_address' => $billingAddress,
-            'shipping_address' => $shippingAddress,
-            'shipping' => $shipping,
-            'products' => $products,
+            'name' => $this->getShopName($idShop),
+            'url' => $this->context->link->getBaseLink($idShop, true),
+        ];
+        $customerData = [
+            'id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : 0,
+            'name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
+            'firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
+            'lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
+            'email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+        ];
+
+        return [
             'related_products' => [],
             'reviews' => [],
+            'event' => $event,
+            'shop' => $shop,
+            'customer' => $customerData,
             'order' => [
                 'id' => $order instanceof Order && Validate::isLoadedObject($order) ? (int) $order->id : 0,
                 'reference' => $order instanceof Order && Validate::isLoadedObject($order) ? (string) $order->reference : '',
-                'totals' => $totals,
+                'total' => $numericOrderTotal,
+                'date' => $orderDate,
+                'formated_date' => $formattedOrderDate,
+                'status' => '',
+                'old_status' => '',
+                'payment_method' => $paymentMethod,
+                'shipping_method' => $shippingMethod,
+                'state' => [
+                    'id' => 0,
+                    'key' => '',
+                    'name' => '',
+                ],
+                'old_state' => [
+                    'id' => 0,
+                    'key' => '',
+                    'name' => '',
+                ],
+                'totals' => $numericTotals,
                 'billing_address' => $billingAddress,
                 'shipping_address' => $shippingAddress,
                 'shipping' => $shipping,
                 'products' => $products,
             ],
-        ]);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function getCommonVariables(int $idShop): array
-    {
-        $shop = new Shop($idShop);
-
-        return [
-            'shop_name' => Validate::isLoadedObject($shop) ? (string) $shop->name : (string) Configuration::get('PS_SHOP_NAME'),
-            'shop_url' => $this->context->link->getBaseLink($idShop, true),
         ];
     }
 
-    private function getOrderTotalsContext(?Order $order, ?Currency $currency): array
+    private function getOrderTotalsNumericContext(?Order $order): array
     {
         if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
             return [
-                'paid' => '',
-                'products' => '',
-                'shipping' => '',
-                'discounts' => '',
-                'tax' => '',
+                'paid' => 0.0,
+                'products' => 0.0,
+                'shipping' => 0.0,
+                'discounts' => 0.0,
+                'tax' => 0.0,
             ];
         }
 
         return [
-            'paid' => Tools::displayPrice((float) $order->total_paid, $currency),
-            'products' => Tools::displayPrice((float) $order->total_products_wt, $currency),
-            'shipping' => Tools::displayPrice((float) $order->total_shipping_tax_incl, $currency),
-            'discounts' => Tools::displayPrice((float) $order->total_discounts_tax_incl, $currency),
-            'tax' => Tools::displayPrice((float) $order->total_paid_tax_incl - (float) $order->total_paid_tax_excl, $currency),
+            'paid' => (float) $order->total_paid,
+            'products' => (float) $order->total_products_wt,
+            'shipping' => (float) $order->total_shipping_tax_incl,
+            'discounts' => (float) $order->total_discounts_tax_incl,
+            'tax' => (float) $order->total_paid_tax_incl - (float) $order->total_paid_tax_excl,
         ];
     }
 
@@ -407,12 +432,12 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
     /**
      * @return array<string, string>
      */
-    private function getShippingContext(?Order $order, ?Currency $currency): array
+    private function getShippingContext(?Order $order): array
     {
         if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
             return [
                 'carrier_name' => '',
-                'cost' => '',
+                'cost' => 0.0,
                 'tracking_url' => '',
             ];
         }
@@ -427,7 +452,7 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
 
         return [
             'carrier_name' => $carrierName,
-            'cost' => Tools::displayPrice((float) $order->total_shipping_tax_incl, $currency),
+            'cost' => (float) $order->total_shipping_tax_incl,
             'tracking_url' => '',
         ];
     }
@@ -453,14 +478,15 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                 'name' => (string) ($row['product_name'] ?? ''),
                 'reference' => (string) ($row['product_reference'] ?? ''),
                 'quantity' => (int) ($row['product_quantity'] ?? 0),
-                'unit_price' => Tools::displayPrice((float) ($row['unit_price_tax_incl'] ?? 0), $currency),
-                'total_price' => Tools::displayPrice((float) ($row['total_price_tax_incl'] ?? 0), $currency),
+                'unit_price' => (float) ($row['unit_price_tax_incl'] ?? 0),
+                'total_price' => (float) ($row['total_price_tax_incl'] ?? 0),
                 'unit_price_tax_excl' => (float) ($row['unit_price_tax_excl'] ?? 0),
                 'unit_price_tax_incl' => (float) ($row['unit_price_tax_incl'] ?? 0),
                 'total_price_tax_excl' => (float) ($row['total_price_tax_excl'] ?? 0),
                 'total_price_tax_incl' => (float) ($row['total_price_tax_incl'] ?? 0),
                 'url' => $idProduct > 0 ? $this->context->link->getProductLink($idProduct, $rewrite, null, null, $idLang, (int) $order->id_shop, $idProductAttribute > 0 ? $idProductAttribute : 0) : '',
                 'image_url' => '',
+                'attributes' => $this->getProductAttributesContext($row),
             ];
         }
 
@@ -493,5 +519,110 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
         }
 
         return '';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function enrichOrderStateVariables(array $context, string $eventName, array $state, array $oldState = []): array
+    {
+        if (!isset($context['order']) || !is_array($context['order'])) {
+            $context['order'] = [];
+        }
+
+        if (!isset($context['event']) || !is_array($context['event'])) {
+            $context['event'] = [];
+        }
+
+        $context['event']['name'] = $eventName;
+        $context['order']['status'] = (string) ($state['name'] ?? '');
+        $context['order']['old_status'] = (string) ($oldState['name'] ?? '');
+        $context['order']['state'] = [
+            'id' => (int) ($state['id'] ?? 0),
+            'key' => (string) ($state['key'] ?? ''),
+            'name' => (string) ($state['name'] ?? ''),
+        ];
+        $context['order']['old_state'] = [
+            'id' => (int) ($oldState['id'] ?? 0),
+            'key' => (string) ($oldState['key'] ?? ''),
+            'name' => (string) ($oldState['name'] ?? ''),
+        ];
+
+        return $context;
+    }
+
+    private function getPaymentMethod(?Order $order): string
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order)) {
+            return '';
+        }
+
+        return (string) ($order->payment ?? '');
+    }
+
+    private function getOrderDate(?Order $order): string
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order) || empty($order->date_add)) {
+            return '';
+        }
+
+        return (string) $order->date_add;
+    }
+
+    private function getFormattedOrderDate(?Order $order, int $idLang): string
+    {
+        if (!$order instanceof Order || !Validate::isLoadedObject($order) || empty($order->date_add)) {
+            return '';
+        }
+
+        return (string) Tools::displayDate((string) $order->date_add, $idLang, true);
+    }
+
+    private function getShopName(int $idShop): string
+    {
+        $shop = new Shop($idShop);
+
+        return Validate::isLoadedObject($shop) ? (string) $shop->name : (string) Configuration::get('PS_SHOP_NAME');
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function getProductAttributesContext(array $row): array
+    {
+        $attributesDescription = '';
+        if (isset($row['product_attributes']) && is_string($row['product_attributes'])) {
+            $attributesDescription = $row['product_attributes'];
+        } elseif (isset($row['attributes']) && is_string($row['attributes'])) {
+            $attributesDescription = $row['attributes'];
+        }
+
+        if ($attributesDescription === '') {
+            return [];
+        }
+
+        $attributes = [];
+        $parts = array_filter(array_map('trim', explode(',', $attributesDescription)));
+        foreach ($parts as $part) {
+            $attribute = explode(':', $part, 2);
+            if (count($attribute) === 2) {
+                $attributes[] = [
+                    'label' => trim((string) $attribute[0]),
+                    'value' => trim((string) $attribute[1]),
+                ];
+                continue;
+            }
+
+            $attributes[] = [
+                'label' => 'Valor',
+                'value' => trim((string) $part),
+            ];
+        }
+
+        return $attributes;
     }
 }

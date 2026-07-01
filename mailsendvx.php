@@ -37,7 +37,9 @@ class Mailsendvx extends Module
     public const ADMIN_PARENT_TAB_CLASS = ModuleConstants::ADMIN_PARENT_TAB_CLASS;
     public const ADMIN_CONFIGURE_TAB_CLASS = ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS;
     public const ADMIN_TEMPLATES_TAB_CLASS = ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS;
+    public const ADMIN_WRAPPERS_TAB_CLASS = ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS;
     public const ADMIN_DASHBOARD_TAB_CLASS = ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS;
+    public const ADMIN_DOCUMENTATION_TAB_CLASS = ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS;
     public const ADMIN_CONFIGURE_SECTION_CLASS = ModuleConstants::ADMIN_CONFIGURE_SECTION_CLASS;
 
     public function __construct()
@@ -53,8 +55,8 @@ class Mailsendvx extends Module
         parent::__construct();
 
         $this->displayName = $this->trans('Mail Send VX', [], 'Modules.Mailsendvx.Admin');
-        $this->description = $this->trans('Base module for transactional and automated email sending.', [], 'Modules.Mailsendvx.Admin');
-        $this->confirmUninstall = $this->trans('Uninstalling will remove Mail Send VX tables and settings. Continue?', [], 'Modules.Mailsendvx.Admin');
+        $this->description = $this->trans('Módulo base para el envío de correos transaccionales y automatizados.', [], 'Modules.Mailsendvx.Admin');
+        $this->confirmUninstall = $this->trans('La desinstalación eliminará las tablas y configuraciones de Mail Send VX. ¿Deseas continuar?', [], 'Modules.Mailsendvx.Admin');
     }
 
     public function install(): bool
@@ -81,7 +83,9 @@ class Mailsendvx extends Module
         $allowedControllers = [
             self::ADMIN_CONFIGURE_TAB_CLASS,
             self::ADMIN_TEMPLATES_TAB_CLASS,
+            self::ADMIN_WRAPPERS_TAB_CLASS,
             self::ADMIN_DASHBOARD_TAB_CLASS,
+            self::ADMIN_DOCUMENTATION_TAB_CLASS,
         ];
 
         if (Tools::getValue('configure') !== $this->name && !in_array($controller, $allowedControllers, true)) {

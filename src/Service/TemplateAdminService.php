@@ -173,15 +173,16 @@ class TemplateAdminService
     public function saveTemplate(array $data): bool
     {
         $htmlContent = (string) ($data['html_content'] ?? '');
-        $textContent = trim((string) ($data['text_content'] ?? ''));
+        $textContent = $this->templateContentService->generateTextContentFromHtml($htmlContent);
         $wrapperName = trim((string) ($data['mail_template'] ?? 'mailsendvx_default'));
         $wrapperHtml = (string) ($data['wrapper_html'] ?? '');
         $wrapperText = trim((string) ($data['wrapper_text'] ?? ''));
-        if ($textContent === '') {
-            $textContent = $this->templateContentService->generateTextContentFromHtml($htmlContent);
-        }
         if ($wrapperText === '' && $wrapperHtml !== '') {
-            $wrapperText = $this->templateContentService->generateTextContentFromHtml($wrapperHtml);
+            $wrapperText = str_replace(
+                '{mailsendvx_html_content}',
+                '{mailsendvx_text_content}',
+                $this->templateContentService->generateTextContentFromHtml($wrapperHtml)
+            );
         }
 
         if ($wrapperName === '') {
@@ -369,7 +370,6 @@ class TemplateAdminService
             $rows[] = [
                 'path' => $path,
                 'twig' => '{{ ' . $path . ' }}',
-                'legacy' => strpos($path, '.') === false ? '{' . $path . '}' : '',
             ];
         }
 
@@ -383,41 +383,61 @@ class TemplateAdminService
      */
     private function flattenCollectionAttributes(array $context): array
     {
-        $rows = [];
-        foreach ($context as $key => $value) {
-            if (!is_array($value) || !$this->isList($value) || empty($value) || !is_array($value[0])) {
-                continue;
-            }
-
-            $sampleItem = $value[0];
-            $fields = [];
-            foreach ($sampleItem as $field => $fieldValue) {
-                if (is_scalar($fieldValue) || $fieldValue === null) {
-                    $fields[] = '{{ item.' . $field . ' }}';
-                }
-            }
-
-            $rows[] = [
-                'path' => $key,
-                'twig' => "{% for item in " . $key . " %}\n  " . implode("\n  ", array_slice($fields, 0, 3)) . "\n{% endfor %}",
-                'legacy' => '',
-            ];
-        }
-
-        return $rows;
+        return $this->flattenCollectionAttributesByPath($context);
     }
 
     private function buildSubjectExample(string $eventName): string
     {
         if ($eventName === ModuleConstants::EVENT_CUSTOMER_REGISTERED) {
-            return '{{ customer_name }} - Bienvenido a {{ shop_name }}';
+            return '{{ customer.name }} - Bienvenido a {{ shop.name }}';
         }
 
         if ($eventName === ModuleConstants::EVENT_NEWSLETTER_REGISTERED) {
-            return '{{ shop_name }} - Confirmacion de suscripcion';
+            return '{{ shop.name }} - Confirmacion de suscripcion';
         }
 
-        return '{{ order_reference }} - {{ order_status|default("Pedido creado") }}';
+        return '{{ order.reference }} - {{ order.status|default("Pedido creado") }}';
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<int, array<string, string>>
+     */
+    private function flattenCollectionAttributesByPath(array $context, string $prefix = ''): array
+    {
+        $rows = [];
+        foreach ($context as $key => $value) {
+            if ($key === '_preview_source' || !is_array($value)) {
+                continue;
+            }
+
+            $path = $prefix === '' ? $key : $prefix . '.' . $key;
+            if ($this->isList($value)) {
+                if (empty($value) || !is_array($value[0])) {
+                    continue;
+                }
+
+                $sampleItem = $value[0];
+                $fields = [];
+                foreach ($sampleItem as $field => $fieldValue) {
+                    if (is_scalar($fieldValue) || $fieldValue === null) {
+                        $fields[] = '{{ item.' . $field . ' }}';
+                    }
+                }
+
+                $rows[] = [
+                    'path' => $path,
+                    'twig' => "{% for item in " . $path . " %}\n  " . implode("\n  ", array_slice($fields, 0, 3)) . "\n{% endfor %}",
+                ];
+
+                continue;
+            }
+
+            $rows = array_merge($rows, $this->flattenCollectionAttributesByPath($value, $path));
+        }
+
+        return $rows;
     }
 
     /**

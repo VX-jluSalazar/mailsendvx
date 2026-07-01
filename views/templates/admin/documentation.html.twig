@@ -1,0 +1,110 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Base de conocimiento'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Documentación'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Revisa las variables de plantillas y la configuración de carrito abandonado sin sobrecargar las pantallas de edición.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Context builders'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ contextBuilderSections|length }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Abandoned cart settings'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ abandonedCartSettingsGuide|length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-7">
+        {% for section in contextBuilderSections %}
+          <div class="card mailsendvx-card{% if not loop.first %} mt-3{% endif %}">
+            <h3 class="card-header">
+              <i class="material-icons">code</i>
+              {{ section.title }}
+            </h3>
+            <div class="card-body">
+              <p><strong>{{ 'Builder'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong> <code>{{ section.builder }}</code></p>
+              <p>{{ section.description }}</p>
+              <p><strong>{{ 'Eventos donde puede usarse'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong></p>
+              <ul class="mailsendvx-note-list">
+                {% for eventLabel in section.events %}
+                  <li>{{ eventLabel }}</li>
+                {% else %}
+                  <li>{{ 'No se encontraron eventos soportados para este builder.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+                {% endfor %}
+              </ul>
+              {% if section.scalar_attributes %}
+                <p class="mt-3"><strong>{{ 'Variables escalares'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
+                <ul class="mailsendvx-note-list">
+                  {% for item in section.scalar_attributes %}
+                    <li><code>{{ item.path }}</code> -> <code>{{ item.twig }}</code></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+              {% if section.collection_attributes %}
+                <p class="mt-3"><strong>{{ 'Colecciones y loops'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
+                <ul class="mailsendvx-note-list">
+                  {% for item in section.collection_attributes %}
+                    <li><code>{{ item.path }}</code><pre class="mailsendvx-text-preview">{{ item.twig }}</pre></li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="card mailsendvx-card">
+            <div class="card-body">
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'No se encontraron datos de context builders.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Revisa las clases ContextBuilder y los eventos soportados registrados por el módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col-xl-5">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">rule</i>
+            {{ 'Checklist de escritura'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              <li>{{ 'Usa asuntos directos que coincidan con el evento que el cliente puede reconocer.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Previsualiza antes de activar plantillas que agreguen condiciones, loops o textos traducidos con Twig.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Trata el editor HTML como la fuente principal, porque el cuerpo en texto plano se regenera al guardar.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Crea o actualiza wrappers en el submenú Wrapper en lugar de hacerlo dentro de Templates.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">shopping_cart</i>
+            {{ 'Configuración de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              {% for item in abandonedCartSettingsGuide %}
+                <li><strong>{{ item.key }}</strong>: {{ item.description }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

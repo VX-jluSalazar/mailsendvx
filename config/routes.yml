@@ -14,6 +14,22 @@ mailsendvx_templates:
     _legacy_controller: AdminMailsendvxTemplates
     _legacy_link: AdminMailsendvxTemplates
 
+mailsendvx_wrappers:
+  path: /mailsendvx/wrappers
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\WrappersController::indexAction'
+    _legacy_controller: AdminMailsendvxWrappers
+    _legacy_link: AdminMailsendvxWrappers
+
+mailsendvx_documentation:
+  path: /mailsendvx/documentation
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DocumentationController::indexAction'
+    _legacy_controller: AdminMailsendvxDocumentation
+    _legacy_link: AdminMailsendvxDocumentation
+
 mailsendvx_template_delete:
   path: /mailsendvx/templates/{idTemplate}/delete
   methods: [POST]

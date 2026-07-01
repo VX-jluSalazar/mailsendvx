@@ -260,6 +260,63 @@
   margin-top: 8px;
 }
 
+.mailsendvx-settings-grid {
+  display: grid;
+  gap: 18px;
+}
+
+.mailsendvx-setting {
+  align-items: start;
+  column-gap: 20px;
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+}
+
+.mailsendvx-setting__label {
+  font-weight: 600;
+  line-height: 1.45;
+  padding-top: 10px;
+}
+
+.mailsendvx-setting__label label {
+  margin-bottom: 0;
+}
+
+.mailsendvx-setting__field .form-group {
+  margin-bottom: 0;
+}
+
+.mailsendvx-setting__field .col-form-label {
+  display: none;
+}
+
+.mailsendvx-setting__field .form-control-label {
+  display: none;
+}
+
+.mailsendvx-setting--switch .mailsendvx-setting__field {
+  padding-top: 6px;
+}
+
+.mailsendvx-setting__field .material-switch,
+.mailsendvx-setting__field .prestashop-switch {
+  margin-bottom: 0;
+}
+
+@media (max-width: 991px) {
+  .mailsendvx-setting {
+    grid-template-columns: 1fr;
+  }
+
+  .mailsendvx-setting__label {
+    padding-top: 0;
+  }
+
+  .mailsendvx-template-actions {
+    min-width: 0;
+  }
+}
+
 .mailsendvx-inline-form {
   margin: 0;
 }

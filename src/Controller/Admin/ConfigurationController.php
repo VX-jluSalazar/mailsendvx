@@ -30,7 +30,7 @@ class ConfigurationController extends FrameworkBundleAdminController
         if ($form->isSubmitted() && $form->isValid()) {
             $errors = $this->formHandler->save($form->getData());
             if (empty($errors)) {
-                $this->addFlash('success', $this->trans('Successful update.', 'Admin.Notifications.Success', []));
+                $this->addFlash('success', $this->trans('Actualización correcta.', 'Admin.Notifications.Success', []));
 
                 return $this->redirectToRoute('mailsendvx_configuration');
             }

@@ -6,7 +6,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\Form\Type\TemplateFormType;
-use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\TemplateAdminService;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 
@@ -41,12 +40,12 @@ class TemplatesController extends FrameworkBundleAdminController
             try {
                 $saved = $this->templateAdminService->saveTemplate($form->getData());
                 if ($saved) {
-                    $this->addFlash('success', $this->trans('Template saved.', 'Admin.Notifications.Success', []));
+                    $this->addFlash('success', $this->trans('Plantilla guardada.', 'Admin.Notifications.Success', []));
 
                     return $this->redirectToRoute('mailsendvx_templates');
                 }
 
-                $this->addFlash('danger', $this->trans('Template could not be saved.', 'Modules.Mailsendvx.Admin', []));
+                $this->addFlash('danger', $this->trans('No se pudo guardar la plantilla.', 'Modules.Mailsendvx.Admin', []));
             } catch (\Throwable $exception) {
                 $this->addFlash('danger', (string) $exception->getMessage());
             }
@@ -63,19 +62,14 @@ class TemplatesController extends FrameworkBundleAdminController
             try {
                 $preview = $this->templateAdminService->getPreviewData($previewId);
             } catch (TwigError $exception) {
-                $this->addFlash('danger', sprintf('Twig syntax error: %s', $exception->getMessage()));
+                $this->addFlash('danger', sprintf('Error de sintaxis Twig: %s', $exception->getMessage()));
             }
         }
-
-        $selectedEventName = (string) ($form->get('event_name')->getData() ?? ModuleConstants::EVENT_ORDER_STATUS_CHANGED);
 
         return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
             'templateForm' => $form->createView(),
             'templates' => $templates,
             'preview' => $preview,
-            'eventGuides' => $this->templateAdminService->getEventGuideData(),
-            'wrapperChoices' => $this->templateAdminService->getWrapperChoices(),
-            'selectedEventName' => $selectedEventName,
             'currentEditTemplate' => $this->findTemplate($templates, $editId),
             'activeTemplatesCount' => $this->countActiveTemplates($templates),
             'defaultTestEmail' => (string) ($this->getContext()->employee->email ?? ''),
@@ -86,15 +80,15 @@ class TemplatesController extends FrameworkBundleAdminController
     public function deleteAction(Request $request, int $idTemplate): Response
     {
         if (!$this->isCsrfTokenValid('delete-template-' . $idTemplate, (string) $request->request->get('_token'))) {
-            $this->addFlash('danger', $this->trans('Security token is invalid. Please refresh and try again.', 'Admin.Notifications.Error', []));
+            $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
         }
 
         if ($this->templateAdminService->deleteTemplate($idTemplate)) {
-            $this->addFlash('success', $this->trans('Template deleted.', 'Admin.Notifications.Success', []));
+            $this->addFlash('success', $this->trans('Plantilla eliminada.', 'Admin.Notifications.Success', []));
         } else {
-            $this->addFlash('danger', $this->trans('Template could not be deleted.', 'Modules.Mailsendvx.Admin', []));
+            $this->addFlash('danger', $this->trans('No se pudo eliminar la plantilla.', 'Modules.Mailsendvx.Admin', []));
         }
 
         return $this->redirectToRoute('mailsendvx_templates');
@@ -103,14 +97,14 @@ class TemplatesController extends FrameworkBundleAdminController
     public function sendTestAction(Request $request, int $idTemplate): Response
     {
         if (!$this->isCsrfTokenValid('test-template-' . $idTemplate, (string) $request->request->get('_token'))) {
-            $this->addFlash('danger', $this->trans('Security token is invalid. Please refresh and try again.', 'Admin.Notifications.Error', []));
+            $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
         }
 
         $result = $this->templateAdminService->sendTest($idTemplate, trim((string) $request->request->get('test_email')));
         if ($result === true) {
-            $this->addFlash('success', $this->trans('Test email sent.', 'Admin.Notifications.Success', []));
+            $this->addFlash('success', $this->trans('Correo de prueba enviado.', 'Admin.Notifications.Success', []));
         } else {
             $this->addFlash('danger', (string) $result);
         }

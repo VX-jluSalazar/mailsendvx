@@ -33,32 +33,44 @@ class CustomerTemplateContextBuilder implements DomainTemplateContextBuilderInte
         $idShop = (int) $this->context->shop->id;
 
         return [
-            'event_name' => ModuleConstants::EVENT_CUSTOMER_REGISTERED,
-            'id_lang' => $idLang,
-            'id_shop' => $idShop,
-            'customer_id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : '',
-            'customer_name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
-            'customer_firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
-            'customer_lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
-            'customer_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            'event' => [
+                'name' => ModuleConstants::EVENT_CUSTOMER_REGISTERED,
+            ],
+            'shop' => [
+                'id' => $idShop,
+                'id_lang' => $idLang,
+                'name' => (string) $this->context->shop->name,
+                'url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            ],
+            'customer' => [
+                'id' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (int) $customer->id : 0,
+                'name' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
+                'firstname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
+                'lastname' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
+                'email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+            ],
         ];
     }
 
     public function buildSampleContext(string $eventName): array
     {
         return [
-            'event_name' => $eventName,
-            'id_lang' => (int) $this->context->language->id,
-            'id_shop' => (int) $this->context->shop->id,
-            'customer_id' => 123,
-            'customer_name' => 'Cliente de prueba',
-            'customer_firstname' => 'Cliente',
-            'customer_lastname' => 'Prueba',
-            'customer_email' => 'cliente@example.com',
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            'event' => [
+                'name' => $eventName,
+            ],
+            'shop' => [
+                'id' => (int) $this->context->shop->id,
+                'id_lang' => (int) $this->context->language->id,
+                'name' => (string) $this->context->shop->name,
+                'url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            ],
+            'customer' => [
+                'id' => 123,
+                'name' => 'Cliente de prueba',
+                'firstname' => 'Cliente',
+                'lastname' => 'Prueba',
+                'email' => 'cliente@example.com',
+            ],
         ];
     }
 }

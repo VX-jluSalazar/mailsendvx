@@ -5,10 +5,10 @@
   <section class="mailsendvx-shell">
     <div class="mailsendvx-hero">
       <div class="mailsendvx-hero__copy">
-        <span class="mailsendvx-eyebrow">{{ 'Template studio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
-        <h1 class="mailsendvx-page-title">{{ 'Instant email templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <span class="mailsendvx-eyebrow">{{ 'Estudio de plantillas'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Plantillas de correo instantáneo'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
         <p class="mailsendvx-page-subtitle">
-          {{ 'Prepare event-specific messages, preview rendered content, and keep one active template per event, language, and shop scope.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          {{ 'Prepara mensajes por evento, previsualiza el contenido renderizado y mantén una sola plantilla activa por evento, idioma y tienda.'|trans({}, 'Modules.Mailsendvx.Admin') }}
         </p>
       </div>
       <div class="mailsendvx-status-cluster">
@@ -34,92 +34,91 @@
           <h3 class="card-header">
             <i class="material-icons">mail</i>
             {% if currentEditTemplate %}
-              {{ 'Edit template'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ currentEditTemplate.name }}
+              {{ 'Editar plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ currentEditTemplate.name }}
             {% else %}
-              {{ 'Create template'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {{ 'Crear plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
             {% endif %}
           </h3>
           <div class="card-body">
             <div class="mailsendvx-inline-note">
-              {{ 'If another active template already exists for the same event, language, and shop scope, it will be deactivated automatically.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {{ 'Si ya existe otra plantilla activa para el mismo evento, idioma y tienda, se desactivará automáticamente.'|trans({}, 'Modules.Mailsendvx.Admin') }}
             </div>
             <div class="form-wrapper">
-              {{ form_widget(templateForm) }}
+              {{ form_errors(templateForm) }}
+              {{ form_row(templateForm.id_mailsendvx_template) }}
+
+              <div>
+                <div>
+                  {{ form_row(templateForm.event_name) }}
+                </div>
+                <div>
+                  {{ form_row(templateForm.template_name) }}
+                </div>
+              </div>
+
+              <div>
+                <div>
+                  {{ form_row(templateForm.subject) }}
+                </div>
+                <div>
+                  {{ form_row(templateForm.active) }}
+                </div>
+              </div>
+
+              <div>
+                <div>
+                  {{ form_row(templateForm.mail_template) }}
+                </div>
+                <div>
+                  {{ form_row(templateForm.id_lang) }}
+                </div>
+                <div>
+                  {{ form_row(templateForm.id_shop) }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">article</i>
+            {{ 'Contenido de la plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <div class="mailsendvx-inline-note">
+              {{ 'La versión en texto plano se genera desde el HTML cada vez que guardas, por lo que el editor HTML es la fuente principal.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </div>
+            <div class="form-wrapper">
+              {{ form_row(templateForm.html_content) }}
+              {{ form_row(templateForm.text_content) }}
             </div>
           </div>
           <div class="card-footer d-flex justify-content-between align-items-center">
             <a class="btn btn-outline-secondary" href="{{ path('mailsendvx_templates') }}">
-              {{ 'Reset form'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {{ 'Restablecer formulario'|trans({}, 'Modules.Mailsendvx.Admin') }}
             </a>
             <button type="submit" class="btn btn-primary">
-              {{ 'Save template'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {{ 'Guardar plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
             </button>
           </div>
         </div>
-        {{ form_end(templateForm) }}
+        {{ form_rest(templateForm) }}
+        {{ form_end(templateForm, {'render_rest': false}) }}
       </div>
 
       <div class="col-xl-5">
         <div class="card mailsendvx-card mailsendvx-card--aside">
           <h3 class="card-header">
-            <i class="material-icons">rule</i>
-            {{ 'Writing checklist'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            <i class="material-icons">info</i>
+            {{ 'Navegación rápida'|trans({}, 'Modules.Mailsendvx.Admin') }}
           </h3>
           <div class="card-body">
             <ul class="mailsendvx-note-list">
-              <li>{{ 'Use direct subjects that match the event customers recognize.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li>{{ 'Twig is available for new templates, including loops on products and simple if conditions.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li>{{ 'Leave text content empty only when the HTML version can be converted safely to a plain text fallback.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li>{{ 'Preview before activating any template that introduces event variables or translated copy.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Usa el submenú Wrapper para crear o editar wrappers de correo.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Usa el submenú Documentación para revisar variables, guías de escritura y notas de implementación.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Usa Previsualizar antes de activar plantillas con condiciones o loops de Twig.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
             </ul>
-          </div>
-        </div>
-
-        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
-          <h3 class="card-header">
-            <i class="material-icons">code</i>
-            {{ 'Variables guide'|trans({}, 'Modules.Mailsendvx.Admin') }}
-          </h3>
-          <div class="card-body">
-            <p class="mb-2">{{ 'The guide changes according to the selected event. Use Twig for advanced templates and legacy placeholders only for top-level simple variables.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
-            {% for eventName, guide in eventGuides %}
-              <div class="mailsendvx-event-guide" data-event-guide="{{ eventName }}" {% if eventName != selectedEventName %}style="display:none"{% endif %}>
-                <h4>{{ guide.label }}</h4>
-                <p><strong>{{ 'Subject example'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong> <code>{{ guide.subject_example }}</code></p>
-                <p><strong>{{ 'Scalar attributes'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
-                <ul class="mailsendvx-note-list">
-                  {% for item in guide.scalar_attributes %}
-                    <li><code>{{ item.path }}</code> -> <code>{{ item.twig }}</code>{% if item.legacy %} / <code>{{ item.legacy }}</code>{% endif %}</li>
-                  {% endfor %}
-                </ul>
-                {% if guide.collection_attributes %}
-                  <p class="mt-2"><strong>{{ 'Collections and loops'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong></p>
-                  <ul class="mailsendvx-note-list">
-                    {% for item in guide.collection_attributes %}
-                      <li><code>{{ item.path }}</code>
-                        <pre class="mailsendvx-text-preview">{{ item.twig }}</pre>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-
-        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
-          <h3 class="card-header">
-            <i class="material-icons">layers</i>
-            {{ 'Wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}
-          </h3>
-          <div class="card-body">
-            <p>{{ 'Available wrapper keys detected in the module:'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
-            <ul class="mailsendvx-note-list">
-              {% for wrapperName, wrapperLabel in wrapperChoices %}
-                <li><code>{{ wrapperName }}</code></li>
-              {% endfor %}
-            </ul>
-            <p class="mb-0">{{ 'When editing a wrapper, include {mailsendvx_html_content} in HTML and {mailsendvx_text_content} in text.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
           </div>
         </div>
 
@@ -127,11 +126,11 @@
           <div class="card mailsendvx-card mt-3">
             <h3 class="card-header">
               <i class="material-icons">visibility</i>
-              {{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
+              {{ 'Previsualización'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ preview.name }}
             </h3>
             <div class="card-body">
               <div class="mailsendvx-inline-note">
-                {{ preview.context_source == 'historical' ? 'Preview rendered with the latest captured payload for this event.'|trans({}, 'Modules.Mailsendvx.Admin') : 'Preview rendered with sample data for this event.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                {{ preview.context_source == 'historical' ? 'Previsualización renderizada con el último payload capturado para este evento.'|trans({}, 'Modules.Mailsendvx.Admin') : 'Previsualización renderizada con datos de ejemplo para este evento.'|trans({}, 'Modules.Mailsendvx.Admin') }}
               </div>
               <div class="mailsendvx-preview-subject">
                 <span>{{ 'Subject'|trans({}, 'Admin.Global') }}</span>
@@ -180,23 +179,23 @@
                     <td>{{ template.shop_label }}</td>
                     <td>
                       <span class="mailsendvx-badge {{ template.active ? 'mailsendvx-badge--success' : 'mailsendvx-badge--muted' }}">
-                        {{ template.active ? 'Active'|trans({}, 'Admin.Global') : 'Inactive'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                        {{ template.active ? 'Activa'|trans({}, 'Modules.Mailsendvx.Admin') : 'Inactiva'|trans({}, 'Modules.Mailsendvx.Admin') }}
                       </span>
                     </td>
                     <td class="mailsendvx-template-actions">
                       <div class="mailsendvx-action-row">
-                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {edit: template.id_mailsendvx_template}) }}">{{ 'Edit'|trans({}, 'Admin.Actions') }}</a>
-                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {preview: template.id_mailsendvx_template}) }}">{{ 'Preview'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {edit: template.id_mailsendvx_template}) }}">{{ 'Editar'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_templates', {preview: template.id_mailsendvx_template}) }}">{{ 'Previsualizar'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
                       </div>
                       <div class="mailsendvx-action-row">
-                        <form method="post" action="{{ path('mailsendvx_template_delete', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-inline-form" onsubmit="return confirm('{{ 'Delete this template and remove it from this scope?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                        <form method="post" action="{{ path('mailsendvx_template_delete', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-inline-form" onsubmit="return confirm('{{ '¿Eliminar esta plantilla y quitarla de este alcance?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
                           <input type="hidden" name="_token" value="{{ csrf_token('delete-template-' ~ template.id_mailsendvx_template) }}">
-                          <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Delete'|trans({}, 'Admin.Actions') }}</button>
+                          <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Eliminar'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
                         </form>
-                        <form method="post" action="{{ path('mailsendvx_template_test', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-test-form" onsubmit="return confirm('{{ 'Send a test email using the current rendered content?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                        <form method="post" action="{{ path('mailsendvx_template_test', {idTemplate: template.id_mailsendvx_template}) }}" class="mailsendvx-test-form" onsubmit="return confirm('{{ '¿Enviar un correo de prueba usando el contenido renderizado actual?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
                           <input type="hidden" name="_token" value="{{ csrf_token('test-template-' ~ template.id_mailsendvx_template) }}">
-                          <input type="email" name="test_email" class="form-control" value="{{ defaultTestEmail }}" placeholder="{{ 'Test email'|trans({}, 'Modules.Mailsendvx.Admin') }}" required>
-                          <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Send test'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                          <input type="email" name="test_email" class="form-control" value="{{ defaultTestEmail }}" placeholder="{{ 'Correo de prueba'|trans({}, 'Modules.Mailsendvx.Admin') }}" required>
+                          <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Enviar prueba'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
                         </form>
                       </div>
                     </td>
@@ -207,32 +206,11 @@
           </div>
         {% else %}
           <div class="mailsendvx-empty-state">
-            <h3>{{ 'No templates yet.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
-            <p>{{ 'Create the first template to start testing event-driven messages from this Back Office area.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+            <h3>{{ 'Aún no hay plantillas.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+            <p>{{ 'Crea la primera plantilla para empezar a probar mensajes disparados por eventos desde esta zona del Back Office.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
           </div>
         {% endif %}
       </div>
     </div>
   </section>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var eventField = document.getElementById('template_form_event_name');
-      if (!eventField) {
-        eventField = document.querySelector('select[name$="[event_name]"]');
-      }
-      if (!eventField) {
-        return;
-      }
-
-      var guides = document.querySelectorAll('[data-event-guide]');
-      var updateGuide = function () {
-        guides.forEach(function (guide) {
-          guide.style.display = guide.getAttribute('data-event-guide') === eventField.value ? '' : 'none';
-        });
-      };
-
-      eventField.addEventListener('change', updateGuide);
-      updateGuide();
-    });
-  </script>
 {% endblock %}

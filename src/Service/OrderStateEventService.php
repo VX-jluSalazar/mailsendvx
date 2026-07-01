@@ -46,12 +46,13 @@ class OrderStateEventService
     public function buildDispatchEventNames(array $variables, MailSendVxTemplateRepository $templateRepository, string $genericEvent, string $legacyEvent): array
     {
         $eventNames = [$genericEvent];
-        if (!empty($variables['order_state_key'])) {
-            $eventNames[] = $genericEvent . '_' . $variables['order_state_key'];
+        $orderStateKey = $variables['order']['state']['key'] ?? null;
+        if (is_string($orderStateKey) && $orderStateKey !== '') {
+            $eventNames[] = $genericEvent . '_' . $orderStateKey;
         }
 
-        $idLang = (int) ($variables['id_lang'] ?? $this->context->language->id);
-        $idShop = (int) ($variables['id_shop'] ?? $this->context->shop->id);
+        $idLang = (int) ($variables['shop']['id_lang'] ?? $this->context->language->id);
+        $idShop = (int) ($variables['shop']['id'] ?? $this->context->shop->id);
         if ($templateRepository->hasActiveByEvent($legacyEvent, $idLang, $idShop)) {
             $eventNames[] = $legacyEvent;
         }

@@ -39,51 +39,64 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
         if (is_file($fixturePath)) {
             $decoded = json_decode((string) file_get_contents($fixturePath), true);
             if (is_array($decoded)) {
-                $decoded['event_name'] = $eventName;
-                $decoded['id_lang'] = (int) $this->context->language->id;
-                $decoded['id_shop'] = (int) $this->context->shop->id;
-                $decoded['customer_id'] = (int) ($decoded['customer']['id'] ?? 0);
-                $decoded['customer_name'] = trim((string) (($decoded['customer']['firstname'] ?? '') . ' ' . ($decoded['customer']['lastname'] ?? '')));
-                $decoded['customer_firstname'] = (string) ($decoded['customer']['firstname'] ?? '');
-                $decoded['customer_lastname'] = (string) ($decoded['customer']['lastname'] ?? '');
-                $decoded['customer_email'] = (string) ($decoded['customer']['email'] ?? '');
-                $decoded['cart_id'] = (int) ($decoded['cart']['id'] ?? 0);
-                $decoded['cart_url'] = (string) ($decoded['misc']['cart_url'] ?? ($decoded['cart']['url'] ?? ''));
-                $decoded['recovery_url'] = $decoded['cart_url'];
-                $decoded['abandoned_at'] = (string) ($decoded['cart']['updated_at'] ?? '');
-                $decoded['abandoned_minutes'] = (int) ($decoded['cart']['abandoned_minutes'] ?? 0);
-                $decoded['currency'] = (string) ($decoded['currency'] ?? '');
-                $decoded['cart_total'] = $decoded['cart']['totals']['total'] ?? 0;
-                $decoded['cart_products_count'] = is_array($decoded['cart']['items'] ?? null) ? count($decoded['cart']['items']) : 0;
-                $decoded['products'] = $decoded['cart']['items'] ?? [];
-                $decoded['shop_name'] = (string) $this->context->shop->name;
-                $decoded['shop_url'] = (string) ($decoded['shop_url'] ?? $this->context->link->getBaseLink((int) $this->context->shop->id, true));
+                $decoded['event']['name'] = $eventName;
+                $decoded['shop']['id'] = (int) ($decoded['shop']['id'] ?? $this->context->shop->id);
+                $decoded['shop']['id_lang'] = (int) ($decoded['shop']['id_lang'] ?? $this->context->language->id);
+                $decoded['shop']['name'] = (string) ($decoded['shop']['name'] ?? $this->context->shop->name);
+                $decoded['shop']['url'] = (string) ($decoded['shop']['url'] ?? $this->context->link->getBaseLink((int) $this->context->shop->id, true));
+                $decoded['shop']['contact_url'] = (string) ($decoded['shop']['contact_url'] ?? '');
+                $decoded['customer']['id'] = (int) ($decoded['customer']['id'] ?? 0);
+                $decoded['customer']['name'] = (string) ($decoded['customer']['name'] ?? trim((string) (($decoded['customer']['firstname'] ?? '') . ' ' . ($decoded['customer']['lastname'] ?? ''))));
+                $decoded['customer']['firstname'] = (string) ($decoded['customer']['firstname'] ?? '');
+                $decoded['customer']['lastname'] = (string) ($decoded['customer']['lastname'] ?? '');
+                $decoded['customer']['email'] = (string) ($decoded['customer']['email'] ?? '');
+                $decoded['customer']['is_customer'] = (bool) ($decoded['customer']['is_customer'] ?? ((int) ($decoded['customer']['id'] ?? 0) > 0));
+                $decoded['cart']['id'] = (int) ($decoded['cart']['id'] ?? 0);
+                $decoded['cart']['url'] = (string) ($decoded['cart']['url'] ?? '');
+                $decoded['cart']['recovery_url'] = (string) ($decoded['cart']['recovery_url'] ?? $decoded['cart']['url']);
+                $decoded['cart']['abandoned_at'] = (string) ($decoded['cart']['abandoned_at'] ?? '');
+                $decoded['cart']['abandoned_minutes'] = (int) ($decoded['cart']['abandoned_minutes'] ?? 0);
+                $decoded['cart']['products_count'] = (int) ($decoded['cart']['products_count'] ?? (is_array($decoded['cart']['items'] ?? null) ? count($decoded['cart']['items']) : 0));
+                $decoded['cart']['total'] = $decoded['cart']['total'] ?? ($decoded['cart']['totals']['total'] ?? 0);
+                $decoded['cart']['items'] = $decoded['cart']['items'] ?? [];
 
                 return $decoded;
             }
         }
 
         return [
-            'event_name' => $eventName,
-            'id_lang' => (int) $this->context->language->id,
-            'id_shop' => (int) $this->context->shop->id,
-            'customer_id' => 0,
-            'customer_name' => 'Cliente de prueba',
-            'customer_firstname' => 'Cliente',
-            'customer_lastname' => 'Prueba',
-            'customer_email' => 'cliente@example.com',
-            'cart_id' => 1,
-            'cart_url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
-            'recovery_url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
-            'abandoned_at' => date(DATE_ATOM),
-            'abandoned_minutes' => 60,
-            'currency' => 'USD',
-            'cart_total' => 0,
-            'cart_products_count' => 0,
-            'products' => [],
             'related_products' => [],
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+            'reviews' => [],
+            'event' => [
+                'name' => $eventName,
+            ],
+            'shop' => [
+                'id' => (int) $this->context->shop->id,
+                'id_lang' => (int) $this->context->language->id,
+                'name' => (string) $this->context->shop->name,
+                'url' => $this->context->link->getBaseLink((int) $this->context->shop->id, true),
+                'contact_url' => '',
+            ],
+            'customer' => [
+                'id' => 0,
+                'name' => 'Cliente de prueba',
+                'firstname' => 'Cliente',
+                'lastname' => 'Prueba',
+                'email' => 'cliente@example.com',
+                'is_customer' => false,
+            ],
+            'cart' => [
+                'id' => 1,
+                'url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
+                'recovery_url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
+                'abandoned_at' => date(DATE_ATOM),
+                'updated_at' => date(DATE_ATOM),
+                'abandoned_minutes' => 60,
+                'products_count' => 0,
+                'total' => 0.0,
+                'totals' => $this->getCartTotals(new Cart()),
+                'items' => [],
+            ],
         ];
     }
 
@@ -97,66 +110,54 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
         $idCart = (int) ($params['id_cart'] ?? 0);
         $cart = $params['cart'] instanceof Cart ? $params['cart'] : new Cart($idCart);
         $customer = $params['customer'] instanceof Customer ? $params['customer'] : new Customer((int) $cart->id_customer);
-        $currency = new Currency((int) $cart->id_currency);
         $idLang = (int) ($cart->id_lang ?: $this->context->language->id);
         $idShop = (int) ($cart->id_shop ?: $this->context->shop->id);
         $cartUrl = $this->context->link->getPageLink('cart', true, $idLang, 'action=show');
         $abandonedAt = (string) ($params['abandoned_at'] ?? $cart->date_upd);
         $abandonedMinutes = $this->calculateAbandonedMinutes($cart->date_upd, $abandonedAt);
-        $products = $this->getCartProducts($cart, $currency);
+        $products = $this->getCartProducts($cart);
         $totals = $this->getCartTotals($cart);
 
-        $context = [
-            'event_name' => ModuleConstants::EVENT_CART_ABANDONED,
-            'id_lang' => $idLang,
-            'id_shop' => $idShop,
-            'customer_id' => Validate::isLoadedObject($customer) ? (int) $customer->id : 0,
-            'customer_name' => Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
-            'customer_firstname' => Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
-            'customer_lastname' => Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
-            'customer_email' => Validate::isLoadedObject($customer) ? (string) $customer->email : '',
-            'cart_id' => (int) $cart->id,
-            'cart_url' => $cartUrl,
-            'recovery_url' => $cartUrl,
-            'abandoned_at' => $abandonedAt,
-            'abandoned_minutes' => $abandonedMinutes,
-            'currency' => Validate::isLoadedObject($currency) ? (string) $currency->iso_code : '',
-            'cart_total' => $totals['total'] ?? 0,
-            'cart_products_count' => $this->countCartItems($products),
-            'products' => $products,
+        return [
+            'event' => [
+                'name' => ModuleConstants::EVENT_CART_ABANDONED,
+            ],
+            'shop' => [
+                'id' => $idShop,
+                'id_lang' => $idLang,
+                'name' => (string) $this->context->shop->name,
+                'url' => $this->context->link->getBaseLink($idShop, true),
+                'contact_url' => '',
+            ],
+            'customer' => [
+                'id' => Validate::isLoadedObject($customer) ? (int) $customer->id : 0,
+                'name' => Validate::isLoadedObject($customer) ? trim($customer->firstname . ' ' . $customer->lastname) : '',
+                'firstname' => Validate::isLoadedObject($customer) ? (string) $customer->firstname : '',
+                'lastname' => Validate::isLoadedObject($customer) ? (string) $customer->lastname : '',
+                'email' => Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+                'is_customer' => Validate::isLoadedObject($customer) && (int) $customer->id > 0,
+            ],
+            'cart' => [
+                'id' => (int) $cart->id,
+                'url' => $cartUrl,
+                'recovery_url' => $cartUrl,
+                'abandoned_at' => $abandonedAt,
+                'updated_at' => $cart->date_upd ? date(DATE_ATOM, strtotime((string) $cart->date_upd)) : null,
+                'abandoned_minutes' => $abandonedMinutes,
+                'products_count' => $this->countCartItems($products),
+                'total' => $totals['total'] ?? 0,
+                'totals' => $totals,
+                'items' => $products,
+            ],
             'related_products' => [],
-            'shop_name' => (string) $this->context->shop->name,
-            'shop_url' => $this->context->link->getBaseLink($idShop, true),
+            'reviews' => [],
         ];
-
-        $context['cart'] = [
-            'abandoned_minutes' => $abandonedMinutes,
-            'id' => (int) $cart->id,
-            'items' => $products,
-            'totals' => $totals,
-            'updated_at' => $cart->date_upd ? date(DATE_ATOM, strtotime((string) $cart->date_upd)) : null,
-            'url' => $cartUrl,
-        ];
-        $context['customer'] = [
-            'email' => $context['customer_email'],
-            'firstname' => $context['customer_firstname'],
-            'id' => $context['customer_id'],
-            'is_customer' => $context['customer_id'] > 0,
-            'lastname' => $context['customer_lastname'],
-        ];
-        $context['misc'] = [
-            'cart_url' => $cartUrl,
-            'contact_url' => '',
-            'shop_url' => $context['shop_url'],
-        ];
-
-        return $context;
     }
 
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function getCartProducts(Cart $cart, ?Currency $currency): array
+    private function getCartProducts(Cart $cart): array
     {
         if (!Validate::isLoadedObject($cart)) {
             return [];
@@ -184,7 +185,6 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
                 'unit_price_tax_amount' => 0.0,
                 'unit_price_tax_excl' => isset($product['price']) ? (float) $product['price'] : 0.0,
                 'unit_price_tax_incl' => isset($product['price_wt']) ? (float) $product['price_wt'] : 0.0,
-                'currency' => Validate::isLoadedObject($currency) ? (string) $currency->iso_code : '',
             ];
         }
 

@@ -17,7 +17,8 @@ class TabInstaller
             'Mail Send VELOX',
             $this->getConfigureSectionTabId(),
             'markunread_mailbox',
-            'mailsendvx_dashboard'
+            'mailsendvx_dashboard',
+            0
         );
 
         if (!$idParent) {
@@ -26,32 +27,53 @@ class TabInstaller
 
         return $this->createOrUpdateAdminTab(
             $moduleName,
-            ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
-            'Configuracion',
+            ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
+            'Dashboard',
             $idParent,
-            'settings',
-            'mailsendvx_configuration'
+            'dashboard',
+            'mailsendvx_dashboard',
+            0
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
             'Templates',
             $idParent,
             'mail',
-            'mailsendvx_templates'
+            'mailsendvx_templates',
+            1
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
-            ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
-            'Dashboard',
+            ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS,
+            'Wrapper',
             $idParent,
-            'dashboard',
-            'mailsendvx_dashboard'
+            'view_quilt',
+            'mailsendvx_wrappers',
+            2
+        ) && $this->createOrUpdateAdminTab(
+            $moduleName,
+            ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
+            'Configuracion',
+            $idParent,
+            'settings',
+            'mailsendvx_configuration',
+            3
+        ) && $this->createOrUpdateAdminTab(
+            $moduleName,
+            ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS,
+            'Documentacion',
+            $idParent,
+            'description',
+            'mailsendvx_documentation',
+            4
         );
     }
 
     public function uninstall(): bool
     {
         $classes = [
+            ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS,
             ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
+            ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS,
             ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
             ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
             ModuleConstants::ADMIN_PARENT_TAB_CLASS,
@@ -72,7 +94,7 @@ class TabInstaller
         return true;
     }
 
-    private function createOrUpdateAdminTab(string $moduleName, string $className, string $name, int $idParent, string $icon, ?string $routeName = null): int
+    private function createOrUpdateAdminTab(string $moduleName, string $className, string $name, int $idParent, string $icon, ?string $routeName = null, ?int $position = null): int
     {
         $idTab = (int) Tab::getIdFromClassName($className);
         $tab = $idTab ? new Tab($idTab) : new Tab();
@@ -83,6 +105,9 @@ class TabInstaller
         $tab->module = $moduleName;
         $tab->id_parent = $idParent;
         $tab->icon = $icon;
+        if ($position !== null) {
+            $tab->position = $position;
+        }
 
         foreach (Language::getLanguages(false) as $language) {
             $tab->name[(int) $language['id_lang']] = $name;
