@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\Form\Type\TemplateFormType;
-use Velox\MailSendVx\Service\TemplateAdminService;
+use Velox\MailSendVx\Service\Template\TemplateAdminService;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 
 class TemplatesController extends FrameworkBundleAdminController

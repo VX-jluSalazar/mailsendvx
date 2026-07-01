@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\ContextBuilder;
 
 use Context;
 use Customer;

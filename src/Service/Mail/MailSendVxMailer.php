@@ -1,11 +1,12 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Mail;
 
 use Throwable;
 use Velox\MailSendVx\Provider\MailSendVxMailProviderInterface;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
+use Velox\MailSendVx\Service\Template\MailSendVxTemplateRenderer;
 
 class MailSendVxMailer
 {

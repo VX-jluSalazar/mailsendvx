@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Template;
 
 use Twig\Environment;
 use Twig\Loader\ArrayLoader;

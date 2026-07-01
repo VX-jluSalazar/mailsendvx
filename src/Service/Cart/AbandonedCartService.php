@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Cart;
 
 use Configuration;
 use Context;
@@ -14,6 +14,8 @@ use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
+use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class AbandonedCartService
 {

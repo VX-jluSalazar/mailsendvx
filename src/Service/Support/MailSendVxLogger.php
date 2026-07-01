@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Support;
 
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 

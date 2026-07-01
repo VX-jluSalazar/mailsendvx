@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Template;
 
 use Context;
 use Language;
@@ -9,6 +9,10 @@ use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
+use Velox\MailSendVx\Service\Event\EventTemplateContextService;
+use Velox\MailSendVx\Service\Event\OrderStateEventService;
+use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
+use Velox\MailSendVx\Service\Mail\MailTemplateWrapperService;
 
 class TemplateAdminService
 {

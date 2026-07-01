@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Event;
 
 use Configuration;
 use Context;
@@ -12,6 +12,7 @@ use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
+use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class InstantEmailHookService
 {

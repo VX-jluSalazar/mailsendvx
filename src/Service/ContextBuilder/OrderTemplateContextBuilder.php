@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\ContextBuilder;
 
 use Address;
 use Carrier;
@@ -16,6 +16,7 @@ use State;
 use Tools;
 use Validate;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\Event\OrderStateEventService;
 
 class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterface
 {

@@ -6,7 +6,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Velox\MailSendVx\ModuleConstants;
-use Velox\MailSendVx\Service\TemplateAdminService;
+use Velox\MailSendVx\Service\Template\TemplateAdminService;
 
 class DocumentationController extends FrameworkBundleAdminController
 {

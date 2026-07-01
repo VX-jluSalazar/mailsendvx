@@ -5,9 +5,9 @@ namespace Velox\MailSendVx\Controller\Admin;
 use Language;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Velox\MailSendVx\Service\MailTemplateWrapperService;
-use Velox\MailSendVx\Service\TemplateAdminService;
-use Velox\MailSendVx\Service\TemplateContentService;
+use Velox\MailSendVx\Service\Mail\MailTemplateWrapperService;
+use Velox\MailSendVx\Service\Template\TemplateAdminService;
+use Velox\MailSendVx\Service\Template\TemplateContentService;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 
 class WrappersController extends FrameworkBundleAdminController

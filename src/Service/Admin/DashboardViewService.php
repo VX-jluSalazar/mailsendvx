@@ -1,6 +1,6 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Admin;
 
 use Context;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;

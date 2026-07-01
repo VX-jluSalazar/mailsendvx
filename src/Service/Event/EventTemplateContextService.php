@@ -1,8 +1,12 @@
 <?php
 
-namespace Velox\MailSendVx\Service;
+namespace Velox\MailSendVx\Service\Event;
 
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
+use Velox\MailSendVx\Service\ContextBuilder\CustomerTemplateContextBuilder;
+use Velox\MailSendVx\Service\ContextBuilder\NewsletterTemplateContextBuilder;
+use Velox\MailSendVx\Service\ContextBuilder\OrderTemplateContextBuilder;
 
 class EventTemplateContextService
 {
