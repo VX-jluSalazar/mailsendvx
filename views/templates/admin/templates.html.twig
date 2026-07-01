@@ -47,32 +47,38 @@
               {{ form_errors(templateForm) }}
               {{ form_row(templateForm.id_mailsendvx_template) }}
 
-              <div>
-                <div>
-                  {{ form_row(templateForm.event_name) }}
+              <div class="row">
+                <div class="col-md-6">
+                  {{ form_label(templateForm.event_name) }}
+                  {{ form_errors(templateForm.event_name) }}
+                  {{ form_widget(templateForm.event_name) }}
+                  <p class="form-text text-muted mailsendvx-event-code-help">
+                    {{ 'Código del evento seleccionado:'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                    <code id="mailsendvx-event-code">{{ templateForm.event_name.vars.value ?: '' }}</code>
+                  </p>
                 </div>
-                <div>
+                <div class="col-md-6">
                   {{ form_row(templateForm.template_name) }}
                 </div>
               </div>
 
-              <div>
-                <div>
+              <div class="row">
+                <div class="col-md-8">
                   {{ form_row(templateForm.subject) }}
                 </div>
-                <div>
+                <div class="col-md-4">
                   {{ form_row(templateForm.active) }}
                 </div>
               </div>
 
-              <div>
-                <div>
+              <div class="row">
+                <div class="col-md-6">
                   {{ form_row(templateForm.mail_template) }}
                 </div>
-                <div>
+                <div class="col-md-3">
                   {{ form_row(templateForm.id_lang) }}
                 </div>
-                <div>
+                <div class="col-md-3">
                   {{ form_row(templateForm.id_shop) }}
                 </div>
               </div>
@@ -213,4 +219,21 @@
       </div>
     </div>
   </section>
+  <script>
+    (function () {
+      var eventField = document.getElementById('{{ templateForm.event_name.vars.id }}');
+      var eventCode = document.getElementById('mailsendvx-event-code');
+
+      if (!eventField || !eventCode) {
+        return;
+      }
+
+      var syncEventCode = function () {
+        eventCode.textContent = eventField.value || '';
+      };
+
+      syncEventCode();
+      eventField.addEventListener('change', syncEventCode);
+    })();
+  </script>
 {% endblock %}

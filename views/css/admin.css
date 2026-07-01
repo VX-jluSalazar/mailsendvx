@@ -136,6 +136,25 @@
   padding: 12px 14px;
 }
 
+.mailsendvx-event-code-help {
+  margin-bottom: 0;
+  margin-top: 8px;
+}
+
+.mailsendvx-event-code-help code {
+  background: #f5f9fb;
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 8px;
+  color: var(--mailsendvx-ink);
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+}
+
+.mailsendvx-form .row + .row {
+  margin-top: 4px;
+}
+
 .mailsendvx-note-list {
   color: var(--mailsendvx-ink);
   line-height: 1.7;
