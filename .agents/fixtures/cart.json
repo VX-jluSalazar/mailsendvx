@@ -1,116 +1,122 @@
 {
-    "cart": {
-        "abandoned_minutes": 0,
-        "id": 15,
-        "items": [
-            {
-                "category_id": 3,
-                "category_name": "SALUD",
-                "id_product": 2,
-                "id_product_attribute": 0,
-                "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
-                "name": "FOCUS",
-                "product_url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
-                "quantity": 1,
-                "reference": "Focus 30ml",
-                "tax_name": "IVA EC 15%",
-                "tax_rate": 15,
-                "total_price": 58.65,
-                "total_price_tax_amount": 7.65,
-                "total_price_tax_excl": 51,
-                "total_price_tax_incl": 58.65,
-                "unit_price": 58.65,
-                "unit_price_tax_amount": 7.65,
-                "unit_price_tax_excl": 51,
-                "unit_price_tax_incl": 58.65
-            },
-            {
-                "category_id": 3,
-                "category_name": "SALUD",
-                "id_product": 3,
-                "id_product_attribute": 0,
-                "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
-                "name": "SUENOS",
-                "product_url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
-                "quantity": 1,
-                "reference": "Dulces Sueñozzz 30ml",
-                "tax_name": "IVA EC 15%",
-                "tax_rate": 15,
-                "total_price": 58.65,
-                "total_price_tax_amount": 7.65,
-                "total_price_tax_excl": 51,
-                "total_price_tax_incl": 58.65,
-                "unit_price": 58.65,
-                "unit_price_tax_amount": 7.65,
-                "unit_price_tax_excl": 51,
-                "unit_price_tax_incl": 58.65
-            }
-        ],
-        "totals": {
-            "discounts": 0,
-            "discounts_tax_amount": 0,
-            "discounts_tax_excl": 0,
-            "discounts_tax_incl": 0,
-            "products": 117.3,
-            "products_tax_amount": 15.30,
-            "products_tax_excl": 102,
-            "products_tax_incl": 117.3,
-            "shipping": 0,
-            "shipping_tax_amount": 0,
-            "shipping_tax_excl": 0,
-            "shipping_tax_incl": 0,
-            "total": 117.3,
-            "total_tax_amount": 15.30,
-            "total_tax_excl": 102,
-            "total_tax_incl": 117.3
-        },
-        "updated_at": "2026-05-22T23:21:30+02:00",
-        "url": "https://hemp.desarrollovelox.com/carrito?action=show"
+  "event": {
+    "name": "cart_abandoned"
+  },
+  "shop": {
+    "id": 1,
+    "id_lang": 1,
+    "name": "HEMP Ecuador",
+    "url": "https://hemp.desarrollovelox.com",
+    "contact_url": "https://api.whatsapp.com/send/?phone=593123456789"
+  },
+  "customer": {
+    "id": 10,
+    "name": "Jonathan Salazar",
+    "firstname": "Jonathan",
+    "lastname": "Salazar",
+    "email": "jonathan@velox.ec",
+    "is_customer": true
+  },
+  "cart": {
+    "id": 15,
+    "url": "https://hemp.desarrollovelox.com/carrito?action=show",
+    "recovery_url": "https://hemp.desarrollovelox.com/carrito?action=show",
+    "abandoned_at": "2026-05-22T23:21:30+02:00",
+    "updated_at": "2026-05-22T22:21:30+02:00",
+    "abandoned_minutes": 60,
+    "products_count": 2,
+    "total": 117.3,
+    "totals": {
+      "products": 117.3,
+      "products_tax_amount": 15.3,
+      "products_tax_excl": 102,
+      "products_tax_incl": 117.3,
+      "shipping": 0,
+      "shipping_tax_amount": 0,
+      "shipping_tax_excl": 0,
+      "shipping_tax_incl": 0,
+      "discounts": 0,
+      "discounts_tax_amount": 0,
+      "discounts_tax_excl": 0,
+      "discounts_tax_incl": 0,
+      "total": 117.3,
+      "total_tax_amount": 15.3,
+      "total_tax_excl": 102,
+      "total_tax_incl": 117.3
     },
-    "currency": "USD",
-    "customer": {
-        "email": "jonathan@velox.ec",
-        "firstname": "Jonathan",
-        "id": 10,
-        "is_customer": true,
-        "lastname": "Salazar"
+    "items": [
+      {
+        "category_id": 3,
+        "category_name": "SALUD",
+        "id_product": 2,
+        "id_product_attribute": 0,
+        "name": "FOCUS",
+        "reference": "Focus 30ml",
+        "quantity": 1,
+        "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
+        "product_url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
+        "tax_name": "",
+        "tax_rate": 15,
+        "unit_price": 58.65,
+        "unit_price_tax_amount": 0,
+        "unit_price_tax_excl": 51,
+        "unit_price_tax_incl": 58.65,
+        "total_price": 58.65,
+        "total_price_tax_amount": 0,
+        "total_price_tax_excl": 51,
+        "total_price_tax_incl": 58.65
+      },
+      {
+        "category_id": 3,
+        "category_name": "SALUD",
+        "id_product": 3,
+        "id_product_attribute": 0,
+        "name": "SUENOS",
+        "reference": "Dulces Sueñozzz 30ml",
+        "quantity": 1,
+        "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
+        "product_url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
+        "tax_name": "",
+        "tax_rate": 15,
+        "unit_price": 58.65,
+        "unit_price_tax_amount": 0,
+        "unit_price_tax_excl": 51,
+        "unit_price_tax_incl": 58.65,
+        "total_price": 58.65,
+        "total_price_tax_amount": 0,
+        "total_price_tax_excl": 51,
+        "total_price_tax_incl": 58.65
+      }
+    ]
+  },
+  "related_products": [
+    {
+      "id": 16,
+      "name": "GOMCBD",
+      "price": 24.44,
+      "url": "https://hemp.desarrollovelox.com/salud/16-gomcbd.html",
+      "image_url": "https://hemp.desarrollovelox.com/16-home_default/gomcbd.jpg"
     },
-    "misc": {
-        "cart_url": "https://hemp.desarrollovelox.com/carrito?action=show",
-        "contact_url": "https://api.whatsapp.com/send/?phone=593123456789",
-        "shop_url": "https://hemp.desarrollovelox.com"
+    {
+      "id": 24,
+      "name": "COLAGENO",
+      "price": 43.99,
+      "url": "https://hemp.desarrollovelox.com/salud/24-colageno.html",
+      "image_url": "https://hemp.desarrollovelox.com/23-home_default/colageno.jpg"
+    }
+  ],
+  "reviews": [
+    {
+      "author": "Erick",
+      "rating": 5,
+      "title": "Atención rápida y personalizada",
+      "content": "Me ayudaron a elegir lo que realmente necesitaba."
     },
-    "related_products": [
-        {
-            "category_id": 3,
-            "category_name": "SALUD",
-            "currency": "USD",
-            "id_product": 24,
-            "image_url": "https://hemp.desarrollovelox.com/23-home_default/colageno.jpg",
-            "name": "COLAGENO",
-            "price": 43.9875,
-            "product_url": "https://hemp.desarrollovelox.com/salud/24-colageno.html"
-        },
-        {
-            "category_id": 3,
-            "category_name": "SALUD",
-            "currency": "USD",
-            "id_product": 16,
-            "image_url": "https://hemp.desarrollovelox.com/16-home_default/gomcbd.jpg",
-            "name": "GOMCBD",
-            "price": 24.4375,
-            "product_url": "https://hemp.desarrollovelox.com/salud/16-gomcbd.html"
-        },
-        {
-            "category_id": 3,
-            "category_name": "SALUD",
-            "currency": "USD",
-            "id_product": 10,
-            "image_url": "https://hemp.desarrollovelox.com/10-home_default/minisuenos.jpg",
-            "name": "MINISUENOS",
-            "price": 29.325,
-            "product_url": "https://hemp.desarrollovelox.com/salud/10-minisuenos.html"
-        }
-    ],
-    "shop_url": "https://hemp.desarrollovelox.com"
+    {
+      "author": "Carlos",
+      "rating": 5,
+      "title": "Entrega exprés sin fallos",
+      "content": "Todo llegó perfecto y rápido."
+    }
+  ]
 }
