@@ -47,6 +47,7 @@ La regla base queda asi:
 - `02D` Worker, locking e idempotencia: `modules/mailsendvx/.agents/FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md`
 - `02E` Condiciones y cancelaciones: `modules/mailsendvx/.agents/FASE_02E_CONDICIONES_Y_CANCELACIONES.md`
 - `02F` UI operativa y casos comerciales: `modules/mailsendvx/.agents/FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md`
+- `02G` Pruebas automatizadas: `modules/mailsendvx/.agents/FASE_02G_PRUEBAS_AUTOMATIZADAS.md`
 
 ## Orden recomendado de implementacion
 
@@ -56,6 +57,7 @@ La regla base queda asi:
 4. `02D` para procesar cola en forma segura.
 5. `02E` para evitar envios fuera de contexto.
 6. `02F` para cerrar UI y casos comerciales iniciales.
+7. `02G` para blindar scheduler, queue, worker y regresiones con pruebas automatizadas.
 
 ## Dependencias heredadas
 
@@ -75,4 +77,5 @@ La prioridad correcta es:
 2. soportar delays configurables por paso,
 3. garantizar idempotencia y locking,
 4. conectar el worker con el mailer Twig ya existente,
-5. recien despues construir la UI operativa completa.
+5. recien despues construir la UI operativa completa,
+6. formalizar una suite de pruebas antes de seguir ampliando casos comerciales.
