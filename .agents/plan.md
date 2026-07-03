@@ -11,7 +11,13 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | `FASE_00_BASE_MODULO.md` | Fase 0 | Diseno tecnico, instalacion, hooks, tablas, servicios base, configuracion y logs. |
 | `FASE_01_EMAILS_INSTANTANEOS.md` | Fase 1 | Correos disparados por eventos inmediatos como cambio de estado, registro de cliente y newsletter. |
 | `FASE_01C_ABANDONED_CART.md` | Fase 1C | Deteccion de carrito abandonado, dedupe por ciclo, evento `cart_abandoned` y uso inmediato en templates. |
-| `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Motor de eventos, flujos, cola, cron, carrito abandonado, postcompra, condiciones y reintentos. |
+| `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Vision general de flows, templates reutilizables, cola, worker, condiciones y UI operativa. |
+| `FASE_02A_MODELO_BASE_DE_FLOWS.md` | Fase 2A | Modelo base de flow, steps, trigger y `context_type`. |
+| `FASE_02B_TEMPLATES_REUTILIZABLES.md` | Fase 2B | Templates desacoplados de `event_name` y compatibles por `context_type`. |
+| `FASE_02C_SCHEDULER_Y_QUEUE.md` | Fase 2C | Scheduler, delays y persistencia de jobs en cola. |
+| `FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md` | Fase 2D | Worker, locking, idempotencia y reintentos. |
+| `FASE_02E_CONDICIONES_Y_CANCELACIONES.md` | Fase 2E | Condiciones de flow y step, cancelaciones y reevaluaciones. |
+| `FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md` | Fase 2F | UI operativa y primeros flujos comerciales. |
 | `FASE_03_MAQUETADOR_VISUAL.md` | Fase 3 | Editor visual, bloques, JSON de diseno, renderizado responsive y previews con datos reales. |
 
 ## Roadmap recomendado
