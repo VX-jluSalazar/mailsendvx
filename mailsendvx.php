@@ -76,6 +76,7 @@ class Mailsendvx extends Module
 
     public function hookDisplayBackOfficeHeader(): void
     {
+        $this->getInstaller()->ensureRuntimeSchema();
         $this->getInstaller()->ensureHooks($this);
         $this->getInstaller()->ensureAdminTabs($this);
 

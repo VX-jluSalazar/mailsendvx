@@ -63,7 +63,14 @@ class MailSendVxMailer
      */
     public function sendTemplate(array $template, string $recipient, ?string $recipientName, array $variables, int $idLang, int $idShop): bool
     {
-        $eventName = (string) $template['event_name'];
+        $eventName = (string) ($template['event_name'] ?? '');
+        if ($eventName === '' && isset($variables['event']['name']) && is_scalar($variables['event']['name'])) {
+            $eventName = (string) $variables['event']['name'];
+        }
+        if ($eventName === '') {
+            $eventName = 'template_context:' . (string) ($template['context_type'] ?? 'unknown');
+        }
+
         $renderedTemplate = $this->renderer->renderTemplate($template, $variables);
         $subject = $renderedTemplate['subject'];
         $mailTemplate = (string) $template['mail_template'];

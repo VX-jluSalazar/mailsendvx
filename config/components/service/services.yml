@@ -27,6 +27,14 @@ services:
       $connection: '@doctrine.dbal.default_connection'
       $databasePrefix: '%database_prefix%'
 
+  prestashop.module.mailsendvx.repository.flow:
+    class: Velox\MailSendVx\Repository\MailSendVxFlowRepository
+    public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+
   prestashop.module.mailsendvx.repository.abandoned_cart:
     class: Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository
     public: true

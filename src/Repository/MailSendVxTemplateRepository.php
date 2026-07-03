@@ -3,14 +3,20 @@
 namespace Velox\MailSendVx\Repository;
 
 use Doctrine\DBAL\ParameterType;
+use InvalidArgumentException;
+use Velox\MailSendVx\ModuleConstants;
 
 class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
 {
     /**
      * @return array<string, mixed>|false
      */
-    public function findByScope(string $eventName, int $idLang, int $idShop, ?int $excludeId = null)
+    public function findByScope(?string $eventName, int $idLang, int $idShop, ?int $excludeId = null)
     {
+        if ($eventName === null || $eventName === '') {
+            return false;
+        }
+
         $queryBuilder = $this->createQueryBuilder();
         $queryBuilder
             ->select('*')
@@ -117,11 +123,22 @@ class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
     public function save(array $data, ?int $idTemplate = null): bool
     {
         $now = date('Y-m-d H:i:s');
-        $eventName = (string) $data['event_name'];
+        $eventName = trim((string) ($data['event_name'] ?? ''));
+        $eventName = $eventName !== '' ? $eventName : null;
+        $contextType = trim((string) ($data['context_type'] ?? ''));
         $idLang = (int) $data['id_lang'];
         $idShop = (int) $data['id_shop'];
 
-        if (!$idTemplate) {
+        if ($contextType === '' || !ModuleConstants::isSupportedContextType($contextType)) {
+            throw new InvalidArgumentException('Template context_type is required and must be supported.');
+        }
+
+        $eventContextType = ModuleConstants::getEventContextType($eventName);
+        if ($eventContextType !== null && $eventContextType !== $contextType) {
+            throw new InvalidArgumentException('Template event_name is not compatible with the selected context_type.');
+        }
+
+        if (!$idTemplate && $eventName !== null) {
             $existing = $this->findByScope($eventName, $idLang, $idShop);
             if ($existing) {
                 $idTemplate = (int) $existing['id_mailsendvx_template'];
@@ -132,6 +149,7 @@ class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
             'id_shop' => $idShop,
             'id_lang' => $idLang,
             'event_name' => $eventName,
+            'context_type' => $contextType,
             'name' => (string) $data['name'],
             'subject' => (string) $data['subject'],
             'mail_template' => (string) $data['mail_template'],
@@ -153,7 +171,7 @@ class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
                     ['id_mailsendvx_template' => $idTemplate]
                 );
 
-                if (!empty($data['active'])) {
+                if (!empty($data['active']) && $eventName !== null) {
                     $this->deactivateByScope($eventName, $idLang, $idShop, (int) $idTemplate);
                 }
 
@@ -166,7 +184,7 @@ class MailSendVxTemplateRepository extends AbstractMailSendVxRepository
             $this->connection->insert($this->getTableName('mailsendvx_template'), $row);
             $insertedId = (int) $this->connection->lastInsertId();
 
-            if (!empty($data['active'])) {
+            if (!empty($data['active']) && $eventName !== null) {
                 $this->deactivateByScope($eventName, $idLang, $idShop, $insertedId);
             }
 

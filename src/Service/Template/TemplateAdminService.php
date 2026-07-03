@@ -3,6 +3,7 @@
 namespace Velox\MailSendVx\Service\Template;
 
 use Context;
+use InvalidArgumentException;
 use Language;
 use Validate;
 use Twig\Error\Error as TwigError;
@@ -113,6 +114,19 @@ class TemplateAdminService
     /**
      * @return array<string, string>
      */
+    public function getSupportedContextTypes(): array
+    {
+        return [
+            ModuleConstants::CONTEXT_ORDER => 'Pedido',
+            ModuleConstants::CONTEXT_CART => 'Carrito',
+            ModuleConstants::CONTEXT_CUSTOMER => 'Cliente',
+            ModuleConstants::CONTEXT_NEWSLETTER => 'Newsletter',
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
     public function getWrapperChoices(): array
     {
         $wrappers = $this->wrapperService->getAvailableWrappers();
@@ -137,7 +151,12 @@ class TemplateAdminService
     public function getFormData(?int $idTemplate = null): array
     {
         $template = $idTemplate ? $this->templateRepository->findById($idTemplate) : null;
-        $eventName = $template ? (string) $template['event_name'] : ModuleConstants::EVENT_ORDER_STATUS_CHANGED;
+        $eventName = $template ? (string) ($template['event_name'] ?? '') : '';
+        $contextType = $template
+            ? (string) ($template['context_type'] ?? ModuleConstants::getEventContextType($eventName))
+            : ModuleConstants::CONTEXT_ORDER;
+        $contextType = ModuleConstants::isSupportedContextType($contextType) ? $contextType : ModuleConstants::CONTEXT_ORDER;
+        $previewEventName = $eventName !== '' ? $eventName : (string) ModuleConstants::getDefaultEventForContext($contextType);
         $idLang = $template ? (int) $template['id_lang'] : (int) $this->context->language->id;
         $wrapperName = $template ? (string) $template['mail_template'] : 'mailsendvx_default';
         $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
@@ -146,19 +165,20 @@ class TemplateAdminService
             'id_mailsendvx_template' => $template ? (int) $template['id_mailsendvx_template'] : 0,
             'id_shop' => $template ? (int) $template['id_shop'] : (int) $this->context->shop->id,
             'id_lang' => $idLang,
+            'context_type' => $contextType,
             'event_name' => $eventName,
             'template_name' => $template ? (string) $template['name'] : '',
             'subject' => $template ? (string) $template['subject'] : '',
             'mail_template' => $wrapperName,
             'html_content' => $template ? (string) $template['html_content'] : $this->templateContentService->getDefaultHtmlContent(
-                $eventName,
+                $previewEventName,
                 ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED,
                 ModuleConstants::EVENT_CART_ABANDONED
             ),
             'text_content' => $template ? (string) $template['text_content'] : $this->templateContentService->getDefaultTextContent(
-                $eventName,
+                $previewEventName,
                 ModuleConstants::EVENT_ORDER_CREATED,
                 ModuleConstants::EVENT_CUSTOMER_REGISTERED,
                 ModuleConstants::EVENT_NEWSLETTER_REGISTERED,
@@ -176,9 +196,22 @@ class TemplateAdminService
      */
     public function saveTemplate(array $data): bool
     {
+        $contextType = trim((string) ($data['context_type'] ?? ''));
+        $eventName = trim((string) ($data['event_name'] ?? ''));
+
+        if ($contextType === '' || !ModuleConstants::isSupportedContextType($contextType)) {
+            throw new InvalidArgumentException('El context_type de la plantilla es obligatorio y debe ser compatible.');
+        }
+
+        $eventContextType = ModuleConstants::getEventContextType($eventName);
+        if ($eventContextType !== null && $eventContextType !== $contextType) {
+            throw new InvalidArgumentException('El evento seleccionado no es compatible con el context_type de la plantilla.');
+        }
+
         $htmlContent = (string) ($data['html_content'] ?? '');
         $textContent = $this->templateContentService->generateTextContentFromHtml($htmlContent);
         $wrapperName = trim((string) ($data['mail_template'] ?? 'mailsendvx_default'));
+        $idLang = (int) ($data['id_lang'] ?? $this->context->language->id);
         $wrapperHtml = (string) ($data['wrapper_html'] ?? '');
         $wrapperText = trim((string) ($data['wrapper_text'] ?? ''));
         if ($wrapperText === '' && $wrapperHtml !== '') {
@@ -193,14 +226,25 @@ class TemplateAdminService
             $wrapperName = 'mailsendvx_default';
         }
 
+        if ($wrapperHtml === '' || $wrapperText === '') {
+            $resolvedWrapperContent = $this->resolveWrapperContentForSave($wrapperName, $idLang);
+            if ($wrapperHtml === '') {
+                $wrapperHtml = $resolvedWrapperContent['html'];
+            }
+            if ($wrapperText === '') {
+                $wrapperText = $resolvedWrapperContent['text'];
+            }
+        }
+
         if (!empty($data['save_wrapper_changes']) || !$this->wrapperService->wrapperExists($wrapperName)) {
             $this->wrapperService->saveWrapperContent($wrapperName, $wrapperHtml, $wrapperText);
         }
 
         return $this->templateRepository->save([
             'id_shop' => (int) ($data['id_shop'] ?? $this->context->shop->id),
-            'id_lang' => (int) ($data['id_lang'] ?? $this->context->language->id),
-            'event_name' => (string) ($data['event_name'] ?? ''),
+            'id_lang' => $idLang,
+            'context_type' => $contextType,
+            'event_name' => $eventName,
             'name' => (string) ($data['template_name'] ?? ''),
             'subject' => (string) ($data['subject'] ?? ''),
             'mail_template' => $wrapperName,
@@ -210,6 +254,26 @@ class TemplateAdminService
             'provider' => 'prestashop_mail',
             'active' => !empty($data['active']),
         ], !empty($data['id_mailsendvx_template']) ? (int) $data['id_mailsendvx_template'] : null);
+    }
+
+    /**
+     * @return array{html: string, text: string}
+     */
+    private function resolveWrapperContentForSave(string $wrapperName, int $idLang): array
+    {
+        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
+        if ($wrapperContent['html'] !== '' && $wrapperContent['text'] !== '') {
+            return $wrapperContent;
+        }
+
+        if ($wrapperName !== 'mailsendvx_default') {
+            $fallbackContent = $this->wrapperService->getWrapperContent('mailsendvx_default', $idLang);
+            if ($fallbackContent['html'] !== '' && $fallbackContent['text'] !== '') {
+                return $fallbackContent;
+            }
+        }
+
+        throw new InvalidArgumentException('No se encontró contenido válido para el wrapper seleccionado. Revisa la sección Wrapper y vuelve a intentarlo.');
     }
 
     public function deleteTemplate(int $idTemplate): bool
@@ -234,7 +298,10 @@ class TemplateAdminService
         try {
             $this->templateRenderer->renderTemplate(
                 $template,
-                $this->getPreviewContext((string) $template['event_name'])
+                $this->getPreviewContext(
+                    (string) ($template['event_name'] ?? ''),
+                    (string) ($template['context_type'] ?? '')
+                )
             );
         } catch (TwigError $exception) {
             return sprintf('Twig syntax error: %s', $exception->getMessage());
@@ -244,7 +311,10 @@ class TemplateAdminService
             $template,
             $recipient,
             null,
-            $this->getPreviewContext((string) $template['event_name']),
+            $this->getPreviewContext(
+                (string) ($template['event_name'] ?? ''),
+                (string) ($template['context_type'] ?? '')
+            ),
             (int) ($template['id_lang'] ?: $this->context->language->id),
             (int) ($template['id_shop'] ?: $this->context->shop->id)
         );
@@ -266,7 +336,10 @@ class TemplateAdminService
             return null;
         }
 
-        $variables = $this->getPreviewContext((string) $template['event_name']);
+        $variables = $this->getPreviewContext(
+            (string) ($template['event_name'] ?? ''),
+            (string) ($template['context_type'] ?? '')
+        );
 
         return [
             'name' => (string) $template['name'],
@@ -299,9 +372,21 @@ class TemplateAdminService
     /**
      * @return array<string, mixed>
      */
-    private function getPreviewContext(string $eventName): array
+    private function getPreviewContext(string $eventName, string $contextType): array
     {
-        $sample = $this->eventContextService->getSampleContext($eventName);
+        $resolvedContextType = $contextType !== '' ? $contextType : (string) ModuleConstants::getEventContextType($eventName);
+        $resolvedEventName = $eventName !== '' ? $eventName : (string) ModuleConstants::getDefaultEventForContext($resolvedContextType);
+        if ($resolvedContextType === '' || $resolvedEventName === '') {
+            return [];
+        }
+
+        $sample = $this->eventContextService->getSampleContextForContextType($resolvedContextType, $resolvedEventName);
+        if ($eventName === '') {
+            $sample['_preview_source'] = 'sample';
+
+            return $sample;
+        }
+
         $event = $this->eventRepository->findLatestByEvent($eventName, (int) $this->context->shop->id);
         if (!$event || empty($event['payload'])) {
             $sample['_preview_source'] = 'sample';

@@ -115,4 +115,28 @@ class EventTemplateContextService
 
         return [];
     }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function getSampleContextForContextType(string $contextType, ?string $eventName = null): array
+    {
+        $resolvedEventName = $eventName ?: ModuleConstants::getDefaultEventForContext($contextType);
+        if (!$resolvedEventName) {
+            return [];
+        }
+
+        switch ($contextType) {
+            case ModuleConstants::CONTEXT_ORDER:
+                return $this->orderBuilder->buildSampleContext($resolvedEventName);
+            case ModuleConstants::CONTEXT_CART:
+                return $this->cartBuilder->buildSampleContext($resolvedEventName);
+            case ModuleConstants::CONTEXT_CUSTOMER:
+                return $this->customerBuilder->buildSampleContext($resolvedEventName);
+            case ModuleConstants::CONTEXT_NEWSLETTER:
+                return $this->newsletterBuilder->buildSampleContext($resolvedEventName);
+            default:
+                return [];
+        }
+    }
 }

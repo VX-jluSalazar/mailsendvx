@@ -6,9 +6,9 @@
     <div class="mailsendvx-hero">
       <div class="mailsendvx-hero__copy">
         <span class="mailsendvx-eyebrow">{{ 'Estudio de plantillas'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
-        <h1 class="mailsendvx-page-title">{{ 'Plantillas de correo instantáneo'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <h1 class="mailsendvx-page-title">{{ 'Plantillas instantáneas y reutilizables'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
         <p class="mailsendvx-page-subtitle">
-          {{ 'Prepara mensajes por evento, previsualiza el contenido renderizado y mantén una sola plantilla activa por evento, idioma y tienda.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          {{ 'Prepara mensajes por evento o por context_type, previsualiza el contenido renderizado y reutiliza plantillas dentro de flows sin acoplarlas al disparo instantáneo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
         </p>
       </div>
       <div class="mailsendvx-status-cluster">
@@ -41,44 +41,55 @@
           </h3>
           <div class="card-body">
             <div class="mailsendvx-inline-note">
-              {{ 'Si ya existe otra plantilla activa para el mismo evento, idioma y tienda, se desactivará automáticamente.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {{ 'Las plantillas con evento funcionan como disparos instantáneos. Si guardas una activa para el mismo evento, idioma y tienda, la anterior se desactivará automáticamente. Si dejas el evento vacío, la plantilla queda reutilizable para flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}
             </div>
             <div class="form-wrapper">
               {{ form_errors(templateForm) }}
               {{ form_row(templateForm.id_mailsendvx_template) }}
 
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
+                  {{ form_row(templateForm.context_type) }}
+                </div>
+                <div class="col-md-12">
                   {{ form_label(templateForm.event_name) }}
                   {{ form_errors(templateForm.event_name) }}
                   {{ form_widget(templateForm.event_name) }}
-                  <p class="form-text text-muted mailsendvx-event-code-help">
-                    {{ 'Código del evento seleccionado:'|trans({}, 'Modules.Mailsendvx.Admin') }}
-                    <code id="mailsendvx-event-code">{{ templateForm.event_name.vars.value ?: '' }}</code>
-                  </p>
+                  <div class="col-md-12">
+                    <p class="form-text text-muted mailsendvx-event-code-help">
+                      {{ 'Código del evento seleccionado:'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                      <code id="mailsendvx-event-code">{{ templateForm.event_name.vars.value ?: '' }}</code>
+                    </p>
+                    <p class="form-text text-muted">
+                      {{ 'Solo se muestran como válidos los eventos compatibles con el context_type actual.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                    </p>
+                  </div>
                 </div>
-                <div class="col-md-6">
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
                   {{ form_row(templateForm.template_name) }}
                 </div>
               </div>
 
               <div class="row">
-                <div class="col-md-8">
+                <div class="col-md-12">
                   {{ form_row(templateForm.subject) }}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-12">
                   {{ form_row(templateForm.active) }}
                 </div>
               </div>
 
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-12">
                   {{ form_row(templateForm.mail_template) }}
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-12">
                   {{ form_row(templateForm.id_lang) }}
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-12">
                   {{ form_row(templateForm.id_shop) }}
                 </div>
               </div>
@@ -161,6 +172,8 @@
               <thead>
                 <tr>
                   <th>{{ 'Name'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Uso'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                  <th>{{ 'Contexto'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
                   <th>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
                   <th>{{ 'Subject'|trans({}, 'Admin.Global') }}</th>
                   <th>{{ 'Language'|trans({}, 'Admin.Global') }}</th>
@@ -177,8 +190,15 @@
                       <div class="mailsendvx-table-meta">#{{ template.id_mailsendvx_template }}</div>
                     </td>
                     <td>
+                      <span class="mailsendvx-badge {{ template.event_name ? 'mailsendvx-badge--success' : 'mailsendvx-badge--muted' }}">{{ template.usage_label }}</span>
+                    </td>
+                    <td>
+                      <span class="mailsendvx-badge mailsendvx-badge--event">{{ template.context_label }}</span>
+                      <div class="mailsendvx-table-meta"><code>{{ template.context_type }}</code></div>
+                    </td>
+                    <td>
                       <span class="mailsendvx-badge mailsendvx-badge--event">{{ template.event_label }}</span>
-                      <div class="mailsendvx-table-meta"><code>{{ template.event_name }}</code></div>
+                      <div class="mailsendvx-table-meta"><code>{{ template.event_name ?: 'NULL' }}</code></div>
                     </td>
                     <td>{{ template.subject }}</td>
                     <td>{{ template.language_label }}</td>
@@ -221,18 +241,50 @@
   </section>
   <script>
     (function () {
+      var contextField = document.getElementById('{{ templateForm.context_type.vars.id }}');
       var eventField = document.getElementById('{{ templateForm.event_name.vars.id }}');
       var eventCode = document.getElementById('mailsendvx-event-code');
+      var eventContextMap = {{ eventContextMap|json_encode|raw }};
 
-      if (!eventField || !eventCode) {
+      if (!contextField || !eventField || !eventCode) {
         return;
       }
+
+      var syncEventChoices = function () {
+        var selectedContext = contextField.value || '';
+        var hasSelectedOption = false;
+
+        Array.prototype.forEach.call(eventField.options, function (option) {
+          if (!option.value) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+          }
+
+          var matches = eventContextMap[option.value] === selectedContext;
+          option.hidden = !matches;
+          option.disabled = !matches;
+
+          if (matches && option.value === eventField.value) {
+            hasSelectedOption = true;
+          }
+        });
+
+        if (eventField.value && !hasSelectedOption) {
+          eventField.value = '';
+        }
+      };
 
       var syncEventCode = function () {
         eventCode.textContent = eventField.value || '';
       };
 
+      syncEventChoices();
       syncEventCode();
+      contextField.addEventListener('change', function () {
+        syncEventChoices();
+        syncEventCode();
+      });
       eventField.addEventListener('change', syncEventCode);
     })();
   </script>

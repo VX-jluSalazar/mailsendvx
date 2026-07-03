@@ -18,9 +18,15 @@ class TemplateFormType extends TranslatorAwareType
     {
         $builder
             ->add('id_mailsendvx_template', HiddenType::class, ['required' => false])
+            ->add('context_type', ChoiceType::class, [
+                'label' => $this->trans('Tipo de contexto', 'Modules.Mailsendvx.Admin'),
+                'choices' => $options['context_choices'],
+            ])
             ->add('event_name', ChoiceType::class, [
                 'label' => $this->trans('Evento', 'Modules.Mailsendvx.Admin'),
                 'choices' => $options['event_choices'],
+                'required' => false,
+                'placeholder' => $this->trans('Sin disparo instantáneo', 'Modules.Mailsendvx.Admin'),
             ])
             ->add('template_name', TextType::class, [
                 'label' => $this->trans('Nombre de la plantilla', 'Modules.Mailsendvx.Admin'),
@@ -68,7 +74,9 @@ class TemplateFormType extends TranslatorAwareType
         parent::configureOptions($resolver);
         $resolver->setDefaults([
             'data_class' => null,
+            'allow_extra_fields' => true,
             'event_choices' => [],
+            'context_choices' => [],
             'wrapper_choices' => [],
             'language_choices' => [],
             'default_shop_id' => 1,
