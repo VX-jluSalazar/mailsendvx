@@ -68,18 +68,26 @@ class DatabaseInstaller
                 `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
                 `id_template` INT UNSIGNED NULL,
                 `id_flow` INT UNSIGNED NULL,
+                `flow_version` INT UNSIGNED NOT NULL DEFAULT 1,
+                `step_id` VARCHAR(128) NULL,
                 `event_name` VARCHAR(128) NOT NULL,
                 `recipient` VARCHAR(191) NOT NULL,
                 `payload` MEDIUMTEXT NULL,
+                `payload_json` MEDIUMTEXT NULL,
                 `status` VARCHAR(32) NOT NULL DEFAULT "pending",
                 `attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                `max_attempts` TINYINT UNSIGNED NOT NULL DEFAULT 3,
                 `scheduled_at` DATETIME NOT NULL,
                 `processed_at` DATETIME NULL,
+                `locked_at` DATETIME NULL,
+                `lock_token` VARCHAR(64) NULL,
                 `last_error` TEXT NULL,
+                `cancel_reason` VARCHAR(191) NULL,
                 `date_add` DATETIME NOT NULL,
                 `date_upd` DATETIME NOT NULL,
                 PRIMARY KEY (`id_mailsendvx_queue`),
                 KEY `next_jobs` (`status`, `scheduled_at`),
+                KEY `flow_step` (`id_flow`, `step_id`),
                 KEY `recipient` (`recipient`)
             ) ENGINE=' . $engine . ' ' . $charset,
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_abandoned_cart` (
@@ -126,7 +134,8 @@ class DatabaseInstaller
         }
 
         return $this->ensureTemplateSchema()
-            && $this->ensureFlowSchema();
+            && $this->ensureFlowSchema()
+            && $this->ensureQueueSchema();
     }
 
     public function uninstall(): bool
@@ -175,6 +184,21 @@ class DatabaseInstaller
             && $this->executeSilently('UPDATE `' . $table . '` SET `context_type` = "customer" WHERE (`context_type` IS NULL OR `context_type` = "") AND `trigger_event` = "customer_registered"')
             && $this->executeSilently('UPDATE `' . $table . '` SET `context_type` = "newsletter" WHERE (`context_type` IS NULL OR `context_type` = "") AND `trigger_event` = "newsletter_registered"')
             && $this->ensureIndex($table, 'context_priority', 'ALTER TABLE `' . $table . '` ADD KEY `context_priority` (`context_type`, `priority`, `active`)');
+    }
+
+    private function ensureQueueSchema(): bool
+    {
+        $table = _DB_PREFIX_ . 'mailsendvx_queue';
+
+        return $this->ensureColumn($table, 'flow_version', 'ALTER TABLE `' . $table . '` ADD `flow_version` INT UNSIGNED NOT NULL DEFAULT 1 AFTER `id_flow`')
+            && $this->ensureColumn($table, 'step_id', 'ALTER TABLE `' . $table . '` ADD `step_id` VARCHAR(128) NULL AFTER `flow_version`')
+            && $this->ensureColumn($table, 'payload_json', 'ALTER TABLE `' . $table . '` ADD `payload_json` MEDIUMTEXT NULL AFTER `payload`')
+            && $this->ensureColumn($table, 'max_attempts', 'ALTER TABLE `' . $table . '` ADD `max_attempts` TINYINT UNSIGNED NOT NULL DEFAULT 3 AFTER `attempts`')
+            && $this->ensureColumn($table, 'locked_at', 'ALTER TABLE `' . $table . '` ADD `locked_at` DATETIME NULL AFTER `processed_at`')
+            && $this->ensureColumn($table, 'lock_token', 'ALTER TABLE `' . $table . '` ADD `lock_token` VARCHAR(64) NULL AFTER `locked_at`')
+            && $this->ensureColumn($table, 'cancel_reason', 'ALTER TABLE `' . $table . '` ADD `cancel_reason` VARCHAR(191) NULL AFTER `last_error`')
+            && $this->executeSilently('UPDATE `' . $table . '` SET `payload_json` = `payload` WHERE (`payload_json` IS NULL OR `payload_json` = "") AND `payload` IS NOT NULL')
+            && $this->ensureIndex($table, 'flow_step', 'ALTER TABLE `' . $table . '` ADD KEY `flow_step` (`id_flow`, `step_id`)');
     }
 
     private function ensureColumn(string $table, string $column, string $sql): bool

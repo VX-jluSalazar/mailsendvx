@@ -15,6 +15,7 @@ use Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
+use Velox\MailSendVx\Service\Flow\FlowSchedulerService;
 use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class AbandonedCartService
@@ -49,13 +50,19 @@ class AbandonedCartService
      */
     private $mailer;
 
+    /**
+     * @var FlowSchedulerService
+     */
+    private $flowScheduler;
+
     public function __construct(
         Context $context,
         CartTemplateContextBuilder $cartContextBuilder,
         MailSendVxAbandonedCartRepository $repository,
         MailSendVxEventRepository $eventRepository,
         MailSendVxLogRepository $logRepository,
-        MailSendVxMailer $mailer
+        MailSendVxMailer $mailer,
+        FlowSchedulerService $flowScheduler
     ) {
         $this->context = $context;
         $this->cartContextBuilder = $cartContextBuilder;
@@ -63,6 +70,7 @@ class AbandonedCartService
         $this->eventRepository = $eventRepository;
         $this->logRepository = $logRepository;
         $this->mailer = $mailer;
+        $this->flowScheduler = $flowScheduler;
     }
 
     /**
@@ -274,6 +282,12 @@ class AbandonedCartService
                 'cart',
                 (string) $candidate['id_cart'],
                 'captured',
+                (int) ($candidate['id_shop'] ?? $this->context->shop->id)
+            );
+
+            $this->flowScheduler->scheduleEvent(
+                ModuleConstants::EVENT_CART_ABANDONED,
+                $variables,
                 (int) ($candidate['id_shop'] ?? $this->context->shop->id)
             );
 

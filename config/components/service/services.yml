@@ -71,6 +71,19 @@ services:
     arguments:
       $repository: '@prestashop.module.mailsendvx.repository.log'
 
+  prestashop.module.mailsendvx.service.flow_condition_evaluator:
+    class: Velox\MailSendVx\Service\Flow\FlowConditionEvaluator
+    public: true
+
+  prestashop.module.mailsendvx.service.flow_scheduler:
+    class: Velox\MailSendVx\Service\Flow\FlowSchedulerService
+    public: true
+    arguments:
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $conditionEvaluator: '@prestashop.module.mailsendvx.service.flow_condition_evaluator'
+
   prestashop.module.mailsendvx.service.mailer:
     class: Velox\MailSendVx\Service\Mail\MailSendVxMailer
     public: true
@@ -191,6 +204,7 @@ services:
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
 
   prestashop.module.mailsendvx.service.abandoned_cart:
     class: Velox\MailSendVx\Service\Cart\AbandonedCartService
@@ -202,6 +216,7 @@ services:
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
 
   prestashop.module.mailsendvx.service.template_content:
     class: Velox\MailSendVx\Service\Template\TemplateContentService

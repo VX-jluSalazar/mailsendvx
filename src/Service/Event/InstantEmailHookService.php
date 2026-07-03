@@ -12,6 +12,7 @@ use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
+use Velox\MailSendVx\Service\Flow\FlowSchedulerService;
 use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class InstantEmailHookService
@@ -51,6 +52,11 @@ class InstantEmailHookService
      */
     private $mailer;
 
+    /**
+     * @var FlowSchedulerService
+     */
+    private $flowScheduler;
+
     public function __construct(
         Context $context,
         EventTemplateContextService $eventContextService,
@@ -58,7 +64,8 @@ class InstantEmailHookService
         MailSendVxTemplateRepository $templateRepository,
         MailSendVxEventRepository $eventRepository,
         MailSendVxLogRepository $logRepository,
-        MailSendVxMailer $mailer
+        MailSendVxMailer $mailer,
+        FlowSchedulerService $flowScheduler
     )
     {
         $this->context = $context;
@@ -68,6 +75,7 @@ class InstantEmailHookService
         $this->eventRepository = $eventRepository;
         $this->logRepository = $logRepository;
         $this->mailer = $mailer;
+        $this->flowScheduler = $flowScheduler;
     }
 
     public function handleOrderStatusPostUpdate(array $params, Module $module): void
@@ -226,6 +234,8 @@ class InstantEmailHookService
                 'captured',
                 $idShop
             );
+
+            $this->flowScheduler->scheduleEvent($eventName, $variables, $idShop);
 
             if (!$recipient || !Validate::isEmail($recipient)) {
                 $this->logRepository->add(

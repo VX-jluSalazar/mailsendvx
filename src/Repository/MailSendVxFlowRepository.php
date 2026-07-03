@@ -33,7 +33,7 @@ class MailSendVxFlowRepository extends AbstractMailSendVxRepository
             ->addOrderBy('date_upd', 'DESC')
             ->setMaxResults(max(1, min(500, $limit)));
 
-        return $queryBuilder->execute()->fetchAllAssociative();
+        return $this->hydrateFlows($queryBuilder->execute()->fetchAllAssociative());
     }
 
     /**
@@ -50,7 +50,39 @@ class MailSendVxFlowRepository extends AbstractMailSendVxRepository
 
         $result = $queryBuilder->execute()->fetchAssociative();
 
-        return $result ?: false;
+        if (!$result) {
+            return false;
+        }
+
+        $flows = $this->hydrateFlows([$result]);
+
+        return $flows[0] ?? false;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function findActiveByTriggerEvent(string $triggerEvent, ?int $idShop = null): array
+    {
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_flow'))
+            ->where('trigger_event = :triggerEvent')
+            ->andWhere('active = :active')
+            ->orderBy('priority', 'DESC')
+            ->addOrderBy('id_mailsendvx_flow', 'ASC')
+            ->setParameter('triggerEvent', $triggerEvent)
+            ->setParameter('active', 1, ParameterType::INTEGER);
+
+        if ($idShop !== null) {
+            $queryBuilder
+                ->andWhere('id_shop IN (:allShops, :idShop)')
+                ->setParameter('allShops', 0, ParameterType::INTEGER)
+                ->setParameter('idShop', $idShop, ParameterType::INTEGER);
+        }
+
+        return $this->hydrateFlows($queryBuilder->execute()->fetchAllAssociative());
     }
 
     /**
@@ -183,5 +215,27 @@ class MailSendVxFlowRepository extends AbstractMailSendVxRepository
         }
 
         return $normalized;
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $rows
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function hydrateFlows(array $rows): array
+    {
+        foreach ($rows as &$row) {
+            $conditions = json_decode((string) ($row['conditions_json'] ?? '[]'), true);
+            $steps = json_decode((string) ($row['steps_json'] ?? '[]'), true);
+
+            $row['conditions_json'] = is_array($conditions) ? $conditions : [];
+            $row['steps_json'] = is_array($steps) ? $steps : [];
+            $row['version'] = max(1, (int) ($row['version'] ?? 1));
+            $row['priority'] = (int) ($row['priority'] ?? 0);
+            $row['active'] = !empty($row['active']);
+        }
+        unset($row);
+
+        return $rows;
     }
 }
