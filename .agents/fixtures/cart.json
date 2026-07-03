@@ -46,46 +46,54 @@
     },
     "items": [
       {
-        "category_id": 3,
-        "category_name": "SALUD",
-        "id_product": 2,
-        "id_product_attribute": 0,
+        "id": 2,
+        "attribute_id": 0,
         "name": "FOCUS",
         "reference": "Focus 30ml",
         "quantity": 1,
-        "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
-        "product_url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
-        "tax_name": "",
-        "tax_rate": 15,
         "unit_price": 58.65,
-        "unit_price_tax_amount": 0,
         "unit_price_tax_excl": 51,
         "unit_price_tax_incl": 58.65,
         "total_price": 58.65,
-        "total_price_tax_amount": 0,
         "total_price_tax_excl": 51,
-        "total_price_tax_incl": 58.65
+        "total_price_tax_incl": 58.65,
+        "url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
+        "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
+        "attributes": [
+          {
+            "label": "Color",
+            "value": "red"
+          },
+          {
+            "label": "Size",
+            "value": "Medium"
+          }
+        ]
       },
       {
-        "category_id": 3,
-        "category_name": "SALUD",
-        "id_product": 3,
-        "id_product_attribute": 0,
+        "id": 3,
+        "attribute_id": 0,
         "name": "SUENOS",
         "reference": "Dulces Sueñozzz 30ml",
         "quantity": 1,
-        "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
-        "product_url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
-        "tax_name": "",
-        "tax_rate": 15,
         "unit_price": 58.65,
-        "unit_price_tax_amount": 0,
         "unit_price_tax_excl": 51,
         "unit_price_tax_incl": 58.65,
         "total_price": 58.65,
-        "total_price_tax_amount": 0,
         "total_price_tax_excl": 51,
-        "total_price_tax_incl": 58.65
+        "total_price_tax_incl": 58.65,
+        "url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
+        "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
+        "attributes": [
+          {
+            "label": "Color",
+            "value": "red"
+          },
+          {
+            "label": "Size",
+            "value": "Medium"
+          }
+        ]
       }
     ]
   },
@@ -108,12 +116,16 @@
   "reviews": [
     {
       "author": "Erick",
+      "firstname": "Erick",
+      "lastname": "",
       "rating": 5,
       "title": "Atención rápida y personalizada",
       "content": "Me ayudaron a elegir lo que realmente necesitaba."
     },
     {
       "author": "Carlos",
+      "firstname": "Carlos",
+      "lastname": "",
       "rating": 5,
       "title": "Entrega exprés sin fallos",
       "content": "Todo llegó perfecto y rápido."

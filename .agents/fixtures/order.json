@@ -91,7 +91,7 @@
         "total_price_tax_excl": 51,
         "total_price_tax_incl": 58.65,
         "url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
-        "image_url": "",
+        "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
         "attributes": [
             {
                 "label": "Color",
@@ -116,7 +116,7 @@
         "total_price_tax_excl": 51,
         "total_price_tax_incl": 58.65,
         "url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
-        "image_url": "",
+        "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
         "attributes": [
             {
                 "label": "Color",
@@ -149,12 +149,16 @@
   "reviews": [
     {
       "author": "Erick",
+      "firstname": "Erick",
+      "lastname": "",
       "rating": 5,
       "title": "Atención rápida y personalizada",
       "content": "Me ayudaron a elegir lo que realmente necesitaba."
     },
     {
       "author": "Carlos",
+      "firstname": "Carlos",
+      "lastname": "",
       "rating": 5,
       "title": "Entrega exprés sin fallos",
       "content": "Todo llegó perfecto y rápido."

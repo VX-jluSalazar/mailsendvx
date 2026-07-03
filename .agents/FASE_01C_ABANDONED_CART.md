@@ -32,6 +32,7 @@ La documentacion anterior marcaba esta fase como pendiente, pero el modulo ya in
 - Endpoint cron `controllers/front/abandonedcartcron.php` protegido por token.
 - Deteccion de recuperacion cuando el carrito vuelve a moverse o se convierte en pedido.
 - Contexto enriquecido para plantillas de carrito abandonado mediante `CartTemplateContextBuilder`.
+- Productos del carrito normalizados a la misma forma base usada por `order.products`, mantenidos dentro de `cart.items` por compatibilidad.
 - Integracion completa con logs y eventos historicos del modulo.
 
 ### Pendiente recomendado
@@ -133,9 +134,12 @@ Esta fase ya reutiliza correctamente:
 
 ## Archivos principales
 
-- `src/Service/AbandonedCartService.php`
+- `src/Service/Cart/AbandonedCartService.php`
 - `src/Repository/MailSendVxAbandonedCartRepository.php`
-- `src/Service/CartTemplateContextBuilder.php`
+- `src/Service/ContextBuilder/CartTemplateContextBuilder.php`
+- `src/Service/ContextBuilder/CartContextSegmentBuilder.php`
+- `src/Service/ContextBuilder/ProductsContextBuilder.php`
+- `src/Service/ContextBuilder/TemplateContextPayloadBuilder.php`
 - `controllers/front/abandonedcartcron.php`
 - `src/Install/DatabaseInstaller.php`
 - `src/Install/ConfigurationInstaller.php`

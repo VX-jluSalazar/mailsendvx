@@ -64,7 +64,7 @@ Adicionalmente, desde la migracion iniciada en junio de 2026:
 - El modulo ya cuenta con una base moderna inicial en `composer.json`, `src/` y `config/`.
 - El autoload del modulo ya se genera con Composer y ya no depende de un `vendor/autoload.php` artesanal.
 - La instalacion, configuracion base, tablas y tabs ya delegan en instaladores dentro de `src/Install/`.
-- Los hooks instantaneos principales ya delegan en `src/Service/InstantEmailHookService.php`.
+- Los hooks instantaneos principales ya delegan en `src/Service/Event/InstantEmailHookService.php`.
 - `Configuracion`, `Templates` y `Dashboard` ya tienen una primera version basada en Symfony con rutas, controllers, forms y vistas Twig.
 - Los controladores legacy de admin se mantienen solo como puente de compatibilidad hacia las rutas Symfony.
 - Las vistas Smarty legacy de esas pantallas fueron retiradas.
@@ -127,6 +127,21 @@ Ejemplos:
 - `old_order_state_id`
 - `old_order_state_key`
 - `old_order_state_name`
+
+### Construccion moderna del payload
+
+La construccion de contexto ya usa `TemplateContextPayloadBuilder` como orquestador y builders de segmentos para:
+
+- `event`
+- `shop`
+- `customer`
+- `cart`
+- `order`
+- `products`
+- `related_products`
+- `reviews`
+
+Esto alinea envio real, previews, fixtures y documentacion con una sola estructura de payload compuesta.
 
 ### Impacto en el roadmap
 

@@ -28,6 +28,7 @@ class DocumentationController extends FrameworkBundleAdminController
         return $this->render('@Modules/mailsendvx/views/templates/admin/documentation.html.twig', [
             'shopName' => (string) $this->getContext()->shop->name,
             'contextBuilderSections' => $contextBuilderSections,
+            'contextSegmentGuide' => $this->getContextSegmentGuide(),
             'abandonedCartSettingsGuide' => $this->getAbandonedCartSettingsGuide(),
         ]);
     }
@@ -43,7 +44,7 @@ class DocumentationController extends FrameworkBundleAdminController
             [
                 'title' => 'Variables de Pedido',
                 'builder' => 'OrderTemplateContextBuilder',
-                'description' => 'Variables creadas por OrderTemplateContextBuilder para pedidos, cambios de estado y estados dinamicos del pedido.',
+                'description' => 'Payload compuesto por OrderTemplateContextBuilder usando builders de segmentos para event, shop, customer, order, products, related_products y reviews.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_ORDER_CREATED
                         || $eventName === ModuleConstants::EVENT_ORDER_STATUS_CHANGED
@@ -54,7 +55,7 @@ class DocumentationController extends FrameworkBundleAdminController
             [
                 'title' => 'Variables de Cliente',
                 'builder' => 'CustomerTemplateContextBuilder',
-                'description' => 'Variables creadas por CustomerTemplateContextBuilder para el registro de cliente.',
+                'description' => 'Payload compuesto por CustomerTemplateContextBuilder usando los segmentos base de event, shop y customer.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_CUSTOMER_REGISTERED;
                 },
@@ -62,7 +63,7 @@ class DocumentationController extends FrameworkBundleAdminController
             [
                 'title' => 'Variables de Newsletter',
                 'builder' => 'NewsletterTemplateContextBuilder',
-                'description' => 'Variables creadas por NewsletterTemplateContextBuilder para eventos de suscripcion newsletter.',
+                'description' => 'Payload compuesto por NewsletterTemplateContextBuilder usando los segmentos de event, shop y customer para suscripciones.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_NEWSLETTER_REGISTERED;
                 },
@@ -70,7 +71,7 @@ class DocumentationController extends FrameworkBundleAdminController
             [
                 'title' => 'Variables de Carrito',
                 'builder' => 'CartTemplateContextBuilder',
-                'description' => 'Variables creadas por CartTemplateContextBuilder para carrito abandonado y enlaces de recuperacion.',
+                'description' => 'Payload compuesto por CartTemplateContextBuilder usando los segmentos de event, shop, customer, cart, products, related_products y reviews.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_CART_ABANDONED;
                 },
@@ -131,6 +132,51 @@ class DocumentationController extends FrameworkBundleAdminController
         }
 
         return $sections;
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function getContextSegmentGuide(): array
+    {
+        return [
+            [
+                'name' => 'TemplateContextPayloadBuilder',
+                'description' => 'Builder padre que arma el payload final como rompecabezas y une los segmentos requeridos por cada evento.',
+            ],
+            [
+                'name' => 'EventContextSegmentBuilder',
+                'description' => 'Construye los datos base del evento, como `event.name` y metadatos puntuales como `newsletter_action`.',
+            ],
+            [
+                'name' => 'ShopContextSegmentBuilder',
+                'description' => 'Resuelve `shop.id`, `shop.id_lang`, `shop.name`, `shop.url` y extras como `contact_url`.',
+            ],
+            [
+                'name' => 'CustomerContextSegmentBuilder',
+                'description' => 'Normaliza el bloque `customer` y permite overrides para casos como newsletter o `is_customer` en carrito.',
+            ],
+            [
+                'name' => 'ProductsContextBuilder',
+                'description' => 'Normaliza los productos de order y cart a una misma estructura e incluye `attributes` dentro de cada producto.',
+            ],
+            [
+                'name' => 'CartContextSegmentBuilder',
+                'description' => 'Arma el bloque `cart` con totales, tiempos de abandono y la colección `cart.items` usando la estructura normalizada de products.',
+            ],
+            [
+                'name' => 'OrderContextSegmentBuilder',
+                'description' => 'Arma el bloque `order` con estados, totales, direcciones, shipping y `order.products`.',
+            ],
+            [
+                'name' => 'RelatedProductsContextProvider',
+                'description' => 'Resuelve `related_products` con prioridad por marca, accesorios y categoría.',
+            ],
+            [
+                'name' => 'ReviewsContextProvider',
+                'description' => 'Resuelve `reviews` desde `ps_bt_spr_shop_reviews` y agrega nombre y apellido del cliente cuando existe.',
+            ],
+        ];
     }
 
     /**

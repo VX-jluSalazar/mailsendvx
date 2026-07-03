@@ -36,7 +36,7 @@ La implementacion debe apoyarse en capacidades ya definidas e implementadas en f
 - `customer_registered` y `newsletter_registered` como triggers inmediatos reutilizables en flows.
 - `cart_abandoned` como trigger intermedio ya deduplicado y estabilizado por Fase 01C.
 - motor Twig para `subject`, `html_content` y `text_content`.
-- context builders por dominio y payloads enriquecidos para pedido, cliente y newsletter.
+- context builders por dominio y payloads enriquecidos compuestos con `TemplateContextPayloadBuilder` y builders de segmentos reutilizables para pedido, carrito, cliente, related products y reviews.
 - wrappers editables desde Back Office.
 - dashboard y logs como base de monitoreo.
 

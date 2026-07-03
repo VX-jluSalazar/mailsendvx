@@ -55,12 +55,40 @@ class DashboardViewService
      */
     public function getViewData(): array
     {
+        $recentLogs = $this->logRepository->getRecent(20);
+
         return [
             'templates_count' => $this->templateRepository->countAll(),
             'scheduled_count' => $this->queueRepository->countByStatus('scheduled'),
             'pending_count' => $this->queueRepository->countByStatus('pending'),
             'recent_events' => $this->eventRepository->getRecent(20),
-            'recent_logs' => $this->logRepository->getRecent(20),
+            'recent_logs' => $this->formatLogsForView($recentLogs),
         ];
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $logs
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatLogsForView(array $logs): array
+    {
+        foreach ($logs as &$log) {
+            $payload = [];
+            if (!empty($log['payload']) && is_string($log['payload'])) {
+                $decodedPayload = json_decode($log['payload'], true);
+                if (is_array($decodedPayload)) {
+                    $payload = $decodedPayload;
+                }
+            }
+
+            $log['payload_pretty'] = !empty($payload)
+                ? (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                : '{}';
+        }
+
+        unset($log);
+
+        return $logs;
     }
 }

@@ -78,30 +78,90 @@ services:
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
 
+  prestashop.module.mailsendvx.service.context_segment.event:
+    class: Velox\MailSendVx\Service\ContextBuilder\EventContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.shop:
+    class: Velox\MailSendVx\Service\ContextBuilder\ShopContextSegmentBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.context_segment.customer:
+    class: Velox\MailSendVx\Service\ContextBuilder\CustomerContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.products:
+    class: Velox\MailSendVx\Service\ContextBuilder\ProductsContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.context_segment.cart:
+    class: Velox\MailSendVx\Service\ContextBuilder\CartContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.order:
+    class: Velox\MailSendVx\Service\ContextBuilder\OrderContextSegmentBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.related_products_context:
+    class: Velox\MailSendVx\Service\ContextBuilder\RelatedProductsContextProvider
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.reviews_context:
+    class: Velox\MailSendVx\Service\ContextBuilder\ReviewsContextProvider
+    public: true
+
   prestashop.module.mailsendvx.service.context_builder.order:
     class: Velox\MailSendVx\Service\ContextBuilder\OrderTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
+      $orderSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.order'
+      $productsContextBuilder: '@prestashop.module.mailsendvx.service.context_segment.products'
+      $relatedProductsContextProvider: '@prestashop.module.mailsendvx.service.related_products_context'
+      $reviewsContextProvider: '@prestashop.module.mailsendvx.service.reviews_context'
 
   prestashop.module.mailsendvx.service.context_builder.customer:
     class: Velox\MailSendVx\Service\ContextBuilder\CustomerTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
 
   prestashop.module.mailsendvx.service.context_builder.newsletter:
     class: Velox\MailSendVx\Service\ContextBuilder\NewsletterTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
 
   prestashop.module.mailsendvx.service.context_builder.cart:
     class: Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
+      $cartSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.cart'
+      $productsContextBuilder: '@prestashop.module.mailsendvx.service.context_segment.products'
+      $relatedProductsContextProvider: '@prestashop.module.mailsendvx.service.related_products_context'
+      $reviewsContextProvider: '@prestashop.module.mailsendvx.service.reviews_context'
 
   prestashop.module.mailsendvx.service.event_context:
     class: Velox\MailSendVx\Service\Event\EventTemplateContextService

@@ -21,6 +21,26 @@ Si el diseñador quiere ver ejemplos completos del payload disponible por evento
 
 Esos archivos muestran ejemplos actuales del tipo de variables y arreglos que el módulo expone a Twig.
 
+## Arquitectura actual del contexto
+
+El payload final no se arma en un solo bloque rígido. El módulo compone el contexto con `TemplateContextPayloadBuilder` y piezas reutilizables:
+
+- `EventContextSegmentBuilder`
+- `ShopContextSegmentBuilder`
+- `CustomerContextSegmentBuilder`
+- `ProductsContextBuilder`
+- `CartContextSegmentBuilder`
+- `OrderContextSegmentBuilder`
+- `RelatedProductsContextProvider`
+- `ReviewsContextProvider`
+
+La idea práctica es simple:
+
+- `event`, `shop` y `customer` son segmentos base reutilizables,
+- `order` y `cart` agregan la información principal del evento,
+- `products`, `related_products` y `reviews` siguen contratos reutilizables entre payloads,
+- los fixtures reflejan esa misma estructura y deben tomarse como referencia de diseño.
+
 ## Modelo mental correcto
 
 En este módulo, un correo se compone de dos capas:
@@ -252,7 +272,14 @@ Para condiciones:
 
 Origen técnico:
 
-- `OrderTemplateContextBuilder`
+- `TemplateContextPayloadBuilder`
+- `EventContextSegmentBuilder`
+- `ShopContextSegmentBuilder`
+- `CustomerContextSegmentBuilder`
+- `OrderContextSegmentBuilder`
+- `ProductsContextBuilder`
+- `RelatedProductsContextProvider`
+- `ReviewsContextProvider`
 
 Aplica a:
 
@@ -401,6 +428,8 @@ Nota:
 ```twig
 {% for item in reviews %}
   {{ item.author }}
+  {{ item.firstname }}
+  {{ item.lastname }}
   {{ item.rating }}
   {{ item.title }}
   {{ item.content }}
@@ -472,7 +501,14 @@ Nota:
 
 Origen técnico:
 
-- `CartTemplateContextBuilder`
+- `TemplateContextPayloadBuilder`
+- `EventContextSegmentBuilder`
+- `ShopContextSegmentBuilder`
+- `CustomerContextSegmentBuilder`
+- `CartContextSegmentBuilder`
+- `ProductsContextBuilder`
+- `RelatedProductsContextProvider`
+- `ReviewsContextProvider`
 
 Aplica a:
 
@@ -507,18 +543,29 @@ Aplica a:
 
 ```twig
 {% for item in cart.items %}
-  {{ item.category_id }}
-  {{ item.category_name }}
-  {{ item.id_product }}
-  {{ item.id_product_attribute }}
-  {{ item.image_url }}
+  {{ item.id }}
+  {{ item.attribute_id }}
   {{ item.name }}
-  {{ item.product_url }}
-  {{ item.quantity }}
   {{ item.reference }}
-  {{ item.tax_rate }}
+  {{ item.quantity }}
   {{ item.total_price }}
   {{ item.unit_price }}
+  {{ item.unit_price_tax_excl }}
+  {{ item.unit_price_tax_incl }}
+  {{ item.total_price_tax_excl }}
+  {{ item.total_price_tax_incl }}
+  {{ item.url }}
+  {{ item.image_url }}
+{% endfor %}
+```
+
+### Atributos por producto del carrito
+
+```twig
+{% for item in cart.items %}
+  {% for attribute in item.attributes %}
+    {{ attribute.label }}: {{ attribute.value }}
+  {% endfor %}
 {% endfor %}
 ```
 
@@ -584,11 +631,18 @@ Aplica a:
 ```twig
 {% for item in reviews %}
   {{ item.author }}
+  {{ item.firstname }}
+  {{ item.lastname }}
   {{ item.rating }}
   {{ item.title }}
   {{ item.content }}
 {% endfor %}
 ```
+
+Nota:
+
+- `cart.items` mantiene ese nombre por compatibilidad,
+- cada item ahora sigue la misma estructura normalizada de `order.products`.
 
 ## Recomendación de uso para plantillas nuevas
 

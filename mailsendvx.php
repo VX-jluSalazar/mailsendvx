@@ -11,9 +11,9 @@ use Velox\MailSendVx\Install\DatabaseInstaller;
 use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\ModuleConstants;
-use Velox\MailSendVx\Service\AbandonedCartService;
-use Velox\MailSendVx\Service\InstantEmailHookService;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use Velox\MailSendVx\Service\Cart\AbandonedCartService;
+use Velox\MailSendVx\Service\Event\InstantEmailHookService;
 
 class Mailsendvx extends Module
 {

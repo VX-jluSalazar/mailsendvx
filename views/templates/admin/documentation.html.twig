@@ -16,7 +16,7 @@
           <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
         </div>
         <div class="mailsendvx-metric">
-          <span class="mailsendvx-metric__label">{{ 'Context builders'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <span class="mailsendvx-metric__label">{{ 'Payload builders'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
           <strong class="mailsendvx-metric__value">{{ contextBuilderSections|length }}</strong>
         </div>
         <div class="mailsendvx-metric">
@@ -77,6 +77,20 @@
 
       <div class="col-xl-5">
         <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">schema</i>
+            {{ 'Arquitectura de Contexto'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              {% for item in contextSegmentGuide %}
+                <li><strong><code>{{ item.name }}</code></strong>: {{ item.description }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
           <h3 class="card-header">
             <i class="material-icons">rule</i>
             {{ 'Checklist de escritura'|trans({}, 'Modules.Mailsendvx.Admin') }}

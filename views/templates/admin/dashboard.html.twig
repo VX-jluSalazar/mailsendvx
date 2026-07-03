@@ -132,7 +132,21 @@
                   </thead>
                   <tbody>
                     {% for log in recent_logs %}
-                      <tr>
+                      <tr class="mailsendvx-log-row"
+                          role="button"
+                          tabindex="0"
+                          data-log-details="{{ {
+                            id: log.id_mailsendvx_log,
+                            date_add: log.date_add,
+                            event_name: log.event_name,
+                            status: log.status,
+                            recipient: log.recipient ?: '-',
+                            message: log.message ?: '-',
+                            id_shop: log.id_shop ?: '-',
+                            id_template: log.id_template ?: '-',
+                            id_queue: log.id_queue ?: '-',
+                            payload_pretty: log.payload_pretty ?: '{}'
+                          }|json_encode|e('html_attr') }}">
                         <td>{{ log.date_add }}</td>
                         <td><code>{{ log.event_name }}</code></td>
                         <td>
@@ -158,4 +172,135 @@
       </div>
     </div>
   </section>
+
+  <div class="mailsendvx-modal" id="mailsendvx-log-modal" hidden>
+    <div class="mailsendvx-modal__backdrop" data-modal-close></div>
+    <div class="mailsendvx-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="mailsendvx-log-modal-title">
+      <div class="mailsendvx-modal__header">
+        <div>
+          <span class="mailsendvx-eyebrow">{{ 'Detalle del log'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <h3 id="mailsendvx-log-modal-title" class="mailsendvx-modal__title">{{ 'Log reciente'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+        </div>
+        <button type="button" class="close" aria-label="{{ 'Cerrar'|trans({}, 'Admin.Actions') }}" data-modal-close>
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="mailsendvx-modal__body">
+        <div class="mailsendvx-log-detail-grid">
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'ID'|trans({}, 'Admin.Global') }}</span>
+            <strong data-log-field="id">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Date'|trans({}, 'Admin.Global') }}</span>
+            <strong data-log-field="date_add">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Event'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+            <strong data-log-field="event_name">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Status'|trans({}, 'Admin.Global') }}</span>
+            <strong data-log-field="status">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Destinatario'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+            <strong data-log-field="recipient">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Template ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+            <strong data-log-field="id_template">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Queue ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+            <strong data-log-field="id_queue">-</strong>
+          </div>
+          <div class="mailsendvx-log-detail">
+            <span>{{ 'Shop ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+            <strong data-log-field="id_shop">-</strong>
+          </div>
+        </div>
+
+        <div class="mailsendvx-log-block">
+          <span class="mailsendvx-log-block__label">{{ 'Mensaje'|trans({}, 'Admin.Global') }}</span>
+          <pre class="mailsendvx-log-block__content" data-log-field="message">-</pre>
+        </div>
+
+        <div class="mailsendvx-log-block">
+          <span class="mailsendvx-log-block__label">{{ 'Payload JSON'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <pre class="mailsendvx-log-block__content mailsendvx-payload" data-log-field="payload_pretty">{}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modal = document.getElementById('mailsendvx-log-modal');
+      if (!modal) {
+        return;
+      }
+
+      var rows = document.querySelectorAll('.mailsendvx-log-row');
+      var closeTriggers = modal.querySelectorAll('[data-modal-close]');
+      var activeClass = 'mailsendvx-modal--open';
+
+      function fillModal(details) {
+        Object.keys(details).forEach(function (key) {
+          var target = modal.querySelector('[data-log-field="' + key + '"]');
+          if (target) {
+            target.textContent = details[key] || '-';
+          }
+        });
+      }
+
+      function openModal(details) {
+        fillModal(details);
+        modal.hidden = false;
+        modal.classList.add(activeClass);
+        document.body.classList.add('modal-open');
+      }
+
+      function closeModal() {
+        modal.hidden = true;
+        modal.classList.remove(activeClass);
+        document.body.classList.remove('modal-open');
+      }
+
+      rows.forEach(function (row) {
+        var open = function () {
+          var details = row.getAttribute('data-log-details');
+          if (!details) {
+            return;
+          }
+
+          try {
+            openModal(JSON.parse(details));
+          } catch (error) {
+          }
+        };
+
+        row.addEventListener('click', open);
+        row.addEventListener('keydown', function (event) {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            open();
+          }
+        });
+      });
+
+      closeTriggers.forEach(function (trigger) {
+        trigger.addEventListener('click', closeModal);
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape' && !modal.hidden) {
+          closeModal();
+        }
+      });
+    });
+  </script>
 {% endblock %}
