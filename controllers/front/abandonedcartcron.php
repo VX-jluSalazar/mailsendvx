@@ -13,22 +13,28 @@ class MailsendvxAbandonedcartcronModuleFrontController extends ModuleFrontContro
         $token = (string) Tools::getValue('token');
         $expectedToken = (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN);
 
-        header('Content-Type: application/json');
-
         if ($token === '' || !hash_equals($expectedToken, $token)) {
             http_response_code(403);
-            $this->ajaxRender(json_encode([
+            $this->respondAndExit([
                 'success' => false,
                 'message' => 'Invalid cron token.',
-            ]));
-
-            return;
+            ]);
         }
 
         $result = $this->module->get('prestashop.module.mailsendvx.service.abandoned_cart')->processDueCarts();
-        $this->ajaxRender(json_encode([
+        $this->respondAndExit([
             'success' => true,
             'result' => $result,
-        ]));
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function respondAndExit(array $payload): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $this->ajaxRender((string) json_encode($payload));
+        exit;
     }
 }

@@ -38,6 +38,15 @@ mailsendvx_documentation:
     _legacy_controller: AdminMailsendvxDocumentation
     _legacy_link: AdminMailsendvxDocumentation
 
+mailsendvx_documentation_fixture_download:
+  path: /mailsendvx/documentation/fixtures/{fixtureKey}/download
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DocumentationController::downloadFixtureAction'
+    _legacy_controller: AdminMailsendvxDocumentation
+  requirements:
+    fixtureKey: order|cart|subscriber
+
 mailsendvx_template_delete:
   path: /mailsendvx/templates/{idTemplate}/delete
   methods: [POST]

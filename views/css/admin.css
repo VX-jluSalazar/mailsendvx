@@ -121,6 +121,11 @@
   background: var(--mailsendvx-panel);
 }
 
+.mailsendvx-doc-card {
+  display: grid;
+  gap: 18px;
+}
+
 .mailsendvx-card--aside .card-body {
   background:
     linear-gradient(180deg, rgba(223, 245, 239, 0.52) 0%, rgba(255, 255, 255, 0) 100%),
@@ -222,6 +227,47 @@
 
 .mailsendvx-table tbody td {
   vertical-align: top;
+}
+
+.mailsendvx-doc-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mailsendvx-doc-table-wrap {
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.mailsendvx-doc-table {
+  margin-bottom: 0;
+}
+
+.mailsendvx-doc-table thead th {
+  background: #f7fafc;
+  border-bottom: 1px solid var(--mailsendvx-line);
+  color: var(--mailsendvx-ink);
+  font-size: 12px;
+}
+
+.mailsendvx-doc-table tbody tr:nth-child(even) td {
+  background: #fbfdfe;
+}
+
+.mailsendvx-doc-table tbody td {
+  border-top: 1px solid rgba(216, 224, 230, 0.7);
+  padding: 14px 16px;
+}
+
+.mailsendvx-doc-code {
+  background: transparent;
+  border: 0;
+  color: var(--mailsendvx-ink);
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
 }
 
 .mailsendvx-log-row {
@@ -586,7 +632,7 @@
 }
 
 .mailsendvx-reference-card__meta {
-  align-items: center;
+  align-items: start;
   display: flex;
   gap: 10px;
   justify-content: space-between;

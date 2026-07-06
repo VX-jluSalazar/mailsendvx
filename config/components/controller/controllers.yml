@@ -33,6 +33,7 @@ services:
     public: true
     arguments:
       - '@prestashop.module.mailsendvx.service.template_admin'
+      - '@prestashop.module.mailsendvx.service.fixture_generator'
     tags:
       - { name: controller.service_arguments }
 

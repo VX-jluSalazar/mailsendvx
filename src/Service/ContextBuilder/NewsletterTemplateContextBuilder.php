@@ -64,29 +64,6 @@ class NewsletterTemplateContextBuilder implements DomainTemplateContextBuilderIn
 
     public function buildSampleContext(string $eventName): array
     {
-        $fixturePaths = [
-            dirname(__DIR__, 2) . '/.agents/fixtures/subscriber.json',
-            dirname(__DIR__, 2) . '/.agents/fixtures/suscriber.json',
-        ];
-
-        foreach ($fixturePaths as $fixturePath) {
-            if (!is_file($fixturePath)) {
-                continue;
-            }
-
-            $decoded = json_decode((string) file_get_contents($fixturePath), true);
-            if (is_array($decoded)) {
-                $decoded['event']['name'] = $eventName;
-                $decoded['event']['newsletter_action'] = (string) ($decoded['event']['newsletter_action'] ?? 'subscribe');
-                $decoded['shop']['id'] = (int) ($decoded['shop']['id'] ?? $this->context->shop->id);
-                $decoded['shop']['id_lang'] = (int) ($decoded['shop']['id_lang'] ?? $this->context->language->id);
-                $decoded['shop']['name'] = (string) ($decoded['shop']['name'] ?? $this->context->shop->name);
-                $decoded['shop']['url'] = (string) ($decoded['shop']['url'] ?? $this->context->link->getBaseLink((int) $decoded['shop']['id'], true));
-
-                return $decoded;
-            }
-        }
-
         return (new TemplateContextPayloadBuilder())
             ->withEvent($this->eventSegmentBuilder->build($eventName, [
                 'newsletter_action' => 'subscribe',

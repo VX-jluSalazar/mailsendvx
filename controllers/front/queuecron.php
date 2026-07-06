@@ -13,16 +13,12 @@ class MailsendvxQueuecronModuleFrontController extends ModuleFrontController
         $token = (string) Tools::getValue('token');
         $expectedToken = (string) Configuration::get(\Velox\MailSendVx\ModuleConstants::CONFIG_CRON_TOKEN);
 
-        header('Content-Type: application/json');
-
         if ($token === '' || !hash_equals($expectedToken, $token)) {
             http_response_code(403);
-            $this->ajaxRender(json_encode([
+            $this->respondAndExit([
                 'success' => false,
                 'message' => 'Invalid cron token.',
-            ]));
-
-            return;
+            ]);
         }
 
         $limit = max(1, min(500, (int) Tools::getValue('limit', 50)));
@@ -30,17 +26,25 @@ class MailsendvxQueuecronModuleFrontController extends ModuleFrontController
 
         if (!$service instanceof FlowWorkerService) {
             http_response_code(500);
-            $this->ajaxRender(json_encode([
+            $this->respondAndExit([
                 'success' => false,
                 'message' => 'Flow worker service is not available.',
-            ]));
-
-            return;
+            ]);
         }
 
-        $this->ajaxRender(json_encode([
+        $this->respondAndExit([
             'success' => true,
             'result' => $service->processDueJobs($limit),
-        ]));
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function respondAndExit(array $payload): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $this->ajaxRender((string) json_encode($payload));
+        exit;
     }
 }

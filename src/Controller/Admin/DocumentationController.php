@@ -3,10 +3,12 @@
 namespace Velox\MailSendVx\Controller\Admin;
 
 use Configuration;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\Documentation\FixtureGeneratorService;
 use Velox\MailSendVx\Service\Template\TemplateAdminService;
 
 class DocumentationController extends FrameworkBundleAdminController
@@ -16,24 +18,55 @@ class DocumentationController extends FrameworkBundleAdminController
      */
     private $templateAdminService;
 
-    public function __construct(TemplateAdminService $templateAdminService)
+    /**
+     * @var FixtureGeneratorService
+     */
+    private $fixtureGenerator;
+
+    public function __construct(TemplateAdminService $templateAdminService, FixtureGeneratorService $fixtureGenerator)
     {
         parent::__construct();
         $this->templateAdminService = $templateAdminService;
+        $this->fixtureGenerator = $fixtureGenerator;
     }
 
     public function indexAction(Request $request): Response
     {
         $contextBuilderSections = $this->buildContextBuilderSections();
+        $fixtureSyncError = null;
+
+        try {
+            $this->fixtureGenerator->syncAllToDisk();
+        } catch (RuntimeException $exception) {
+            $fixtureSyncError = $exception->getMessage();
+        }
 
         return $this->render('@Modules/mailsendvx/views/templates/admin/documentation.html.twig', [
             'shopName' => (string) $this->getContext()->shop->name,
             'contextBuilderSections' => $contextBuilderSections,
-            'contextSegmentGuide' => $this->getContextSegmentGuide(),
-            'abandonedCartSettingsGuide' => $this->getAbandonedCartSettingsGuide(),
             'cronGuides' => $this->getCronGuides(),
             'fixtureGuides' => $this->getFixtureGuides(),
+            'fixtureSyncError' => $fixtureSyncError,
         ]);
+    }
+
+    public function downloadFixtureAction(string $fixtureKey): Response
+    {
+        $definitions = $this->fixtureGenerator->getDefinitions();
+        if (!isset($definitions[$fixtureKey])) {
+            throw $this->createNotFoundException(sprintf('Fixture "%s" not found.', $fixtureKey));
+        }
+
+        $json = (string) json_encode(
+            $this->fixtureGenerator->generateFixture($fixtureKey),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
+
+        $response = new Response($json . PHP_EOL);
+        $response->headers->set('Content-Type', 'application/json; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $definitions[$fixtureKey]['filename']));
+
+        return $response;
     }
 
     /**
@@ -46,8 +79,7 @@ class DocumentationController extends FrameworkBundleAdminController
         $sectionsConfig = [
             [
                 'title' => 'Variables de Pedido',
-                'builder' => 'OrderTemplateContextBuilder',
-                'description' => 'Payload compuesto por OrderTemplateContextBuilder usando builders de segmentos para event, shop, customer, order, products, related_products y reviews.',
+                'description' => 'Variables disponibles para correos de pedido, cambios de estado y automatizaciones relacionadas.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_ORDER_CREATED
                         || $eventName === ModuleConstants::EVENT_ORDER_STATUS_CHANGED
@@ -57,24 +89,21 @@ class DocumentationController extends FrameworkBundleAdminController
             ],
             [
                 'title' => 'Variables de Cliente',
-                'builder' => 'CustomerTemplateContextBuilder',
-                'description' => 'Payload compuesto por CustomerTemplateContextBuilder usando los segmentos base de event, shop y customer.',
+                'description' => 'Variables disponibles para emails disparados cuando se registra un nuevo cliente.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_CUSTOMER_REGISTERED;
                 },
             ],
             [
                 'title' => 'Variables de Newsletter',
-                'builder' => 'NewsletterTemplateContextBuilder',
-                'description' => 'Payload compuesto por NewsletterTemplateContextBuilder usando los segmentos de event, shop y customer para suscripciones.',
+                'description' => 'Variables disponibles para mensajes de suscripcion y automatizaciones de newsletter.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_NEWSLETTER_REGISTERED;
                 },
             ],
             [
                 'title' => 'Variables de Carrito',
-                'builder' => 'CartTemplateContextBuilder',
-                'description' => 'Payload compuesto por CartTemplateContextBuilder usando los segmentos de event, shop, customer, cart, products, related_products y reviews.',
+                'description' => 'Variables disponibles para recuperacion de carrito y secuencias de carrito abandonado.',
                 'matches' => static function (string $eventName): bool {
                     return $eventName === ModuleConstants::EVENT_CART_ABANDONED;
                 },
@@ -116,103 +145,36 @@ class DocumentationController extends FrameworkBundleAdminController
             ksort($scalarAttributes);
             ksort($collectionAttributes);
 
-            if (in_array($sectionConfig['builder'], ['OrderTemplateContextBuilder', 'CustomerTemplateContextBuilder', 'NewsletterTemplateContextBuilder', 'CartTemplateContextBuilder'], true)) {
-                $scalarAttributes = array_filter($scalarAttributes, static function (array $item): bool {
-                    $path = (string) ($item['path'] ?? '');
+            $scalarAttributes = array_filter($scalarAttributes, static function (array $item): bool {
+                $path = (string) ($item['path'] ?? '');
 
-                    return strpos($path, '.') !== false;
-                });
+                return strpos($path, '.') !== false;
+            });
+
+            $variables = [];
+            foreach ($scalarAttributes as $item) {
+                $variables[] = [
+                    'path' => (string) ($item['path'] ?? ''),
+                    'twig' => (string) ($item['twig'] ?? ''),
+                ];
+            }
+
+            foreach ($collectionAttributes as $item) {
+                $variables[] = [
+                    'path' => (string) ($item['path'] ?? ''),
+                    'twig' => (string) ($item['twig'] ?? ''),
+                ];
             }
 
             $sections[] = [
                 'title' => $sectionConfig['title'],
-                'builder' => $sectionConfig['builder'],
                 'description' => $sectionConfig['description'],
                 'events' => array_values($matchedEventNames),
-                'scalar_attributes' => array_values($scalarAttributes),
-                'collection_attributes' => array_values($collectionAttributes),
+                'variables' => $variables,
             ];
         }
 
         return $sections;
-    }
-
-    /**
-     * @return array<int, array<string, string>>
-     */
-    private function getContextSegmentGuide(): array
-    {
-        return [
-            [
-                'name' => 'TemplateContextPayloadBuilder',
-                'description' => 'Builder padre que arma el payload final como rompecabezas y une los segmentos requeridos por cada evento.',
-            ],
-            [
-                'name' => 'EventContextSegmentBuilder',
-                'description' => 'Construye los datos base del evento, como `event.name` y metadatos puntuales como `newsletter_action`.',
-            ],
-            [
-                'name' => 'ShopContextSegmentBuilder',
-                'description' => 'Resuelve `shop.id`, `shop.id_lang`, `shop.name`, `shop.url` y extras como `contact_url`.',
-            ],
-            [
-                'name' => 'CustomerContextSegmentBuilder',
-                'description' => 'Normaliza el bloque `customer` y permite overrides para casos como newsletter o `is_customer` en carrito.',
-            ],
-            [
-                'name' => 'ProductsContextBuilder',
-                'description' => 'Normaliza los productos de order y cart a una misma estructura e incluye `attributes` dentro de cada producto.',
-            ],
-            [
-                'name' => 'CartContextSegmentBuilder',
-                'description' => 'Arma el bloque `cart` con totales, tiempos de abandono y la colección `cart.items` usando la estructura normalizada de products.',
-            ],
-            [
-                'name' => 'OrderContextSegmentBuilder',
-                'description' => 'Arma el bloque `order` con estados, totales, direcciones, shipping y `order.products`.',
-            ],
-            [
-                'name' => 'RelatedProductsContextProvider',
-                'description' => 'Resuelve `related_products` con prioridad por marca, accesorios y categoría.',
-            ],
-            [
-                'name' => 'ReviewsContextProvider',
-                'description' => 'Resuelve `reviews` desde `ps_bt_spr_shop_reviews` y agrega nombre y apellido del cliente cuando existe.',
-            ],
-        ];
-    }
-
-    /**
-     * @return array<int, array<string, string>>
-     */
-    private function getAbandonedCartSettingsGuide(): array
-    {
-        return [
-            [
-                'key' => 'Enable abandoned cart detection',
-                'description' => 'Activa o desactiva por completo la deteccion de carritos abandonados. Si esta en No, el cron no captura eventos `cart_abandoned`.',
-            ],
-            [
-                'key' => 'Abandoned cart delay value',
-                'description' => 'Es el numero base de tiempo que debe pasar sin actividad antes de considerar abandonado un carrito.',
-            ],
-            [
-                'key' => 'Abandoned cart delay unit',
-                'description' => 'Define la unidad del retraso: minutos, horas, dias o semanas. Junto con el valor anterior forma la ventana de abandono.',
-            ],
-            [
-                'key' => 'Require customer email',
-                'description' => 'Si esta en Si, solo se evaluan carritos con email resoluble. Es lo recomendado cuando quieres enviar correo inmediatamente.',
-            ],
-            [
-                'key' => 'Require products in cart',
-                'description' => 'Si esta en Si, excluye carritos vacios. Es la configuracion normal para evitar ruido y falsos positivos.',
-            ],
-            [
-                'key' => 'Abandoned cart batch size',
-                'description' => 'Limita cuantos carritos procesa el cron en cada corrida. Sirve para controlar carga y tiempos de ejecucion.',
-            ],
-        ];
     }
 
     /**
@@ -254,22 +216,20 @@ class DocumentationController extends FrameworkBundleAdminController
      */
     private function getFixtureGuides(): array
     {
-        return [
-            [
-                'title' => 'Pedido / order',
-                'path' => 'modules/mailsendvx/.agents/fixtures/order.json',
-                'description' => 'Referencia para `order_created`, `order_status_changed` y variantes `order_status_changed_*`.',
-            ],
-            [
-                'title' => 'Carrito / cart',
-                'path' => 'modules/mailsendvx/.agents/fixtures/cart.json',
-                'description' => 'Referencia para `cart_abandoned`, con `cart.items`, `related_products`, `reviews` y datos de recuperacion.',
-            ],
-            [
-                'title' => 'Newsletter / subscriber',
-                'path' => 'modules/mailsendvx/.agents/fixtures/subscriber.json',
-                'description' => 'Referencia para `newsletter_registered` con `event.newsletter_action`, `shop.*` y `customer.*`.',
-            ],
-        ];
+        $guides = [];
+
+        foreach ($this->fixtureGenerator->getDefinitions() as $key => $definition) {
+            $guides[] = [
+                'title' => $definition['title'],
+                'path' => 'modules/mailsendvx/docs/fixtures/' . $definition['filename'],
+                'download_url' => $this->generateUrl('mailsendvx_documentation_fixture_download', [
+                    'fixtureKey' => $key,
+                ]),
+                'filename' => $definition['filename'],
+                'description' => $definition['description'],
+            ];
+        }
+
+        return $guides;
     }
 }

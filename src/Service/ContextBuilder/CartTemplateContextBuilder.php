@@ -109,79 +109,133 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
 
     public function buildSampleContext(string $eventName): array
     {
-        $fixturePath = dirname(__DIR__, 2) . '/.agents/fixtures/cart.json';
-        if (is_file($fixturePath)) {
-            $decoded = json_decode((string) file_get_contents($fixturePath), true);
-            if (is_array($decoded)) {
-                $decoded['event']['name'] = $eventName;
-                $decoded['shop']['id'] = (int) ($decoded['shop']['id'] ?? $this->context->shop->id);
-                $decoded['shop']['id_lang'] = (int) ($decoded['shop']['id_lang'] ?? $this->context->language->id);
-                $decoded['shop']['name'] = (string) ($decoded['shop']['name'] ?? $this->context->shop->name);
-                $decoded['shop']['url'] = (string) ($decoded['shop']['url'] ?? $this->context->link->getBaseLink((int) $decoded['shop']['id'], true));
-                $decoded['shop']['contact_url'] = (string) ($decoded['shop']['contact_url'] ?? '');
-                $decoded['customer']['id'] = (int) ($decoded['customer']['id'] ?? 0);
-                $decoded['customer']['name'] = (string) ($decoded['customer']['name'] ?? trim((string) (($decoded['customer']['firstname'] ?? '') . ' ' . ($decoded['customer']['lastname'] ?? ''))));
-                $decoded['customer']['firstname'] = (string) ($decoded['customer']['firstname'] ?? '');
-                $decoded['customer']['lastname'] = (string) ($decoded['customer']['lastname'] ?? '');
-                $decoded['customer']['email'] = (string) ($decoded['customer']['email'] ?? '');
-                $decoded['customer']['is_customer'] = (bool) ($decoded['customer']['is_customer'] ?? ((int) ($decoded['customer']['id'] ?? 0) > 0));
-                $decoded['cart']['id'] = (int) ($decoded['cart']['id'] ?? 0);
-                $decoded['cart']['url'] = (string) ($decoded['cart']['url'] ?? '');
-                $decoded['cart']['recovery_url'] = (string) ($decoded['cart']['recovery_url'] ?? $decoded['cart']['url']);
-                $decoded['cart']['abandoned_at'] = (string) ($decoded['cart']['abandoned_at'] ?? '');
-                $decoded['cart']['abandoned_minutes'] = (int) ($decoded['cart']['abandoned_minutes'] ?? 0);
-                $decoded['cart']['products_count'] = (int) ($decoded['cart']['products_count'] ?? (is_array($decoded['cart']['items'] ?? null) ? count($decoded['cart']['items']) : 0));
-                $decoded['cart']['total'] = $decoded['cart']['total'] ?? ($decoded['cart']['totals']['total'] ?? 0);
-                $decoded['cart']['items'] = $decoded['cart']['items'] ?? [];
-
-                return $decoded;
-            }
-        }
-
         return (new TemplateContextPayloadBuilder())
             ->withEvent($this->eventSegmentBuilder->build($eventName))
             ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id, [
-                'contact_url' => '',
+                'contact_url' => 'https://api.whatsapp.com/send/?phone=593123456789',
             ]))
             ->withCustomer($this->customerSegmentBuilder->build(null, [
-                'id' => 0,
-                'name' => 'Cliente de prueba',
-                'firstname' => 'Cliente',
-                'lastname' => 'Prueba',
-                'email' => 'cliente@example.com',
-                'is_customer' => false,
+                'id' => 10,
+                'name' => 'Jonathan Salazar',
+                'firstname' => 'Jonathan',
+                'lastname' => 'Salazar',
+                'email' => 'jonathan@velox.ec',
+                'is_customer' => true,
             ]))
             ->withCart([
-                'id' => 1,
+                'id' => 15,
                 'url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
                 'recovery_url' => $this->context->link->getPageLink('cart', true, null, 'action=show'),
-                'abandoned_at' => date(DATE_ATOM),
-                'updated_at' => date(DATE_ATOM),
+                'abandoned_at' => '2026-07-06T18:39:30-05:00',
+                'updated_at' => '2026-07-06T17:39:30-05:00',
                 'abandoned_minutes' => 60,
-                'products_count' => 0,
-                'total' => 0.0,
+                'products_count' => 2,
+                'total' => 117.3,
                 'totals' => [
                     'discounts' => 0.0,
                     'discounts_tax_amount' => 0.0,
                     'discounts_tax_excl' => 0.0,
                     'discounts_tax_incl' => 0.0,
-                    'products' => 0.0,
-                    'products_tax_amount' => 0.0,
-                    'products_tax_excl' => 0.0,
-                    'products_tax_incl' => 0.0,
+                    'products' => 117.3,
+                    'products_tax_amount' => 15.3,
+                    'products_tax_excl' => 102.0,
+                    'products_tax_incl' => 117.3,
                     'shipping' => 0.0,
                     'shipping_tax_amount' => 0.0,
                     'shipping_tax_excl' => 0.0,
                     'shipping_tax_incl' => 0.0,
-                    'total' => 0.0,
-                    'total_tax_amount' => 0.0,
-                    'total_tax_excl' => 0.0,
-                    'total_tax_incl' => 0.0,
+                    'total' => 117.3,
+                    'total_tax_amount' => 15.3,
+                    'total_tax_excl' => 102.0,
+                    'total_tax_incl' => 117.3,
                 ],
-                'items' => [],
+                'items' => [
+                    [
+                        'id' => 2,
+                        'attribute_id' => 0,
+                        'name' => 'FOCUS',
+                        'reference' => 'Focus 30ml',
+                        'quantity' => 1,
+                        'unit_price' => 58.65,
+                        'unit_price_tax_excl' => 51,
+                        'unit_price_tax_incl' => 58.65,
+                        'total_price' => 58.65,
+                        'total_price_tax_excl' => 51,
+                        'total_price_tax_incl' => 58.65,
+                        'url' => 'https://hemp.desarrollovelox.com/salud/2-focus.html',
+                        'image_url' => 'https://hemp.desarrollovelox.com/2-home_default/focus.jpg',
+                        'attributes' => [
+                            [
+                                'label' => 'Presentacion',
+                                'value' => '30ml',
+                            ],
+                            [
+                                'label' => 'Aroma',
+                                'value' => 'Natural',
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => 3,
+                        'attribute_id' => 0,
+                        'name' => 'SUENOS',
+                        'reference' => 'Dulces Sueñozzz 30ml',
+                        'quantity' => 1,
+                        'unit_price' => 58.65,
+                        'unit_price_tax_excl' => 51,
+                        'unit_price_tax_incl' => 58.65,
+                        'total_price' => 58.65,
+                        'total_price_tax_excl' => 51,
+                        'total_price_tax_incl' => 58.65,
+                        'url' => 'https://hemp.desarrollovelox.com/salud/3-suenos.html',
+                        'image_url' => 'https://hemp.desarrollovelox.com/3-home_default/suenos.jpg',
+                        'attributes' => [
+                            [
+                                'label' => 'Presentacion',
+                                'value' => '30ml',
+                            ],
+                            [
+                                'label' => 'Aroma',
+                                'value' => 'Natural',
+                            ],
+                        ],
+                    ],
+                ],
             ])
-            ->withRelatedProducts([])
-            ->withReviews([])
+            ->withRelatedProducts([
+                [
+                    'id' => 16,
+                    'name' => 'GOMCBD',
+                    'price' => 24.44,
+                    'url' => 'https://hemp.desarrollovelox.com/salud/16-gomcbd.html',
+                    'image_url' => 'https://hemp.desarrollovelox.com/16-home_default/gomcbd.jpg',
+                ],
+                [
+                    'id' => 24,
+                    'name' => 'COLAGENO',
+                    'price' => 43.99,
+                    'url' => 'https://hemp.desarrollovelox.com/salud/24-colageno.html',
+                    'image_url' => 'https://hemp.desarrollovelox.com/23-home_default/colageno.jpg',
+                ],
+            ])
+            ->withReviews([
+                [
+                    'author' => 'Erick',
+                    'firstname' => 'Erick',
+                    'lastname' => '',
+                    'rating' => 5,
+                    'title' => 'Atención rápida y personalizada',
+                    'content' => 'Me ayudaron a elegir lo que realmente necesitaba.',
+                ],
+                [
+                    'author' => 'Carlos',
+                    'firstname' => 'Carlos',
+                    'lastname' => '',
+                    'rating' => 5,
+                    'title' => 'Entrega exprés sin fallos',
+                    'content' => 'Todo llegó perfecto y rápido.',
+                ],
+            ])
             ->build();
     }
 }

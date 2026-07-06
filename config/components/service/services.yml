@@ -205,6 +205,12 @@ services:
       $newsletterBuilder: '@prestashop.module.mailsendvx.service.context_builder.newsletter'
       $cartBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
 
+  prestashop.module.mailsendvx.service.fixture_generator:
+    class: Velox\MailSendVx\Service\Documentation\FixtureGeneratorService
+    public: true
+    arguments:
+      $eventContextService: '@prestashop.module.mailsendvx.service.event_context'
+
   prestashop.module.mailsendvx.service.instant_email_hook:
     class: Velox\MailSendVx\Service\Event\InstantEmailHookService
     public: true
