@@ -17,9 +17,9 @@ Por esta razon, la migracion a Twig debe ejecutarse como una fase intermedia ant
 - Compatibilidad temporal con templates legacy existentes sin migracion forzada.
 - Preview del Back Office usando el nuevo renderer.
 - Validacion controlada de errores Twig en preview y envio de prueba.
-- Contexto de ejemplo estructurado con `products`, `related_products`, `reviews`, `billing_address`, `shipping_address`, `shipping` y `order_totals`.
-- Contexto real enriquecido para eventos de pedido con listas de productos, direcciones y totales.
-- Builders de contexto separados por dominio para pedido, cliente y newsletter.
+- Contexto de ejemplo y contexto real agrupados por segmentos como `event`, `shop`, `customer`, `order`, `cart`, `related_products` y `reviews`.
+- Contexto real enriquecido para eventos de pedido y carrito con listas de productos, direcciones, totales, productos relacionados y reviews.
+- Builders de contexto compuestos con `TemplateContextPayloadBuilder` y builders de segmentos reutilizables.
 - Preview con payload historico cuando existe un evento capturado del mismo tipo.
 - Gestion editable de wrappers desde Back Office usando archivos fisicos del modulo.
 - Guia dinamica de atributos por evento dentro de la pantalla de creacion/edicion de templates.
@@ -84,8 +84,16 @@ Propuesta:
 - `LegacyPlaceholderTemplateEngine`
 - `TwigTemplateEngine`
 - `TemplateContextBuilderInterface`
+- `TemplateContextPayloadBuilder`
+- `EventContextSegmentBuilder`
+- `ShopContextSegmentBuilder`
+- `CustomerContextSegmentBuilder`
+- `ProductsContextBuilder`
+- `CartContextSegmentBuilder`
+- `OrderContextSegmentBuilder`
 - builders por dominio, por ejemplo:
   - `OrderTemplateContextBuilder`
+  - `CartTemplateContextBuilder`
   - `CustomerTemplateContextBuilder`
   - `NewsletterTemplateContextBuilder`
 
@@ -167,9 +175,9 @@ Esta fase debe completarse antes de Fase 02 y antes de Fase 03.
 
 ## Archivos y zonas a intervenir
 
-- `src/Service/MailSendVxMailer.php`
-- `src/Service/MailSendVxVariableRenderer.php` o su reemplazo
-- `src/Service/InstantEmailHookService.php`
+- `src/Service/Mail/MailSendVxMailer.php`
+- `src/Service/Template/MailSendVxVariableRenderer.php` o su reemplazo
+- `src/Service/Event/InstantEmailHookService.php`
 - `src/Service/TemplateAdminService.php`
 - `src/Form/Type/TemplateFormType.php`
 - `views/templates/admin/templates.html.twig`

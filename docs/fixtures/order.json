@@ -1,0 +1,167 @@
+{
+  "event": {
+    "name": "order_status_changed_shipped"
+  },
+  "shop": {
+    "id": 1,
+    "id_lang": 1,
+    "name": "HEMP Ecuador",
+    "url": "https://hemp.desarrollovelox.com"
+  },
+  "customer": {
+    "id": 10,
+    "name": "Jonathan Salazar",
+    "firstname": "Jonathan",
+    "lastname": "Salazar",
+    "email": "jonathan@velox.ec"
+  },
+  "order": {
+    "id": 10,
+    "reference": "RSTIQXSIH",
+    "total": 117.30,
+    "date": "2026-07-06 18:41:00",
+    "formated_date": "06 de Julio, 2026",
+    "status": "Enviado",
+    "old_status": "Pago aceptado",
+    "payment_method": "Pagos por transferencia bancaria",
+    "shipping_method": "Recoger en la tienda",
+    "state": {
+      "id": 4,
+      "key": "shipped",
+      "name": "Enviado"
+    },
+    "old_state": {
+      "id": 2,
+      "key": "payment_accepted",
+      "name": "Pago aceptado"
+    },
+    "totals": {
+      "paid": 117.30,
+      "products": 117.30,
+      "shipping": 0.00,
+      "discounts": 0.00,
+      "tax": 15.30
+    },
+    "billing_address": {
+      "firstname": "Jonathan",
+      "lastname": "Salazar",
+      "full_name": "Jonathan Salazar",
+      "company": "",
+      "address1": "Quito",
+      "address2": "",
+      "city": "Quito",
+      "postcode": "170150",
+      "country": "Ecuador",
+      "state": "Pichincha",
+      "phone": "0987654321",
+      "phone_mobile": "0987654321",
+      "formatted": "Jonathan Salazar\nQuito\nQuito 170150\nPichincha\nEcuador"
+    },
+    "shipping_address": {
+      "firstname": "Jonathan",
+      "lastname": "Salazar",
+      "full_name": "Jonathan Salazar",
+      "company": "",
+      "address1": "Quito",
+      "address2": "",
+      "city": "Quito",
+      "postcode": "170150",
+      "country": "Ecuador",
+      "state": "Pichincha",
+      "phone": "0987654321",
+      "phone_mobile": "0987654321",
+      "formatted": "Jonathan Salazar\nQuito\nQuito 170150\nPichincha\nEcuador"
+    },
+    "shipping": {
+      "carrier_name": "Recoger en la tienda",
+      "cost": 0.00,
+      "tracking_url": ""
+    },
+    "products": [
+      {
+        "id": 3,
+        "attribute_id": 0,
+        "name": "SUENOS",
+        "reference": "Dulces Sueñozzz 30ml",
+        "quantity": 1,
+        "unit_price": 58.65,
+        "total_price": 58.65,
+        "unit_price_tax_excl": 51,
+        "unit_price_tax_incl": 58.65,
+        "total_price_tax_excl": 51,
+        "total_price_tax_incl": 58.65,
+        "url": "https://hemp.desarrollovelox.com/salud/3-suenos.html",
+        "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
+        "attributes": [
+            {
+                "label": "Presentacion",
+                "value": "30ml"
+            },
+            {
+                "label": "Aroma",
+                "value": "Natural"
+            }
+        ]
+      },
+      {
+        "id": 2,
+        "attribute_id": 0,
+        "name": "FOCUS",
+        "reference": "Focus 30ml",
+        "quantity": 1,
+        "unit_price": 58.65,
+        "total_price": 58.65,
+        "unit_price_tax_excl": 51,
+        "unit_price_tax_incl": 58.65,
+        "total_price_tax_excl": 51,
+        "total_price_tax_incl": 58.65,
+        "url": "https://hemp.desarrollovelox.com/salud/2-focus.html",
+        "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
+        "attributes": [
+            {
+                "label": "Presentacion",
+                "value": "30ml"
+            },
+            {
+                "label": "Aroma",
+                "value": "Natural"
+            }
+        ]
+      }
+    ]
+  },
+  "related_products": [
+    {
+      "id": 16,
+      "name": "GOMCBD",
+      "price": 24.44,
+      "url": "https://hemp.desarrollovelox.com/salud/16-gomcbd.html",
+      "image_url": "https://hemp.desarrollovelox.com/16-home_default/gomcbd.jpg"
+    },
+    {
+      "id": 24,
+      "name": "COLAGENO",
+      "price": 43.99,
+      "url": "https://hemp.desarrollovelox.com/salud/24-colageno.html",
+      "image_url": "https://hemp.desarrollovelox.com/23-home_default/colageno.jpg"
+    }
+  ],
+  "reviews": [
+    {
+      "author": "Erick",
+      "firstname": "Erick",
+      "lastname": "",
+      "rating": 5,
+      "title": "Atención rápida y personalizada",
+      "content": "Me ayudaron a elegir lo que realmente necesitaba."
+    },
+    {
+      "author": "Carlos",
+      "firstname": "Carlos",
+      "lastname": "",
+      "rating": 5,
+      "title": "Entrega exprés sin fallos",
+      "content": "Todo llegó perfecto y rápido."
+    }
+  ]
+}

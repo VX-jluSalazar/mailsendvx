@@ -21,7 +21,7 @@ Implementado y aterrizado en codigo.
 - Autoload PSR-4 real generado con Composer.
 - Clase compartida de constantes `src/ModuleConstants.php`.
 - `Installer`, `ConfigurationInstaller`, `DatabaseInstaller`, `TabInstaller`.
-- Extraccion de handlers de hooks instantaneos a `src/Service/InstantEmailHookService.php`.
+- Extraccion de handlers de hooks instantaneos a `src/Service/Event/InstantEmailHookService.php`.
 - `mailsendvx.php` ya delega instalacion y hooks principales.
 - Servicios registrados tanto para admin como para front.
 
@@ -49,7 +49,7 @@ Estado:
 
 - Completado en esta fase para la capa principal.
 - La clase principal ya no arma variables de pedidos, clientes o newsletter.
-- Los hooks instantaneos delegan en `src/Service/InstantEmailHookService.php`.
+- Los hooks instantaneos delegan en `src/Service/Event/InstantEmailHookService.php`.
 
 Resultado aplicado:
 

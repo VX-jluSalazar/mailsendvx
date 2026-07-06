@@ -1,207 +1,106 @@
 # Fase 02: flujos automatizados
 
-## Objetivo
+## Estado
 
-Construir un motor de automatizacion capaz de programar emails, evaluar condiciones, procesar una cola con cron y cancelar o reintentar envios segun el comportamiento del cliente.
+En progreso.
 
-Esta fase transforma Mail Send VX de un sistema de emails instantaneos en un motor de automatizacion comercial.
+### Resumen actual
 
-## Dependencia de arquitectura
+- `02A` Implementada en backend.
+- `02B` Implementada en backend y administración de templates.
+- `02C` Implementada en primera iteración funcional de scheduler y queue.
+- `02D` Pendiente de implementación.
+- `02E` Pendiente de implementación.
+- `02F` Pendiente de implementación.
+- `02G` Documentada, pero pendiente de infraestructura y ejecución real.
 
-Los flujos de postcompra no deben construirse sobre un unico evento `order_status_updated`.
+La base necesaria ya existe:
 
-Tampoco conviene construir la capa de render de flujos sobre el motor MVP de placeholders simples.
+- Fase 00 implementada como base tecnica del modulo, instalacion, tablas, configuracion, dashboard y logs.
+- Fase 01 implementada para eventos inmediatos, templates activas y taxonomia moderna de eventos de pedido.
+- Fase 01B implementada en primera iteracion funcional con motor Twig, contextos enriquecidos, preview mejorado y wrappers editables.
+- Fase 01C implementada para `cart_abandoned` como trigger canonico y deduplicado.
 
-Antes o durante esta fase, la capa de eventos debe exponer:
+## Objetivo general
 
-- `order_created` como trigger canonico de pedido confirmado.
-- `order_status_changed` como trigger generico.
-- `order_status_changed_{state_key}` como trigger especifico por estado destino.
+Construir un motor de automatizacion capaz de:
 
-Y antes de implementar rendering avanzado de flows, debe estar resuelta la fase intermedia:
+- reaccionar a eventos internos ya normalizados,
+- iniciar flujos activos por trigger,
+- programar pasos con tiempos de espera configurables,
+- renderizar cada envio con Twig y contexto enriquecido,
+- reevaluar condiciones antes de enviar,
+- cancelar o reprogramar jobs segun reglas de negocio,
+- registrar trazabilidad completa en cola y logs.
 
-- `modules/mailsendvx/.agents/FASE_01B_MOTOR_TWIG.md`
+## Decision de arquitectura
 
-Sin esta separacion, los flujos de confirmacion, entrega, envio, pago aceptado, cancelacion o reembolso quedan ambiguos y requieren condiciones excesivas para diferenciarse.
+Para esta fase se separan tres conceptos:
 
-## Alcance funcional
+- `event_name`: define disparo automatico directo.
+- `trigger_event`: define que evento activa un flow.
+- `context_type`: define compatibilidad de payload.
 
-| Subfase | Objetivo | Complejidad |
-| --- | --- | --- |
-| 2.1 Motor de eventos | Registrar eventos como `cart_abandoned`, `order_created`, `order_status_changed_delivered` y `customer_registered`. | Media-alta |
-| 2.2 Motor de flujos | Crear flujos con pasos, delays, plantillas y condiciones. | Alta |
-| 2.3 Cola de envios | Programar emails para minutos, horas o dias posteriores. | Alta |
-| 2.4 Cron o comando | Procesar cola automaticamente. | Media-alta |
-| 2.5 Flujo abandoned cart | Enviar 3 emails en tiempos diferentes. | Alta |
-| 2.6 Cancelacion por compra | Cancelar emails pendientes si el carrito se convierte en pedido. | Alta |
-| 2.7 Flujo postcompra | Programar emails despues de compra, envio, entrega o cambio de estado. | Alta |
-| 2.8 Flujo suscriptor | Crear secuencia para nuevos suscriptores. | Media-alta |
-| 2.9 Condiciones por flujo | Evaluar estado, total, idioma, tienda, grupo, productos y categorias. | Alta |
-| 2.10 Reintentos automaticos | Reintentar emails fallidos segun intentos maximos. | Media |
-| 2.11 Estados de cola | Controlar `pending`, `scheduled`, `processing`, `sent`, `failed`, `cancelled` y `skipped`. | Media |
-| 2.12 Panel de monitoreo | Ver cola, proximos envios, enviados, fallidos y cancelados. | Media-alta |
+La regla base queda asi:
 
-## Flujo tecnico
+- un template puede tener `event_name` o no tenerlo,
+- un flow siempre tiene `trigger_event`,
+- flow y template deben declarar `context_type`,
+- un flow puede usar dos o mas templates a traves de sus steps,
+- los flows resuelven templates por `template_id`, no por `event_name`.
 
-```txt
-Evento detectado
-|
-Flow Engine busca flujos activos
-|
-Condition Engine valida reglas iniciales
-|
-Scheduler crea registros en cola
-|
-Cron toma jobs vencidos
-|
-Valida condiciones antes de enviar
-|
-Renderiza plantilla
-|
-Envia email
-|
-Actualiza estado y registra log
-```
+## Subfases documentadas
 
-## Estados de cola recomendados
+- `02A` Modelo base de flows: `modules/mailsendvx/.agents/FASE_02A_MODELO_BASE_DE_FLOWS.md` - implementada
+- `02B` Templates reutilizables: `modules/mailsendvx/.agents/FASE_02B_TEMPLATES_REUTILIZABLES.md` - implementada
+- `02C` Scheduler y queue: `modules/mailsendvx/.agents/FASE_02C_SCHEDULER_Y_QUEUE.md` - implementada en primera iteración
+- `02D` Worker, locking e idempotencia: `modules/mailsendvx/.agents/FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md` - pendiente
+- `02E` Condiciones y cancelaciones: `modules/mailsendvx/.agents/FASE_02E_CONDICIONES_Y_CANCELACIONES.md` - pendiente
+- `02F` UI operativa y casos comerciales: `modules/mailsendvx/.agents/FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md` - pendiente
+- `02G` Pruebas automatizadas: `modules/mailsendvx/.agents/FASE_02G_PRUEBAS_AUTOMATIZADAS.md` - documentada, no implementada
 
-| Estado | Uso |
-| --- | --- |
-| `pending` | Registro creado, aun no preparado para envio. |
-| `scheduled` | Email programado con `scheduled_at`. |
-| `processing` | Job tomado por cron. |
-| `sent` | Envio exitoso. |
-| `failed` | Envio fallido sin reintentos disponibles o con error persistente. |
-| `cancelled` | Job cancelado por compra, baja o regla de negocio. |
-| `skipped` | Job omitido por condicion no cumplida. |
+## Orden recomendado de implementacion
 
-## Flujos comerciales iniciales
+1. `02A` para estabilizar el modelo de flow y steps.
+2. `02B` para desacoplar templates de `event_name`.
+3. `02C` para programar jobs persistidos.
+4. `02D` para procesar cola en forma segura.
+5. `02E` para evitar envios fuera de contexto.
+6. `02F` para cerrar UI y casos comerciales iniciales.
+7. `02G` para blindar scheduler, queue, worker y regresiones con pruebas automatizadas.
 
-### Carrito abandonado
+## Dependencias heredadas
 
-- Email 1: 1 hora despues del abandono.
-- Email 2: 24 horas despues si no compro.
-- Email 3: 72 horas despues si no compro.
-- Cancelar todos los pendientes si se crea un pedido con ese carrito o cliente.
+- motor Twig como renderer oficial,
+- `TemplateContextPayloadBuilder` y builders de segmentos como fuente de datos,
+- taxonomia moderna de eventos como fuente de triggers,
+- `context_type` como contrato de compatibilidad entre flow, step y template,
+- sistema de logs ya existente para observabilidad.
 
-### Postcompra
+## Nota de implementacion
 
-- Email de confirmacion inmediata al ocurrir `order_created`.
-- Email de agradecimiento despues de `order_status_changed_payment_accepted`.
-- Email de seguimiento cuando ocurra `order_status_changed_shipped`.
-- Email de review cuando ocurra `order_status_changed_delivered`.
+Fase 02 no debe reabrir la arquitectura de Fase 01.
 
-## Triggers recomendados para flows
+La prioridad correcta es:
 
-| Tipo | Trigger |
-| --- | --- |
-| Canonico | `order_created` |
-| Generico | `order_status_changed` |
-| Especifico | `order_status_changed_payment_accepted` |
-| Especifico | `order_status_changed_shipped` |
-| Especifico | `order_status_changed_delivered` |
-| Especifico | `order_status_changed_canceled` |
-| Especifico | `order_status_changed_refunded` |
-| Otros | `customer_registered`, `newsletter_registered`, `cart_abandoned` |
+1. definir modelo estable de flows, steps y templates reutilizables,
+2. soportar delays configurables por paso,
+3. garantizar idempotencia y locking,
+4. conectar el worker con el mailer Twig ya existente,
+5. recien despues construir la UI operativa completa,
+6. formalizar una suite de pruebas antes de seguir ampliando casos comerciales.
 
-### Suscriptores
+## Nota de estado
 
-- Email de bienvenida inmediato o programado.
-- Email educativo/promocional a los 2 dias.
-- Email de incentivo a los 5 dias, si aplica.
+Lo ya implementado en código cubre:
 
-## Patrones recomendados
+- contrato base de flows,
+- templates reutilizables desacoplados de `event_name`,
+- scheduler inicial que crea jobs persistidos desde eventos capturados.
 
-- Event Driven Architecture para eventos internos.
-- Command y Command Handler para crear jobs y procesarlos.
-- Queue/Scheduler para envios diferidos.
-- Chain of Responsibility para condiciones.
-- State para transiciones de cola.
-- Strategy para providers y renderers.
-- Repository para persistencia.
+Lo que todavía falta para cerrar Fase 02:
 
-## Dependencias
-
-- Fase 0 completa.
-- Fase 1 funcional para renderizado, plantillas y logs.
-- Fase 01B completada para usar Twig como motor de render.
-- Plantillas activas por evento/flujo.
-- Token de cron configurado.
-
-## Como probar la funcionalidad
-
-### Prueba 1: programar un email en cola
-
-1. Crear un flujo activo con trigger `customer_registered`.
-2. Configurar un paso con delay corto, por ejemplo 5 minutos.
-3. Registrar un cliente de prueba.
-4. Revisar que se cree un registro en `PREFIX_mailsendvx_queue` con estado `scheduled`.
-5. Confirmar que `scheduled_at` respeta el delay configurado.
-
-### Prueba 2: procesar cron
-
-1. Crear o ajustar un job con `scheduled_at` en el pasado.
-2. Ejecutar el cron o controller correspondiente.
-3. Confirmar que el job pasa por `processing`.
-4. Confirmar que termina como `sent`, `failed`, `skipped` o `cancelled`.
-5. Revisar que se cree un log asociado.
-
-### Prueba 3: carrito abandonado
-
-1. Crear un carrito con email identificado.
-2. Esperar o simular la condicion de abandono.
-3. Confirmar que se crean 3 jobs programados.
-4. Convertir el carrito en pedido antes del segundo envio.
-5. Confirmar que los jobs pendientes quedan `cancelled`.
-
-### Prueba 4: reintentos
-
-1. Forzar un error de provider con un destinatario o configuracion invalida.
-2. Ejecutar cron.
-3. Confirmar que `attempts` aumenta.
-4. Confirmar que se reprograma si quedan intentos.
-5. Confirmar que termina en `failed` al superar el maximo.
-
-### Prueba 5: condiciones por flujo
-
-1. Crear un flujo condicionado por idioma, tienda o total de pedido.
-2. Ejecutar eventos que cumplan y no cumplan la condicion.
-3. Confirmar que solo se programan o envian los casos validos.
-4. Confirmar que los casos rechazados quedan registrados como `skipped` o no generan cola, segun la regla definida.
-
-## Consultas utiles de validacion
-
-```sql
-SELECT id_mailsendvx_queue, event_name, recipient, status, attempts, scheduled_at, processed_at, last_error
-FROM PREFIX_mailsendvx_queue
-ORDER BY id_mailsendvx_queue DESC
-LIMIT 50;
-
-SELECT id_mailsendvx_flow, name, trigger_event, active, date_add, date_upd
-FROM PREFIX_mailsendvx_flow
-ORDER BY id_mailsendvx_flow DESC;
-
-SELECT event_name, recipient, status, id_queue, message, date_add
-FROM PREFIX_mailsendvx_log
-ORDER BY id_mailsendvx_log DESC
-LIMIT 50;
-```
-
-## Criterios de aceptacion
-
-- Los eventos pueden activar flujos.
-- Los flujos pueden arrancar desde `order_created` para la confirmacion inicial del pedido.
-- Los flujos postcompra pueden apuntar a estados de pedido especificos sin depender de un filtro manual adicional sobre un evento global.
-- Los pasos de flujo crean jobs en cola con fechas correctas.
-- El cron procesa solo jobs vencidos y disponibles.
-- Los jobs no se duplican accidentalmente.
-- Las compras cancelan emails pendientes de carrito abandonado.
-- Los errores generan reintentos controlados.
-- El panel permite monitorear pendientes, programados, enviados, fallidos y cancelados.
-
-## Riesgos
-
-- Sin idempotencia, un hook repetido puede crear jobs duplicados.
-- Un cron sin bloqueo puede procesar dos veces el mismo job si hay ejecuciones paralelas.
-- Las condiciones pueden volverse complejas; conviene versionar `conditions_json` y `steps_json`.
-- El volumen de cola requiere indices correctos en `status` y `scheduled_at`.
+- worker real para procesar jobs,
+- reevaluación completa de condiciones y cancelaciones,
+- UI de flows y panel operativo,
+- infraestructura ejecutable de pruebas automáticas.

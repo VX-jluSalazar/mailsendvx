@@ -2,7 +2,7 @@
 
 ## Estado
 
-Implementado en `modules/mailsendvx/mailsendvx.php`, `src/Service/InstantEmailHookService.php`, `classes/Service/MailSendVxMailer.php`, `classes/Repository/MailSendVxTemplateRepository.php`, `src/Controller/Admin/TemplatesController.php` y `views/templates/admin/templates.html.twig`.
+Implementado en `modules/mailsendvx/mailsendvx.php`, `src/Service/Event/InstantEmailHookService.php`, `src/Service/Mail/MailSendVxMailer.php`, `src/Repository/MailSendVxTemplateRepository.php`, `src/Controller/Admin/TemplatesController.php` y `views/templates/admin/templates.html.twig`.
 
 La pantalla `Mail Send VELOX > Templates` ya funciona sobre Symfony y Twig, y permite crear plantillas por evento, editar asunto/HTML/texto, activar/desactivar, previsualizar con datos de prueba y enviar un email de prueba.
 
@@ -108,6 +108,25 @@ Guardar log de resultado
 | `order_status_changed_{state_key}` | Las mismas variables del evento generico, orientadas al estado destino. |
 | `customer_registered` | `customer_name`, `customer_email`, `shop_name`, `shop_url` |
 | `newsletter_registered` | `customer_email`, `newsletter_action`, `shop_name`, `shop_url` |
+
+## Arquitectura de contexto aplicada
+
+La construccion del payload ya no depende de un unico builder monolitico.
+
+Actualmente el modulo compone el contexto con `TemplateContextPayloadBuilder` y builders de segmentos reutilizables para:
+
+- `event`
+- `shop`
+- `customer`
+- `order`
+- `cart`
+- `products`
+- `related_products`
+- `reviews`
+
+Esto permite mantener contratos mas estables entre preview, envio real, fixtures y documentacion.
+
+Para plantillas nuevas, el formato recomendado es priorizar variables agrupadas como `event.*`, `shop.*`, `customer.*`, `order.*` y `cart.*` cuando existan, en lugar de apoyarse solo en variables planas legacy.
 
 ## Estrategia tecnica recomendada para estados de pedido
 

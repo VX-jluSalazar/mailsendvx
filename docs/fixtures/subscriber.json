@@ -1,0 +1,19 @@
+{
+  "event": {
+    "name": "newsletter_registered",
+    "newsletter_action": "subscribe"
+  },
+  "shop": {
+    "id": 1,
+    "id_lang": 1,
+    "name": "HEMP Ecuador",
+    "url": "https://hemp.desarrollovelox.com"
+  },
+  "customer": {
+    "id": 10,
+    "name": "Jonathan Salazar",
+    "firstname": "Jonathan",
+    "lastname": "Salazar",
+    "email": "jonathan@velox.ec"
+  }
+}

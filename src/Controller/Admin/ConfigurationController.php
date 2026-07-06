@@ -4,8 +4,10 @@ namespace Velox\MailSendVx\Controller\Admin;
 
 use PrestaShop\PrestaShop\Core\Form\FormHandlerInterface;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use Configuration;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Velox\MailSendVx\ModuleConstants;
 
 class ConfigurationController extends FrameworkBundleAdminController
 {
@@ -28,7 +30,7 @@ class ConfigurationController extends FrameworkBundleAdminController
         if ($form->isSubmitted() && $form->isValid()) {
             $errors = $this->formHandler->save($form->getData());
             if (empty($errors)) {
-                $this->addFlash('success', $this->trans('Successful update.', 'Admin.Notifications.Success', []));
+                $this->addFlash('success', $this->trans('Actualización correcta.', 'Admin.Notifications.Success', []));
 
                 return $this->redirectToRoute('mailsendvx_configuration');
             }
@@ -42,6 +44,13 @@ class ConfigurationController extends FrameworkBundleAdminController
             'configurationForm' => $form->createView(),
             'configurationData' => (array) ($form->getData()['mailsendvx_configuration'] ?? []),
             'shopName' => (string) $this->getContext()->shop->name,
+            'abandonedCartCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'abandonedcartcron', [
+                'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),
+            ], true),
+            'queueCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'queuecron', [
+                'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),
+                'limit' => 50,
+            ], true),
         ]);
     }
 }

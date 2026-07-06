@@ -36,11 +36,11 @@ Esta fase no busca resolver todavia todos los casos comerciales, sino preparar e
 ## Componentes principales
 
 - `mailsendvx.php`: entrada del modulo, instalacion, hooks, configuracion y render de panel.
-- `classes/Repository/*`: acceso a tablas internas.
-- `classes/Service/MailSendVxLogger.php`: registro de logs.
-- `classes/Service/MailSendVxVariableRenderer.php`: reemplazo simple de variables `{variable}`.
-- `classes/Service/MailSendVxMailer.php`: orquestacion de plantilla, variables, provider y log.
-- `classes/Provider/*`: abstraccion del proveedor de envio.
+- `src/Repository/*`: acceso a tablas internas.
+- `src/Service/Support/MailSendVxLogger.php`: registro de logs.
+- `src/Service/Template/MailSendVxVariableRenderer.php`: reemplazo simple de variables `{variable}`.
+- `src/Service/Mail/MailSendVxMailer.php`: orquestacion de plantilla, variables, provider y log.
+- `src/Provider/*`: abstraccion del proveedor de envio.
 - `controllers/admin/AdminMailsendvx.php`: entrada padre del menu `Mail Send VELOX`, redirige al dashboard si se accede por URL directa.
 - `controllers/admin/AdminMailsendvxConfigure.php`: pantalla `Configuracion` del menu lateral.
 - `controllers/admin/AdminMailsendvxDashboard.php`: dashboard inicial.

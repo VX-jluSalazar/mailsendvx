@@ -11,8 +11,9 @@ use Velox\MailSendVx\Install\DatabaseInstaller;
 use Velox\MailSendVx\Install\Installer;
 use Velox\MailSendVx\Install\TabInstaller;
 use Velox\MailSendVx\ModuleConstants;
-use Velox\MailSendVx\Service\InstantEmailHookService;
 use PrestaShop\PrestaShop\Adapter\SymfonyContainer;
+use Velox\MailSendVx\Service\Cart\AbandonedCartService;
+use Velox\MailSendVx\Service\Event\InstantEmailHookService;
 
 class Mailsendvx extends Module
 {
@@ -21,15 +22,25 @@ class Mailsendvx extends Module
     public const EVENT_ORDER_STATUS_LEGACY = ModuleConstants::EVENT_ORDER_STATUS_LEGACY;
     public const EVENT_CUSTOMER_REGISTERED = ModuleConstants::EVENT_CUSTOMER_REGISTERED;
     public const EVENT_NEWSLETTER_REGISTERED = ModuleConstants::EVENT_NEWSLETTER_REGISTERED;
+    public const EVENT_CART_ABANDONED = ModuleConstants::EVENT_CART_ABANDONED;
     public const CONFIG_ENABLED = ModuleConstants::CONFIG_ENABLED;
     public const CONFIG_PROVIDER = ModuleConstants::CONFIG_PROVIDER;
     public const CONFIG_DEBUG = ModuleConstants::CONFIG_DEBUG;
     public const CONFIG_CRON_TOKEN = ModuleConstants::CONFIG_CRON_TOKEN;
+    public const CONFIG_ABANDONED_CART_ENABLED = ModuleConstants::CONFIG_ABANDONED_CART_ENABLED;
+    public const CONFIG_ABANDONED_CART_DELAY_VALUE = ModuleConstants::CONFIG_ABANDONED_CART_DELAY_VALUE;
+    public const CONFIG_ABANDONED_CART_DELAY_UNIT = ModuleConstants::CONFIG_ABANDONED_CART_DELAY_UNIT;
+    public const CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER = ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER;
+    public const CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS = ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS;
+    public const CONFIG_ABANDONED_CART_CRON_BATCH_SIZE = ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE;
 
     public const ADMIN_PARENT_TAB_CLASS = ModuleConstants::ADMIN_PARENT_TAB_CLASS;
     public const ADMIN_CONFIGURE_TAB_CLASS = ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS;
+    public const ADMIN_FLOWS_TAB_CLASS = ModuleConstants::ADMIN_FLOWS_TAB_CLASS;
     public const ADMIN_TEMPLATES_TAB_CLASS = ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS;
+    public const ADMIN_WRAPPERS_TAB_CLASS = ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS;
     public const ADMIN_DASHBOARD_TAB_CLASS = ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS;
+    public const ADMIN_DOCUMENTATION_TAB_CLASS = ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS;
     public const ADMIN_CONFIGURE_SECTION_CLASS = ModuleConstants::ADMIN_CONFIGURE_SECTION_CLASS;
 
     public function __construct()
@@ -45,8 +56,8 @@ class Mailsendvx extends Module
         parent::__construct();
 
         $this->displayName = $this->trans('Mail Send VX', [], 'Modules.Mailsendvx.Admin');
-        $this->description = $this->trans('Base module for transactional and automated email sending.', [], 'Modules.Mailsendvx.Admin');
-        $this->confirmUninstall = $this->trans('Uninstalling will remove Mail Send VX tables and settings. Continue?', [], 'Modules.Mailsendvx.Admin');
+        $this->description = $this->trans('Módulo base para el envío de correos transaccionales y automatizados.', [], 'Modules.Mailsendvx.Admin');
+        $this->confirmUninstall = $this->trans('La desinstalación eliminará las tablas y configuraciones de Mail Send VX. ¿Deseas continuar?', [], 'Modules.Mailsendvx.Admin');
     }
 
     public function install(): bool
@@ -66,14 +77,18 @@ class Mailsendvx extends Module
 
     public function hookDisplayBackOfficeHeader(): void
     {
+        $this->getInstaller()->ensureRuntimeSchema();
         $this->getInstaller()->ensureHooks($this);
         $this->getInstaller()->ensureAdminTabs($this);
 
         $controller = Tools::getValue('controller');
         $allowedControllers = [
             self::ADMIN_CONFIGURE_TAB_CLASS,
+            self::ADMIN_FLOWS_TAB_CLASS,
             self::ADMIN_TEMPLATES_TAB_CLASS,
+            self::ADMIN_WRAPPERS_TAB_CLASS,
             self::ADMIN_DASHBOARD_TAB_CLASS,
+            self::ADMIN_DOCUMENTATION_TAB_CLASS,
         ];
 
         if (Tools::getValue('configure') !== $this->name && !in_array($controller, $allowedControllers, true)) {
@@ -103,6 +118,7 @@ class Mailsendvx extends Module
 
     public function hookActionValidateOrder(array $params): void
     {
+        $this->getAbandonedCartService()->markRecoveredFromOrderParams($params);
         $this->getInstantEmailHookService()->handleValidateOrder($params, $this);
     }
 
@@ -148,5 +164,15 @@ class Mailsendvx extends Module
         }
 
         throw new RuntimeException('Mail Send VX hook service is not available in the Symfony container.');
+    }
+
+    private function getAbandonedCartService(): AbandonedCartService
+    {
+        $service = $this->get('prestashop.module.mailsendvx.service.abandoned_cart');
+        if ($service instanceof AbandonedCartService) {
+            return $service;
+        }
+
+        throw new RuntimeException('Mail Send VX abandoned cart service is not available in the Symfony container.');
     }
 }

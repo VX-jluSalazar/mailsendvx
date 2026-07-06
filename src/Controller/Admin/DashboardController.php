@@ -4,7 +4,7 @@ namespace Velox\MailSendVx\Controller\Admin;
 
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Symfony\Component\HttpFoundation\Response;
-use Velox\MailSendVx\Service\DashboardViewService;
+use Velox\MailSendVx\Service\Admin\DashboardViewService;
 
 class DashboardController extends FrameworkBundleAdminController
 {

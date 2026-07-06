@@ -13,6 +13,30 @@ services:
     tags:
       - { name: controller.service_arguments }
 
+  Velox\MailSendVx\Controller\Admin\FlowsController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.service.flow_admin'
+    tags:
+      - { name: controller.service_arguments }
+
+  Velox\MailSendVx\Controller\Admin\WrappersController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.service.wrapper_manager'
+      - '@prestashop.module.mailsendvx.service.template_content'
+      - '@prestashop.module.mailsendvx.service.template_admin'
+    tags:
+      - { name: controller.service_arguments }
+
+  Velox\MailSendVx\Controller\Admin\DocumentationController:
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.service.template_admin'
+      - '@prestashop.module.mailsendvx.service.fixture_generator'
+    tags:
+      - { name: controller.service_arguments }
+
   Velox\MailSendVx\Controller\Admin\DashboardController:
     public: true
     arguments:

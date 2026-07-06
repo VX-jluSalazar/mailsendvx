@@ -1,0 +1,149 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Base de conocimiento'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Documentación'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Consulta variables Twig por tipo de correo, descarga fixtures de referencia y revisa los cron operativos del módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Secciones'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ contextBuilderSections|length }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Cron endpoints'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ cronGuides|length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-8">
+        {% for section in contextBuilderSections %}
+          <div class="card mailsendvx-card{% if not loop.first %} mt-3{% endif %}">
+            <h3 class="card-header">
+              <i class="material-icons">code</i>
+              {{ section.title }}
+            </h3>
+            <div class="card-body mailsendvx-doc-card">
+              <p>{{ section.description }}</p>
+
+              <div class="mailsendvx-doc-chips">
+                {% for eventLabel in section.events %}
+                  <span class="mailsendvx-badge mailsendvx-badge--event">{{ eventLabel }}</span>
+                {% else %}
+                  <span class="mailsendvx-badge mailsendvx-badge--muted">{{ 'Sin eventos asociados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                {% endfor %}
+              </div>
+
+              <div class="mailsendvx-doc-table-wrap">
+                <table class="table mailsendvx-table mailsendvx-doc-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Variable'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Acceso Twig'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for item in section.variables %}
+                      <tr>
+                        <td><code>{{ item.path }}</code></td>
+                        <td><pre class="mailsendvx-doc-code">{{ item.twig }}</pre></td>
+                      </tr>
+                    {% else %}
+                      <tr>
+                        <td colspan="2">{{ 'No se encontraron variables documentadas para esta sección.'|trans({}, 'Modules.Mailsendvx.Admin') }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        {% else %}
+          <div class="card mailsendvx-card">
+            <div class="card-body">
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'No se encontraron datos de context builders.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Revisa las clases ContextBuilder y los eventos soportados registrados por el módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="col-xl-4">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">schedule_send</i>
+            {{ 'Crons del servidor'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <p class="mailsendvx-inline-note">
+              {{ 'El boton "Procesar queue ahora" es manual. En produccion debes configurar estos cron para que los flows y los carritos abandonados se ejecuten automaticamente.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </p>
+
+            <div class="mailsendvx-reference-grid">
+              {% for cron in cronGuides %}
+                <article class="mailsendvx-reference-card">
+                  <div class="mailsendvx-reference-card__meta">
+                    <strong>{{ cron.title }}</strong>
+                    <span class="mailsendvx-badge {% if cron.importance == 'Obligatorio' %}mailsendvx-badge--danger{% else %}mailsendvx-badge--warning{% endif %}">{{ cron.importance }}</span>
+                  </div>
+                  <p>{{ cron.description }}</p>
+                  <ul class="mailsendvx-note-list">
+                    <li><strong>{{ 'Frecuencia'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong> {{ cron.frequency }}</li>
+                    <li><strong>{{ 'Endpoint'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><pre class="mailsendvx-text-preview">{{ cron.url }}</pre></li>
+                    <li><strong>{{ 'Cron sugerido'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><pre class="mailsendvx-text-preview">{{ cron.command }}</pre></li>
+                  </ul>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">topic</i>
+            {{ 'Fixtures de referencia'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if fixtureSyncError %}
+              <p class="mailsendvx-inline-note">
+                {{ 'No se pudieron sincronizar los snapshots en docs/fixtures en esta carga.'|trans({}, 'Modules.Mailsendvx.Admin') }}<br>
+                <small>{{ fixtureSyncError }}</small>
+              </p>
+            {% else %}
+              <p class="mailsendvx-inline-note">
+                {{ 'Estos fixtures se regeneran automaticamente desde el codigo del payload y tambien pueden descargarse en tiempo real.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </p>
+            {% endif %}
+            <div class="mailsendvx-reference-grid">
+              {% for fixture in fixtureGuides %}
+                <article class="mailsendvx-reference-card">
+                  <div class="mailsendvx-reference-card__meta">
+                    <strong>{{ fixture.title }}</strong>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ fixture.download_url }}">
+                      {{ 'Descargar'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                    </a>
+                  </div>
+                  <p>{{ fixture.description }}</p>
+                  <pre class="mailsendvx-text-preview">{{ fixture.path }}</pre>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}

@@ -27,37 +27,77 @@ services:
       $connection: '@doctrine.dbal.default_connection'
       $databasePrefix: '%database_prefix%'
 
+  prestashop.module.mailsendvx.repository.flow:
+    class: Velox\MailSendVx\Repository\MailSendVxFlowRepository
+    public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+
+  prestashop.module.mailsendvx.repository.abandoned_cart:
+    class: Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository
+    public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
+
   prestashop.module.mailsendvx.provider.prestashop_mail:
     class: Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider
     public: true
 
   prestashop.module.mailsendvx.service.variable_renderer:
-    class: Velox\MailSendVx\Service\MailSendVxVariableRenderer
+    class: Velox\MailSendVx\Service\Template\MailSendVxVariableRenderer
     public: true
 
   prestashop.module.mailsendvx.service.template_engine.legacy:
-    class: Velox\MailSendVx\Service\LegacyPlaceholderTemplateEngine
+    class: Velox\MailSendVx\Service\Template\LegacyPlaceholderTemplateEngine
     public: true
 
   prestashop.module.mailsendvx.service.template_engine.twig:
-    class: Velox\MailSendVx\Service\TwigTemplateEngine
+    class: Velox\MailSendVx\Service\Template\TwigTemplateEngine
     public: true
 
   prestashop.module.mailsendvx.service.template_renderer:
-    class: Velox\MailSendVx\Service\MailSendVxTemplateRenderer
+    class: Velox\MailSendVx\Service\Template\MailSendVxTemplateRenderer
     public: true
     arguments:
       $legacyEngine: '@prestashop.module.mailsendvx.service.template_engine.legacy'
       $twigEngine: '@prestashop.module.mailsendvx.service.template_engine.twig'
 
   prestashop.module.mailsendvx.service.logger:
-    class: Velox\MailSendVx\Service\MailSendVxLogger
+    class: Velox\MailSendVx\Service\Support\MailSendVxLogger
     public: true
     arguments:
       $repository: '@prestashop.module.mailsendvx.repository.log'
 
+  prestashop.module.mailsendvx.service.flow_condition_evaluator:
+    class: Velox\MailSendVx\Service\Flow\FlowConditionEvaluator
+    public: true
+
+  prestashop.module.mailsendvx.service.flow_scheduler:
+    class: Velox\MailSendVx\Service\Flow\FlowSchedulerService
+    public: true
+    arguments:
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $conditionEvaluator: '@prestashop.module.mailsendvx.service.flow_condition_evaluator'
+
+  prestashop.module.mailsendvx.service.flow_worker:
+    class: Velox\MailSendVx\Service\Flow\FlowWorkerService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $conditionEvaluator: '@prestashop.module.mailsendvx.service.flow_condition_evaluator'
+
   prestashop.module.mailsendvx.service.mailer:
-    class: Velox\MailSendVx\Service\MailSendVxMailer
+    class: Velox\MailSendVx\Service\Mail\MailSendVxMailer
     public: true
     arguments:
       $templates: '@prestashop.module.mailsendvx.repository.template'
@@ -66,40 +106,113 @@ services:
       $renderer: '@prestashop.module.mailsendvx.service.template_renderer'
 
   prestashop.module.mailsendvx.service.order_state_event:
-    class: Velox\MailSendVx\Service\OrderStateEventService
+    class: Velox\MailSendVx\Service\Event\OrderStateEventService
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
 
+  prestashop.module.mailsendvx.service.context_segment.event:
+    class: Velox\MailSendVx\Service\ContextBuilder\EventContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.shop:
+    class: Velox\MailSendVx\Service\ContextBuilder\ShopContextSegmentBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.context_segment.customer:
+    class: Velox\MailSendVx\Service\ContextBuilder\CustomerContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.products:
+    class: Velox\MailSendVx\Service\ContextBuilder\ProductsContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.context_segment.cart:
+    class: Velox\MailSendVx\Service\ContextBuilder\CartContextSegmentBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.context_segment.order:
+    class: Velox\MailSendVx\Service\ContextBuilder\OrderContextSegmentBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.related_products_context:
+    class: Velox\MailSendVx\Service\ContextBuilder\RelatedProductsContextProvider
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
+  prestashop.module.mailsendvx.service.reviews_context:
+    class: Velox\MailSendVx\Service\ContextBuilder\ReviewsContextProvider
+    public: true
+
   prestashop.module.mailsendvx.service.context_builder.order:
-    class: Velox\MailSendVx\Service\OrderTemplateContextBuilder
+    class: Velox\MailSendVx\Service\ContextBuilder\OrderTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
       $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
+      $orderSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.order'
+      $productsContextBuilder: '@prestashop.module.mailsendvx.service.context_segment.products'
+      $relatedProductsContextProvider: '@prestashop.module.mailsendvx.service.related_products_context'
+      $reviewsContextProvider: '@prestashop.module.mailsendvx.service.reviews_context'
 
   prestashop.module.mailsendvx.service.context_builder.customer:
-    class: Velox\MailSendVx\Service\CustomerTemplateContextBuilder
+    class: Velox\MailSendVx\Service\ContextBuilder\CustomerTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
 
   prestashop.module.mailsendvx.service.context_builder.newsletter:
-    class: Velox\MailSendVx\Service\NewsletterTemplateContextBuilder
+    class: Velox\MailSendVx\Service\ContextBuilder\NewsletterTemplateContextBuilder
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
+
+  prestashop.module.mailsendvx.service.context_builder.cart:
+    class: Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $eventSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.event'
+      $shopSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.shop'
+      $customerSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.customer'
+      $cartSegmentBuilder: '@prestashop.module.mailsendvx.service.context_segment.cart'
+      $productsContextBuilder: '@prestashop.module.mailsendvx.service.context_segment.products'
+      $relatedProductsContextProvider: '@prestashop.module.mailsendvx.service.related_products_context'
+      $reviewsContextProvider: '@prestashop.module.mailsendvx.service.reviews_context'
 
   prestashop.module.mailsendvx.service.event_context:
-    class: Velox\MailSendVx\Service\EventTemplateContextService
+    class: Velox\MailSendVx\Service\Event\EventTemplateContextService
     public: true
     arguments:
       $orderBuilder: '@prestashop.module.mailsendvx.service.context_builder.order'
       $customerBuilder: '@prestashop.module.mailsendvx.service.context_builder.customer'
       $newsletterBuilder: '@prestashop.module.mailsendvx.service.context_builder.newsletter'
+      $cartBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
+
+  prestashop.module.mailsendvx.service.fixture_generator:
+    class: Velox\MailSendVx\Service\Documentation\FixtureGeneratorService
+    public: true
+    arguments:
+      $eventContextService: '@prestashop.module.mailsendvx.service.event_context'
 
   prestashop.module.mailsendvx.service.instant_email_hook:
-    class: Velox\MailSendVx\Service\InstantEmailHookService
+    class: Velox\MailSendVx\Service\Event\InstantEmailHookService
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
@@ -109,17 +222,34 @@ services:
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
+
+  prestashop.module.mailsendvx.service.abandoned_cart:
+    class: Velox\MailSendVx\Service\Cart\AbandonedCartService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $cartContextBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
+      $repository: '@prestashop.module.mailsendvx.repository.abandoned_cart'
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
 
   prestashop.module.mailsendvx.service.template_content:
-    class: Velox\MailSendVx\Service\TemplateContentService
+    class: Velox\MailSendVx\Service\Template\TemplateContentService
     public: true
 
   prestashop.module.mailsendvx.service.wrapper_manager:
-    class: Velox\MailSendVx\Service\MailTemplateWrapperService
+    class: Velox\MailSendVx\Service\Mail\MailTemplateWrapperService
     public: true
 
   prestashop.module.mailsendvx.service.dashboard_view:
-    class: Velox\MailSendVx\Service\DashboardViewService
+    class: Velox\MailSendVx\Service\Admin\DashboardViewService
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
@@ -128,8 +258,20 @@ services:
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
 
+  prestashop.module.mailsendvx.service.flow_admin:
+    class: Velox\MailSendVx\Service\Admin\FlowAdminService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
+
   prestashop.module.mailsendvx.service.template_admin:
-    class: Velox\MailSendVx\Service\TemplateAdminService
+    class: Velox\MailSendVx\Service\Template\TemplateAdminService
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"

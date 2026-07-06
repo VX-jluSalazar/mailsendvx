@@ -10,7 +10,14 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | --- | --- | --- |
 | `FASE_00_BASE_MODULO.md` | Fase 0 | Diseno tecnico, instalacion, hooks, tablas, servicios base, configuracion y logs. |
 | `FASE_01_EMAILS_INSTANTANEOS.md` | Fase 1 | Correos disparados por eventos inmediatos como cambio de estado, registro de cliente y newsletter. |
-| `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Motor de eventos, flujos, cola, cron, carrito abandonado, postcompra, condiciones y reintentos. |
+| `FASE_01C_ABANDONED_CART.md` | Fase 1C | Deteccion de carrito abandonado, dedupe por ciclo, evento `cart_abandoned` y uso inmediato en templates. |
+| `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Vision general de flows, templates reutilizables, cola, worker, condiciones y UI operativa. |
+| `FASE_02A_MODELO_BASE_DE_FLOWS.md` | Fase 2A | Modelo base de flow, steps, trigger y `context_type`. |
+| `FASE_02B_TEMPLATES_REUTILIZABLES.md` | Fase 2B | Templates desacoplados de `event_name` y compatibles por `context_type`. |
+| `FASE_02C_SCHEDULER_Y_QUEUE.md` | Fase 2C | Scheduler, delays y persistencia de jobs en cola. |
+| `FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md` | Fase 2D | Worker, locking, idempotencia y reintentos. |
+| `FASE_02E_CONDICIONES_Y_CANCELACIONES.md` | Fase 2E | Condiciones de flow y step, cancelaciones y reevaluaciones. |
+| `FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md` | Fase 2F | UI operativa y primeros flujos comerciales. |
 | `FASE_03_MAQUETADOR_VISUAL.md` | Fase 3 | Editor visual, bloques, JSON de diseno, renderizado responsive y previews con datos reales. |
 
 ## Roadmap recomendado
@@ -20,11 +27,12 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | 1 | Fase 0 completa | Modulo instalable, configurable y con base tecnica lista. |
 | 2 | Fase 1.1 a 1.3 | Primeros eventos capturados y emails instantaneos funcionales. |
 | 3 | Fase 1.4 a 1.8 | Plantillas simples, variables, preview, prueba de envio y logs. |
-| 4 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
-| 5 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
-| 6 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
-| 7 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
-| 8 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
+| 4 | Fase 01C | Evento `cart_abandoned`, criterio de abandono y dedupe por cron. |
+| 5 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
+| 6 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
+| 7 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
+| 8 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
+| 9 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
 
 ## Arquitectura objetivo
 
@@ -62,7 +70,7 @@ Adicionalmente, desde la migracion iniciada en junio de 2026:
 - El modulo ya cuenta con una base moderna inicial en `composer.json`, `src/` y `config/`.
 - El autoload del modulo ya se genera con Composer y ya no depende de un `vendor/autoload.php` artesanal.
 - La instalacion, configuracion base, tablas y tabs ya delegan en instaladores dentro de `src/Install/`.
-- Los hooks instantaneos principales ya delegan en `src/Service/InstantEmailHookService.php`.
+- Los hooks instantaneos principales ya delegan en `src/Service/Event/InstantEmailHookService.php`.
 - `Configuracion`, `Templates` y `Dashboard` ya tienen una primera version basada en Symfony con rutas, controllers, forms y vistas Twig.
 - Los controladores legacy de admin se mantienen solo como puente de compatibilidad hacia las rutas Symfony.
 - Las vistas Smarty legacy de esas pantallas fueron retiradas.
@@ -126,9 +134,25 @@ Ejemplos:
 - `old_order_state_key`
 - `old_order_state_name`
 
+### Construccion moderna del payload
+
+La construccion de contexto ya usa `TemplateContextPayloadBuilder` como orquestador y builders de segmentos para:
+
+- `event`
+- `shop`
+- `customer`
+- `cart`
+- `order`
+- `products`
+- `related_products`
+- `reviews`
+
+Esto alinea envio real, previews, fixtures y documentacion con una sola estructura de payload compuesta.
+
 ### Impacto en el roadmap
 
 - Fase 1 ya incorpora el refactor principal de eventos instantaneos de estado.
 - Fase 1 todavia requiere validacion funcional real, limpieza documental y pequenos ajustes de consistencia.
-- Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, no sobre un unico `order_status_updated`.
+- Fase 01C debe introducir `cart_abandoned` como evento estable y deduplicado antes de usarlo en automatizaciones.
+- Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, y debe consumir `cart_abandoned` desde Fase 01C en lugar de redefinirlo.
 - Fase 3 debe usar esta misma taxonomia para plantillas predisenadas y previews reales por estado.

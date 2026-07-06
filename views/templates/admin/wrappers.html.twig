@@ -1,0 +1,121 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Control de layout'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Gestiona los wrappers reutilizables de encabezado y pie que envuelven el cuerpo renderizado de cada plantilla de correo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Wrappers detectados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ wrappers|length }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Language'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ selectedLanguageCode ?: '-' }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-8">
+        <form method="post" class="mailsendvx-form">
+          <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-wrapper-save') }}">
+          <div class="card mailsendvx-card">
+            <h3 class="card-header">
+              <i class="material-icons">view_quilt</i>
+            {{ 'Editor de wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-inline-note">
+                {{ 'Usa esta pantalla para crear una clave de wrapper o actualizar una existente. El mismo wrapper guardado se propaga actualmente a cada carpeta de idioma del módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="wrapper_name">{{ 'Clave del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <input type="text" id="wrapper_name" name="wrapper_name" class="form-control" value="{{ selectedWrapper }}" required>
+                    <small class="form-text text-muted">{{ 'Ejemplo: mailsendvx_default'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label class="form-control-label" for="id_lang">{{ 'Idioma de referencia'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <select id="id_lang" name="id_lang" class="form-control">
+                      {% for language in languages %}
+                        <option value="{{ language.id_lang }}" {% if language.id_lang == selectedLangId %}selected{% endif %}>{{ language.name }}</option>
+                      {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">{{ 'Esto afecta qué archivo existente se carga en el editor antes de guardar.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-control-label" for="wrapper_html">{{ 'HTML del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                <textarea id="wrapper_html" name="wrapper_html" class="form-control" rows="12" required>{{ wrapperHtml }}</textarea>
+                <small class="form-text text-muted">{{ 'El wrapper HTML debe incluir {mailsendvx_html_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-control-label" for="wrapper_text">{{ 'Texto del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                <textarea id="wrapper_text" name="wrapper_text" class="form-control" rows="8">{{ wrapperText }}</textarea>
+                <small class="form-text text-muted">{{ 'Déjalo vacío si quieres que el módulo genere automáticamente un wrapper base de texto desde el HTML y reemplace el placeholder por {mailsendvx_text_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+              </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+              <a class="btn btn-outline-secondary" href="{{ path('mailsendvx_wrappers', {wrapper: selectedWrapper, id_lang: selectedLangId}) }}">
+                {{ 'Restablecer formulario'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </a>
+              <button type="submit" class="btn btn-primary">
+                {{ 'Guardar wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="col-xl-4">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">layers</i>
+            {{ 'Wrappers disponibles'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              {% for wrapperName, wrapperLabel in wrappers %}
+                <li>
+                  <a href="{{ path('mailsendvx_wrappers', {wrapper: wrapperName, id_lang: selectedLangId}) }}"><code>{{ wrapperName }}</code></a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">tips_and_updates</i>
+            {{ 'Reglas del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              <li>{{ 'El wrapper HTML debe contener el placeholder {mailsendvx_html_content} exactamente una vez.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'El wrapper de texto debe contener el placeholder {mailsendvx_text_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'El archivo base por defecto es modules/mailsendvx/mails/es/mailsendvx_default.html.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
