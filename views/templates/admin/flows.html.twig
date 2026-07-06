@@ -140,10 +140,11 @@
                   </div>
                 </div>
                 <div class="col-md-12">
-                  <div class="form-check mailsendvx-check">
-                    <input class="form-check-input" type="checkbox" id="mailsendvx-flow-active" name="active" value="1" {{ flowFormData.active ? 'checked' : '' }}>
-                    <label class="form-check-label" for="mailsendvx-flow-active">{{ 'Activar flow al guardar'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
-                  </div>
+                  <label class="mailsendvx-toggle" for="mailsendvx-flow-active">
+                    <input class="mailsendvx-toggle__input" type="checkbox" id="mailsendvx-flow-active" name="active" value="1" {{ flowFormData.active ? 'checked' : '' }}>
+                    <span class="mailsendvx-toggle__switch" aria-hidden="true"></span>
+                    <span class="mailsendvx-toggle__label">{{ 'Activar flow al guardar'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                  </label>
                 </div>
               </div>
 
@@ -248,10 +249,11 @@
                       </div>
                     </div>
 
-                    <div class="form-check mailsendvx-check">
-                      <input class="form-check-input" type="checkbox" data-step-field="active">
-                      <label class="form-check-label">{{ 'Step activo'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
-                    </div>
+                    <label class="row mailsendvx-toggle">
+                      <input class="mailsendvx-toggle__input" type="checkbox" data-step-field="active">
+                      <span class="mailsendvx-toggle__switch" aria-hidden="true"></span>
+                      <span class="mailsendvx-toggle__label">{{ 'Step activo'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    </label>
                   </div>
                 </article>
               </template>
