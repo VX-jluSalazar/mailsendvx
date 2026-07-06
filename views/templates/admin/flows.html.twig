@@ -151,7 +151,26 @@
               <div class="form-group">
                 <label for="mailsendvx-flow-conditions">{{ 'Condiciones del flow (JSON)'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
                 <textarea class="form-control mailsendvx-code-field" id="mailsendvx-flow-conditions" name="conditions_json" rows="5" spellcheck="false">{{ flowFormData.conditions_json|json_encode(constant('JSON_PRETTY_PRINT')) }}</textarea>
-                <small class="form-text text-muted">{{ 'Ejemplo: [{"path":"order.total_paid_tax_incl","operator":"gte","value":100}]'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                <small class="form-text text-muted">{{ 'Ejemplo: [{"path":"order.total","operator":"gte","value":100}] o [{"path":"order.payment_method_code","operator":"eq","value":"bankwire"}]'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                <div class="mailsendvx-operator-help">
+                  <strong>{{ 'Operadores disponibles'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+                  <div class="mailsendvx-operator-help__grid">
+                    <span><code>eq</code>: {{ 'igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>neq</code>: {{ 'diferente'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>gt</code>: {{ 'mayor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>gte</code>: {{ 'mayor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>lt</code>: {{ 'menor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>lte</code>: {{ 'menor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>contains</code>: {{ 'contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>not_contains</code>: {{ 'no contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>in</code>: {{ 'esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>not_in</code>: {{ 'no esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>empty</code>: {{ 'vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>not_empty</code>: {{ 'no vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>starts_with</code>: {{ 'empieza con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    <span><code>ends_with</code>: {{ 'termina con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -239,12 +258,52 @@
                         <div class="form-group">
                           <label>{{ 'Conditions JSON'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
                           <textarea class="form-control mailsendvx-code-field" rows="4" spellcheck="false" data-step-field="conditions"></textarea>
+                          <small class="form-text text-muted">{{ 'Ejemplo: [{"path":"customer.email","operator":"not_empty"}] o [{"path":"order.payment_method_code","operator":"eq","value":"bankwire"}]'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                          <div class="mailsendvx-operator-help mailsendvx-operator-help--compact">
+                            <strong>{{ 'Operadores disponibles'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+                            <div class="mailsendvx-operator-help__grid">
+                              <span><code>eq</code>: {{ 'igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>neq</code>: {{ 'diferente'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>gt</code>: {{ 'mayor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>gte</code>: {{ 'mayor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>lt</code>: {{ 'menor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>lte</code>: {{ 'menor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>contains</code>: {{ 'contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_contains</code>: {{ 'no contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>in</code>: {{ 'esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_in</code>: {{ 'no esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>empty</code>: {{ 'vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_empty</code>: {{ 'no vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>starts_with</code>: {{ 'empieza con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>ends_with</code>: {{ 'termina con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div class="col-md-12">
                         <div class="form-group">
                           <label>{{ 'Cancel rules JSON'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
                           <textarea class="form-control mailsendvx-code-field" rows="4" spellcheck="false" data-step-field="cancel_rules"></textarea>
+                          <small class="form-text text-muted">{{ 'Ejemplo: [{"path":"order.id","operator":"not_empty"}] o [{"path":"order.state.key","operator":"in","value":["canceled","refunded"]}]'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                          <div class="mailsendvx-operator-help mailsendvx-operator-help--compact">
+                            <strong>{{ 'Operadores disponibles'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+                            <div class="mailsendvx-operator-help__grid">
+                              <span><code>eq</code>: {{ 'igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>neq</code>: {{ 'diferente'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>gt</code>: {{ 'mayor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>gte</code>: {{ 'mayor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>lt</code>: {{ 'menor que'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>lte</code>: {{ 'menor o igual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>contains</code>: {{ 'contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_contains</code>: {{ 'no contiene'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>in</code>: {{ 'esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_in</code>: {{ 'no esta dentro de una lista'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>empty</code>: {{ 'vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>not_empty</code>: {{ 'no vacio'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>starts_with</code>: {{ 'empieza con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                              <span><code>ends_with</code>: {{ 'termina con'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

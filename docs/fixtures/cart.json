@@ -7,6 +7,7 @@
     "id_lang": 1,
     "name": "HEMP Ecuador",
     "url": "https://hemp.desarrollovelox.com",
+    "unsubscribe_url": "https://hemp.desarrollovelox.com/module/mailsendvx/unsubscribe?email=jonathan%40velox.ec&token=sample-token&id_shop=1",
     "contact_url": "https://api.whatsapp.com/send/?phone=593123456789"
   },
   "customer": {

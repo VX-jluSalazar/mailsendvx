@@ -111,6 +111,12 @@ services:
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
 
+  prestashop.module.mailsendvx.service.unsubscribe_url:
+    class: Velox\MailSendVx\Service\Marketing\UnsubscribeUrlService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+
   prestashop.module.mailsendvx.service.context_segment.event:
     class: Velox\MailSendVx\Service\ContextBuilder\EventContextSegmentBuilder
     public: true
@@ -120,6 +126,7 @@ services:
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $unsubscribeUrlService: '@prestashop.module.mailsendvx.service.unsubscribe_url'
 
   prestashop.module.mailsendvx.service.context_segment.customer:
     class: Velox\MailSendVx\Service\ContextBuilder\CustomerContextSegmentBuilder

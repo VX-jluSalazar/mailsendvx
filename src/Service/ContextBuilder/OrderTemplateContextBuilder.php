@@ -108,6 +108,7 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                 'id_lang' => (int) $this->context->language->id,
                 'name' => 'HEMP Ecuador',
                 'url' => 'https://hemp.desarrollovelox.com',
+                'unsubscribe_url' => 'https://hemp.desarrollovelox.com/module/mailsendvx/unsubscribe?email=jonathan%40velox.ec&token=sample-token&id_shop=1',
             ],
             'customer' => [
                 'id' => 10,
@@ -125,6 +126,7 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                 'status' => 'Enviado',
                 'old_status' => 'Pago aceptado',
                 'payment_method' => 'Pagos por transferencia bancaria',
+                'payment_method_code' => 'bankwire',
                 'shipping_method' => 'Recoger en la tienda',
                 'state' => [
                     'id' => 4,
@@ -176,7 +178,7 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                 'shipping' => [
                     'carrier_name' => 'Recoger en la tienda',
                     'cost' => 0.00,
-                    'tracking_url' => '',
+                    'tracking_url' => 'https://tracking.example.com/shipments/TRK-RSTIQXSIH',
                 ],
                 'products' => [
                     [
@@ -354,7 +356,9 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
     {
         return (new TemplateContextPayloadBuilder())
             ->withEvent($this->eventSegmentBuilder->build($eventName))
-            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang))
+            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang, [
+                'unsubscribe_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+            ]))
             ->withCustomer($this->customerSegmentBuilder->build($customer instanceof Customer && Validate::isLoadedObject($customer) ? $customer : null))
             ->withOrder($order)
             ->withRelatedProducts($this->relatedProductsContextProvider->getRelatedProducts(

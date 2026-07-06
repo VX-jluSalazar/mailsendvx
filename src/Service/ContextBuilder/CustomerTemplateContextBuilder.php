@@ -56,7 +56,9 @@ class CustomerTemplateContextBuilder implements DomainTemplateContextBuilderInte
 
         return (new TemplateContextPayloadBuilder())
             ->withEvent($this->eventSegmentBuilder->build(ModuleConstants::EVENT_CUSTOMER_REGISTERED))
-            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang))
+            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang, [
+                'unsubscribe_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
+            ]))
             ->withCustomer($this->customerSegmentBuilder->build($customer instanceof Customer ? $customer : null))
             ->build();
     }
@@ -65,7 +67,9 @@ class CustomerTemplateContextBuilder implements DomainTemplateContextBuilderInte
     {
         return (new TemplateContextPayloadBuilder())
             ->withEvent($this->eventSegmentBuilder->build($eventName))
-            ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id))
+            ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id, [
+                'unsubscribe_email' => 'cliente@example.com',
+            ]))
             ->withCustomer($this->customerSegmentBuilder->build(null, [
                 'id' => 123,
                 'name' => 'Cliente de prueba',

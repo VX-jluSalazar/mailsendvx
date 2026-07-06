@@ -6,7 +6,8 @@
     "id": 1,
     "id_lang": 1,
     "name": "HEMP Ecuador",
-    "url": "https://hemp.desarrollovelox.com"
+    "url": "https://hemp.desarrollovelox.com",
+    "unsubscribe_url": "https://hemp.desarrollovelox.com/module/mailsendvx/unsubscribe?email=jonathan%40velox.ec&token=sample-token&id_shop=1"
   },
   "customer": {
     "id": 10,
@@ -24,6 +25,7 @@
     "status": "Enviado",
     "old_status": "Pago aceptado",
     "payment_method": "Pagos por transferencia bancaria",
+    "payment_method_code": "bankwire",
     "shipping_method": "Recoger en la tienda",
     "state": {
       "id": 4,
@@ -75,7 +77,7 @@
     "shipping": {
       "carrier_name": "Recoger en la tienda",
       "cost": 0.00,
-      "tracking_url": ""
+      "tracking_url": "https://tracking.example.com/shipments/TRK-RSTIQXSIH"
     },
     "products": [
       {

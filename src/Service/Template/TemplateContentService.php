@@ -15,7 +15,7 @@ class TemplateContentService
         }
 
         if ($eventName === $newsletterRegisteredEvent) {
-            return '<p>Hola {{ customer.firstname ?: customer.name ?: "suscriptor" }},</p><p>Gracias por suscribirte al newsletter de {{ shop.name }}.</p><p><a href="{{ shop.url }}">Visitar la tienda</a></p>';
+            return '<p>Hola {{ customer.firstname ?: customer.name ?: "suscriptor" }},</p><p>Gracias por suscribirte al newsletter de {{ shop.name }}.</p><p><a href="{{ shop.url }}">Visitar la tienda</a></p>{% if shop.unsubscribe_url %}<p><a href="{{ shop.unsubscribe_url }}">Desuscribirme</a></p>{% endif %}';
         }
 
         if ($eventName === $cartAbandonedEvent) {
@@ -36,7 +36,7 @@ class TemplateContentService
         }
 
         if ($eventName === $newsletterRegisteredEvent) {
-            return "Hola {{ customer.firstname ?: customer.name ?: 'suscriptor' }},\n\nGracias por suscribirte al newsletter de {{ shop.name }}.\n\n{{ shop.url }}";
+            return "Hola {{ customer.firstname ?: customer.name ?: 'suscriptor' }},\n\nGracias por suscribirte al newsletter de {{ shop.name }}.\n\n{{ shop.url }}\n{% if shop.unsubscribe_url %}\nDesuscribirme:\n{{ shop.unsubscribe_url }}\n{% endif %}";
         }
 
         if ($eventName === $cartAbandonedEvent) {

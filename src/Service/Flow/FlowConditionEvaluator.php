@@ -64,6 +64,12 @@ class FlowConditionEvaluator
                 }
 
                 return is_scalar($actualValue) && is_scalar($expectedValue) && strpos((string) $actualValue, (string) $expectedValue) !== false;
+            case 'not_contains':
+                if (is_array($actualValue)) {
+                    return !in_array($expectedValue, $actualValue, true);
+                }
+
+                return is_scalar($actualValue) && is_scalar($expectedValue) && strpos((string) $actualValue, (string) $expectedValue) === false;
             case 'starts_with':
                 return is_scalar($actualValue) && is_scalar($expectedValue) && strpos((string) $actualValue, (string) $expectedValue) === 0;
             case 'ends_with':

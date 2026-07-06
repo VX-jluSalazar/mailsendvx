@@ -42,6 +42,7 @@ class OrderContextSegmentBuilder
                 'status' => '',
                 'old_status' => '',
                 'payment_method' => '',
+                'payment_method_code' => '',
                 'shipping_method' => '',
                 'state' => $this->normalizeState($state),
                 'old_state' => $this->normalizeState($oldState),
@@ -64,6 +65,7 @@ class OrderContextSegmentBuilder
             'status' => (string) ($state['name'] ?? ''),
             'old_status' => (string) ($oldState['name'] ?? ''),
             'payment_method' => (string) ($order->payment ?? ''),
+            'payment_method_code' => (string) ($order->module ?? ''),
             'shipping_method' => (string) ($shipping['carrier_name'] ?? ''),
             'state' => $this->normalizeState($state),
             'old_state' => $this->normalizeState($oldState),
@@ -201,17 +203,19 @@ class OrderContextSegmentBuilder
     private function getShippingContext(Order $order): array
     {
         $carrierName = '';
+        $trackingUrl = '';
         if (!empty($order->id_carrier)) {
             $carrier = new Carrier((int) $order->id_carrier);
             if (Validate::isLoadedObject($carrier)) {
                 $carrierName = (string) $carrier->name;
+                $trackingUrl = $this->buildTrackingUrl($carrier, $order);
             }
         }
 
         return [
             'carrier_name' => $carrierName,
             'cost' => (float) $order->total_shipping_tax_incl,
-            'tracking_url' => '',
+            'tracking_url' => $trackingUrl,
         ];
     }
 
@@ -225,5 +229,20 @@ class OrderContextSegmentBuilder
             'cost' => 0.0,
             'tracking_url' => '',
         ];
+    }
+
+    private function buildTrackingUrl(Carrier $carrier, Order $order): string
+    {
+        $carrierUrl = trim((string) $carrier->url);
+        if ($carrierUrl === '') {
+            return '';
+        }
+
+        $shippingNumber = (string) ($order->getShippingNumber() ?? '');
+        if ($shippingNumber === '') {
+            return $carrierUrl;
+        }
+
+        return str_replace('@', $shippingNumber, $carrierUrl);
     }
 }

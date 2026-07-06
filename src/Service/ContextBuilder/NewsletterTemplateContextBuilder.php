@@ -55,7 +55,9 @@ class NewsletterTemplateContextBuilder implements DomainTemplateContextBuilderIn
             ->withEvent($this->eventSegmentBuilder->build(ModuleConstants::EVENT_NEWSLETTER_REGISTERED, [
                 'newsletter_action' => $action,
             ]))
-            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang))
+            ->withShop($this->shopSegmentBuilder->build($idShop, $idLang, [
+                'unsubscribe_email' => $email,
+            ]))
             ->withCustomer($this->customerSegmentBuilder->build(null, [
                 'email' => $email,
             ]))
@@ -68,7 +70,9 @@ class NewsletterTemplateContextBuilder implements DomainTemplateContextBuilderIn
             ->withEvent($this->eventSegmentBuilder->build($eventName, [
                 'newsletter_action' => 'subscribe',
             ]))
-            ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id))
+            ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id, [
+                'unsubscribe_email' => 'jonathan@velox.ec',
+            ]))
             ->withCustomer($this->customerSegmentBuilder->build(null, [
                 'id' => 10,
                 'name' => 'Jonathan Salazar',

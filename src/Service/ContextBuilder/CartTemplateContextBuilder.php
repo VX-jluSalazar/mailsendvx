@@ -90,6 +90,7 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
             ->withEvent($this->eventSegmentBuilder->build(ModuleConstants::EVENT_CART_ABANDONED))
             ->withShop($this->shopSegmentBuilder->build($idShop, $idLang, [
                 'contact_url' => '',
+                'unsubscribe_email' => $customer instanceof Customer && Validate::isLoadedObject($customer) ? (string) $customer->email : '',
             ]))
             ->withCustomer($this->customerSegmentBuilder->build(
                 $customer instanceof Customer && Validate::isLoadedObject($customer) ? $customer : null,
@@ -113,6 +114,7 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
             ->withEvent($this->eventSegmentBuilder->build($eventName))
             ->withShop($this->shopSegmentBuilder->build((int) $this->context->shop->id, (int) $this->context->language->id, [
                 'contact_url' => 'https://api.whatsapp.com/send/?phone=593123456789',
+                'unsubscribe_email' => 'jonathan@velox.ec',
             ]))
             ->withCustomer($this->customerSegmentBuilder->build(null, [
                 'id' => 10,

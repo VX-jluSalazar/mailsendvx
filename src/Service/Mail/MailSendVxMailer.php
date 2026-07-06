@@ -90,11 +90,9 @@ class MailSendVxMailer
         $renderedTemplate = $this->renderer->renderTemplate($template, $variables);
         $subject = $renderedTemplate['subject'];
         $mailTemplate = (string) $template['mail_template'];
-        $mailVars = [];
-        foreach ($variables as $key => $value) {
-            if (is_scalar($value) || $value === null) {
-                $mailVars['{' . $key . '}'] = (string) $value;
-            }
+        $mailVars = $this->buildMailVarsFromContext($variables);
+        if (isset($mailVars['{shop_unsubscribe_url}']) && !isset($mailVars['{unsubscribe_url}'])) {
+            $mailVars['{unsubscribe_url}'] = $mailVars['{shop_unsubscribe_url}'];
         }
         $mailVars['{mailsendvx_html_content}'] = $renderedTemplate['html'];
         $mailVars['{mailsendvx_text_content}'] = $renderedTemplate['text'];
@@ -127,5 +125,33 @@ class MailSendVxMailer
 
             return false;
         }
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, string>
+     */
+    private function buildMailVarsFromContext(array $context, string $prefix = ''): array
+    {
+        $mailVars = [];
+
+        foreach ($context as $key => $value) {
+            if (!is_string($key) || $key === '' || $key[0] === '_') {
+                continue;
+            }
+
+            $path = $prefix === '' ? $key : $prefix . '_' . $key;
+            if (is_array($value)) {
+                $mailVars = array_merge($mailVars, $this->buildMailVarsFromContext($value, $path));
+                continue;
+            }
+
+            if (is_scalar($value) || $value === null) {
+                $mailVars['{' . $path . '}'] = (string) $value;
+            }
+        }
+
+        return $mailVars;
     }
 }

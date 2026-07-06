@@ -549,6 +549,48 @@
   max-width: 260px;
 }
 
+.mailsendvx-operator-help {
+  background: #f7fafc;
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 12px;
+  margin-top: 10px;
+  padding: 12px 14px;
+}
+
+.mailsendvx-operator-help strong {
+  color: var(--mailsendvx-ink);
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+}
+
+.mailsendvx-operator-help__grid {
+  display: grid;
+  gap: 8px 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mailsendvx-operator-help__grid span {
+  color: var(--mailsendvx-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mailsendvx-operator-help__grid code {
+  background: #fff;
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 6px;
+  color: var(--mailsendvx-ink);
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 6px;
+}
+
+.mailsendvx-operator-help--compact .mailsendvx-operator-help__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .mailsendvx-flow-list {
   display: grid;
   gap: 16px;
