@@ -65,8 +65,8 @@ class WrappersController extends FrameworkBundleAdminController
 
             if ($wrapperText === '' && $wrapperHtml !== '') {
                 $wrapperText = str_replace(
-                    '{mailsendvx_html_content}',
-                    '{mailsendvx_text_content}',
+                    '{{ mailsendvx_html_content|raw }}',
+                    '{{ mailsendvx_text_content }}',
                     $this->templateContentService->generateTextContentFromHtml($wrapperHtml)
                 );
             }

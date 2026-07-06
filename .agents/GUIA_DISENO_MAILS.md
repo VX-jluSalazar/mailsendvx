@@ -110,7 +110,7 @@ Tu idea es correcta:
 
 Ejemplo conceptual:
 
-```html
+```twig
 <!DOCTYPE html>
 <html>
 <body>
@@ -123,7 +123,7 @@ Ejemplo conceptual:
     </tr>
     <tr>
       <td>
-        {mailsendvx_html_content}
+        {{ mailsendvx_html_content|raw }}
       </td>
     </tr>
     <tr>
@@ -139,8 +139,8 @@ Ejemplo conceptual:
 
 Puntos obligatorios del wrapper:
 
-- en HTML debe contener `{mailsendvx_html_content}`,
-- en texto debe contener `{mailsendvx_text_content}`.
+- en HTML debe contener `{{ mailsendvx_html_content|raw }}`,
+- en texto debe contener `{{ mailsendvx_text_content }}`.
 
 ### Template
 
@@ -769,7 +769,7 @@ Si el diseño tiene botón:
 
 ### Wrapper
 
-```html
+```twig
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr>
     <td style="padding:24px;background:#0f172a;color:#ffffff;">
@@ -778,7 +778,7 @@ Si el diseño tiene botón:
   </tr>
   <tr>
     <td style="padding:24px;background:#ffffff;">
-      {mailsendvx_html_content}
+      {{ mailsendvx_html_content|raw }}
     </td>
   </tr>
   <tr>

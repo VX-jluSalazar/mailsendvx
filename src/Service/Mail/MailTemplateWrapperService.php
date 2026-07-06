@@ -59,8 +59,8 @@ class MailTemplateWrapperService
             $textPath = $directory . $wrapperName . '.txt';
             if (is_file($htmlPath) && is_file($textPath)) {
                 return [
-                    'html' => (string) file_get_contents($htmlPath),
-                    'text' => (string) file_get_contents($textPath),
+                    'html' => $this->normalizeTwigWrapperSyntax((string) file_get_contents($htmlPath), false),
+                    'text' => $this->normalizeTwigWrapperSyntax((string) file_get_contents($textPath), true),
                 ];
             }
         }
@@ -81,6 +81,9 @@ class MailTemplateWrapperService
         if ($htmlContent === '' || $textContent === '') {
             throw new RuntimeException('Wrapper HTML and text content are required.');
         }
+
+        $htmlContent = $this->normalizeTwigWrapperSyntax($htmlContent, false);
+        $textContent = $this->normalizeTwigWrapperSyntax($textContent, true);
 
         foreach ($this->getLanguageDirectories(true) as $directory) {
             if (!is_dir($directory) && !mkdir($directory, 0775, true) && !is_dir($directory)) {
@@ -142,5 +145,23 @@ class MailTemplateWrapperService
     private function getMailBaseDirectory(): string
     {
         return dirname(__DIR__, 2) . '/mails/';
+    }
+
+    private function normalizeTwigWrapperSyntax(string $content, bool $isText): string
+    {
+        if ($content === '') {
+            return '';
+        }
+
+        $replacements = [
+            '{shop_name}' => '{{ shop.name }}',
+            '{shop_url}' => '{{ shop.url }}',
+            '{unsubscribe_url}' => '{{ shop.unsubscribe_url }}',
+            '{shop_unsubscribe_url}' => '{{ shop.unsubscribe_url }}',
+            '{mailsendvx_text_content}' => '{{ mailsendvx_text_content }}',
+            '{mailsendvx_html_content}' => $isText ? '{{ mailsendvx_text_content }}' : '{{ mailsendvx_html_content|raw }}',
+        ];
+
+        return strtr($content, $replacements);
     }
 }

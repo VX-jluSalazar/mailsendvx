@@ -1,5 +1,8 @@
-{mailsendvx_text_content}
+{{ mailsendvx_text_content }}
 
 --
-{shop_name}
-{shop_url}
+{{ shop.name }}
+{{ shop.url }}
+{% if shop.unsubscribe_url %}
+{{ shop.unsubscribe_url }}
+{% endif %}

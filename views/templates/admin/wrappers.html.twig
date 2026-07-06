@@ -64,13 +64,13 @@
               <div class="form-group">
                 <label class="form-control-label" for="wrapper_html">{{ 'HTML del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
                 <textarea id="wrapper_html" name="wrapper_html" class="form-control" rows="12" required>{{ wrapperHtml }}</textarea>
-                <small class="form-text text-muted">{{ 'El wrapper HTML debe incluir {mailsendvx_html_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                <small class="form-text text-muted">{{ 'El wrapper HTML debe incluir {{ mailsendvx_html_content|raw }}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
               </div>
 
               <div class="form-group">
                 <label class="form-control-label" for="wrapper_text">{{ 'Texto del wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
                 <textarea id="wrapper_text" name="wrapper_text" class="form-control" rows="8">{{ wrapperText }}</textarea>
-                <small class="form-text text-muted">{{ 'Déjalo vacío si quieres que el módulo genere automáticamente un wrapper base de texto desde el HTML y reemplace el placeholder por {mailsendvx_text_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                <small class="form-text text-muted">{{ 'Déjalo vacío si quieres que el módulo genere automáticamente un wrapper base de texto desde el HTML y use {{ mailsendvx_text_content }}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
               </div>
             </div>
             <div class="card-footer d-flex justify-content-between align-items-center">
@@ -109,9 +109,9 @@
           </h3>
           <div class="card-body">
             <ul class="mailsendvx-note-list">
-              <li>{{ 'El wrapper HTML debe contener el placeholder {mailsendvx_html_content} exactamente una vez.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li>{{ 'El wrapper de texto debe contener el placeholder {mailsendvx_text_content}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li>{{ 'Puedes usar placeholders como {shop_name}, {shop_url}, {unsubscribe_url} o su version anidada {shop_unsubscribe_url}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'El wrapper HTML debe contener {{ mailsendvx_html_content|raw }} exactamente una vez.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'El wrapper de texto debe contener {{ mailsendvx_text_content }}.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+              <li>{{ 'Usa solo Twig en wrappers: {{ shop.name }}, {{ shop.url }}, {{ shop.unsubscribe_url }}, {{ customer.email }} y el resto del payload.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li>{{ 'El archivo base por defecto es modules/mailsendvx/mails/es/mailsendvx_default.html.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
             </ul>
           </div>
