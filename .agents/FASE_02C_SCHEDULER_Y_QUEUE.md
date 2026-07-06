@@ -1,5 +1,25 @@
 # Fase 02C: scheduler y queue
 
+## Estado
+
+Implementada en primera iteración funcional.
+
+### Alcance ya cubierto
+
+- búsqueda de flows activos por `trigger_event`,
+- validación inicial de `context_type`,
+- recorrido de `steps_json`,
+- cálculo de `scheduled_at`,
+- creación de jobs persistidos en `mailsendvx_queue`,
+- integración del scheduler con eventos instantáneos y `cart_abandoned`.
+
+### Pendientes relacionados
+
+- falta worker real para consumir la cola,
+- falta locking operativo e idempotencia completa,
+- falta reevaluación previa al envío,
+- falta suite de pruebas ejecutable.
+
 ## Objetivo
 
 Transformar los steps de un flow en jobs programados y persistidos.

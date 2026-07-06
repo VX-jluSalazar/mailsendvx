@@ -35,12 +35,20 @@ class TabInstaller
             0
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
+            ModuleConstants::ADMIN_FLOWS_TAB_CLASS,
+            'Flows',
+            $idParent,
+            'alt_route',
+            'mailsendvx_flows',
+            1
+        ) && $this->createOrUpdateAdminTab(
+            $moduleName,
             ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
             'Templates',
             $idParent,
             'mail',
             'mailsendvx_templates',
-            1
+            2
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS,
@@ -48,7 +56,7 @@ class TabInstaller
             $idParent,
             'view_quilt',
             'mailsendvx_wrappers',
-            2
+            3
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
@@ -56,7 +64,7 @@ class TabInstaller
             $idParent,
             'settings',
             'mailsendvx_configuration',
-            3
+            4
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS,
@@ -64,7 +72,7 @@ class TabInstaller
             $idParent,
             'description',
             'mailsendvx_documentation',
-            4
+            5
         );
     }
 
@@ -75,6 +83,7 @@ class TabInstaller
             ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
             ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS,
             ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS,
+            ModuleConstants::ADMIN_FLOWS_TAB_CLASS,
             ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS,
             ModuleConstants::ADMIN_PARENT_TAB_CLASS,
         ];

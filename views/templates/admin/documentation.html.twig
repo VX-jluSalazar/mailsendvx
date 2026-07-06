@@ -7,7 +7,7 @@
         <span class="mailsendvx-eyebrow">{{ 'Base de conocimiento'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
         <h1 class="mailsendvx-page-title">{{ 'Documentación'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
         <p class="mailsendvx-page-subtitle">
-          {{ 'Revisa las variables de plantillas y la configuración de carrito abandonado sin sobrecargar las pantallas de edición.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          {{ 'Revisa variables, fixtures, arquitectura de contexto y cron operativos sin sobrecargar las pantallas de edición.'|trans({}, 'Modules.Mailsendvx.Admin') }}
         </p>
       </div>
       <div class="mailsendvx-status-cluster">
@@ -20,8 +20,8 @@
           <strong class="mailsendvx-metric__value">{{ contextBuilderSections|length }}</strong>
         </div>
         <div class="mailsendvx-metric">
-          <span class="mailsendvx-metric__label">{{ 'Abandoned cart settings'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
-          <strong class="mailsendvx-metric__value">{{ abandonedCartSettingsGuide|length }}</strong>
+          <span class="mailsendvx-metric__label">{{ 'Cron endpoints'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ cronGuides|length }}</strong>
         </div>
       </div>
     </div>
@@ -78,6 +78,35 @@
       <div class="col-xl-5">
         <div class="card mailsendvx-card mailsendvx-card--aside">
           <h3 class="card-header">
+            <i class="material-icons">schedule_send</i>
+            {{ 'Crons del servidor'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <p class="mailsendvx-inline-note">
+              {{ 'El boton "Procesar queue ahora" es manual. En produccion debes configurar estos cron para que los flows y los carritos abandonados se ejecuten automaticamente.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </p>
+
+            <div class="mailsendvx-reference-grid">
+              {% for cron in cronGuides %}
+                <article class="mailsendvx-reference-card">
+                  <div class="mailsendvx-reference-card__meta">
+                    <strong>{{ cron.title }}</strong>
+                    <span class="mailsendvx-badge {% if cron.importance == 'Obligatorio' %}mailsendvx-badge--danger{% else %}mailsendvx-badge--warning{% endif %}">{{ cron.importance }}</span>
+                  </div>
+                  <p>{{ cron.description }}</p>
+                  <ul class="mailsendvx-note-list">
+                    <li><strong>{{ 'Frecuencia'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong> {{ cron.frequency }}</li>
+                    <li><strong>{{ 'Endpoint'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><pre class="mailsendvx-text-preview">{{ cron.url }}</pre></li>
+                    <li><strong>{{ 'Cron sugerido'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><pre class="mailsendvx-text-preview">{{ cron.command }}</pre></li>
+                  </ul>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
             <i class="material-icons">schema</i>
             {{ 'Arquitectura de Contexto'|trans({}, 'Modules.Mailsendvx.Admin') }}
           </h3>
@@ -101,6 +130,23 @@
               <li>{{ 'Previsualiza antes de activar plantillas que agreguen condiciones, loops o textos traducidos con Twig.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li>{{ 'Trata el editor HTML como la fuente principal, porque el cuerpo en texto plano se regenera al guardar.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li>{{ 'Crea o actualiza wrappers en el submenú Wrapper en lugar de hacerlo dentro de Templates.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">topic</i>
+            {{ 'Fixtures de referencia'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <ul class="mailsendvx-note-list">
+              {% for fixture in fixtureGuides %}
+                <li>
+                  <strong>{{ fixture.title }}</strong>: {{ fixture.description }}
+                  <pre class="mailsendvx-text-preview">{{ fixture.path }}</pre>
+                </li>
+              {% endfor %}
             </ul>
           </div>
         </div>

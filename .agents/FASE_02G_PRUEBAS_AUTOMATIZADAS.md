@@ -1,5 +1,17 @@
 # Fase 02G: pruebas automatizadas
 
+## Estado
+
+Documentada, pendiente de implementación.
+
+### Nota
+
+La estrategia ya está definida, pero el módulo aún no tiene infraestructura activa de testing:
+
+- no hay `require-dev` con PHPUnit,
+- no hay `autoload-dev`,
+- no existe todavía estructura real `tests/`.
+
 ## Objetivo
 
 Agregar una capa de pruebas automatizadas que proteja la arquitectura de flows, queue, worker y reglas comerciales antes de seguir ampliando UI y casos de negocio.

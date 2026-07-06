@@ -1,5 +1,22 @@
 # Fase 02B: templates reutilizables
 
+## Estado
+
+Implementada en primera iteración funcional.
+
+### Alcance ya cubierto
+
+- `event_name` nullable en persistencia,
+- `context_type` obligatorio en backend,
+- compatibilidad flow/template por `context_type`,
+- formulario de templates actualizado para soportar templates reutilizables,
+- preview y guardado adaptados para templates sin `event_name`.
+
+### Pendientes relacionados
+
+- falta cobertura de pruebas automatizadas,
+- la diferenciación operativa completa entre instantáneos y reutilizables todavía puede mejorar en UI futura de flows.
+
 ## Objetivo
 
 Desacoplar los templates del evento obligatorio para que puedan reutilizarse dentro de flows.

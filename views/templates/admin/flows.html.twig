@@ -1,0 +1,716 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero mailsendvx-hero--operations">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Mesa operativa'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Flows, cola y recetas comerciales'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Diseña journeys reutilizando plantillas compatibles, activa recetas comerciales y cancela jobs cuando el contexto del cliente ya cambió.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+        <div class="mailsendvx-route-strip" aria-hidden="true">
+          <span>Trigger</span>
+          <span>Steps</span>
+          <span>Queue</span>
+          <span>Resultado</span>
+        </div>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Flows activos'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ active_flows_count }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Jobs vigilados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ queue_jobs|length }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Reusable templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ reusable_templates_count }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="mailsendvx-control-grid">
+      <article class="mailsendvx-pulse-card mailsendvx-pulse-card--pending">
+        <span>{{ 'Pendientes'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <strong>{{ queue_counts.pending }}</strong>
+      </article>
+      <article class="mailsendvx-pulse-card mailsendvx-pulse-card--scheduled">
+        <span>{{ 'Programados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <strong>{{ queue_counts.scheduled }}</strong>
+      </article>
+      <article class="mailsendvx-pulse-card mailsendvx-pulse-card--processing">
+        <span>{{ 'Procesando'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <strong>{{ queue_counts.processing }}</strong>
+      </article>
+      <article class="mailsendvx-pulse-card mailsendvx-pulse-card--failed">
+        <span>{{ 'Fallidos'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <strong>{{ queue_counts.failed }}</strong>
+      </article>
+      <article class="mailsendvx-pulse-card mailsendvx-pulse-card--cancelled">
+        <span>{{ 'Cancelados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <strong>{{ queue_counts.cancelled }}</strong>
+      </article>
+    </div>
+
+    <div class="card mailsendvx-card mailsendvx-card--aside mb-3">
+      <div class="card-body mailsendvx-inline-action">
+        <div>
+          <strong>{{ 'Los steps programados necesitan que corra el worker de queue.'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+          <p>{{ 'El primer mail puede salir al instante, pero los siguientes sólo se enviarán después de su fecha programada cuando ejecutes el cron o lances el worker manualmente desde aquí.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+        </div>
+        <form method="post" class="mailsendvx-inline-runner">
+          <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-flow-save') }}">
+          <input type="hidden" name="run_queue_now" value="1">
+          <input type="hidden" name="queue_limit" value="50">
+          <button type="submit" class="btn btn-primary">{{ 'Procesar queue ahora'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-xl-7">
+        <form method="post" class="mailsendvx-form" id="mailsendvx-flow-form">
+          <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-flow-save') }}">
+          <input type="hidden" name="id_mailsendvx_flow" value="{{ flowFormData.id_mailsendvx_flow }}">
+          <input type="hidden" name="version" value="{{ flowFormData.version }}">
+          <input type="hidden" name="steps_json" id="mailsendvx-steps-json">
+
+          <div class="card mailsendvx-card">
+            <h3 class="card-header">
+              <i class="material-icons">alt_route</i>
+              {% if currentEditFlowId %}
+                {{ 'Editar flow'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {% else %}
+                {{ 'Crear flow'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              {% endif %}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-inline-note">
+                {{ 'Los flows trabajan con templates compatibles por context_type. Las plantillas reutilizables aparecen primero para evitar acoplar pasos a eventos instantáneos.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="mailsendvx-flow-name">{{ 'Nombre del flow'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <input type="text" class="form-control" id="mailsendvx-flow-name" name="name" value="{{ flowFormData.name }}" required>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="mailsendvx-flow-description">{{ 'Descripción operativa'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <textarea class="form-control" id="mailsendvx-flow-description" name="description" rows="3" placeholder="{{ 'Explica qué negocio cubre, qué momento del cliente activa y qué resultado espera este flow.'|trans({}, 'Modules.Mailsendvx.Admin') }}">{{ flowFormData.description }}</textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="mailsendvx-flow-context">{{ 'Context type'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <select class="form-control" id="mailsendvx-flow-context" name="context_type" required>
+                      {% for contextType, label in supported_context_types %}
+                        <option value="{{ contextType }}" {{ flowFormData.context_type == contextType ? 'selected' : '' }}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">{{ 'Define qué bloque de datos podrá usar cada step y qué templates serán compatibles.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="mailsendvx-flow-trigger">{{ 'Trigger event'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <select class="form-control" id="mailsendvx-flow-trigger" name="trigger_event" required>
+                      {% for eventName, label in supported_events %}
+                        <option value="{{ eventName }}" {{ flowFormData.trigger_event == eventName ? 'selected' : '' }}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">{{ 'El trigger se filtra por context_type para evitar combinaciones inválidas.'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <div class="form-group">
+                    <label for="mailsendvx-flow-priority">{{ 'Prioridad'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    <input type="number" class="form-control" id="mailsendvx-flow-priority" name="priority" value="{{ flowFormData.priority }}">
+                  </div>
+                </div>
+                <div class="col-md-12">
+                  <div class="form-check mailsendvx-check">
+                    <input class="form-check-input" type="checkbox" id="mailsendvx-flow-active" name="active" value="1" {{ flowFormData.active ? 'checked' : '' }}>
+                    <label class="form-check-label" for="mailsendvx-flow-active">{{ 'Activar flow al guardar'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="mailsendvx-flow-conditions">{{ 'Condiciones del flow (JSON)'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                <textarea class="form-control mailsendvx-code-field" id="mailsendvx-flow-conditions" name="conditions_json" rows="5" spellcheck="false">{{ flowFormData.conditions_json|json_encode(constant('JSON_PRETTY_PRINT')) }}</textarea>
+                <small class="form-text text-muted">{{ 'Ejemplo: [{"path":"order.total_paid_tax_incl","operator":"gte","value":100}]'|trans({}, 'Modules.Mailsendvx.Admin') }}</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="card mailsendvx-card mt-3">
+            <h3 class="card-header">
+              <i class="material-icons">route</i>
+              {{ 'Steps del journey'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-steps-toolbar">
+                <div>
+                  <strong>{{ 'Construye la secuencia'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+                  <p>{{ 'Cada step toma una plantilla compatible, define un delay y opcionalmente condiciones o reglas de cancelación.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+                </div>
+                <button type="button" class="btn btn-outline-primary" id="mailsendvx-add-step">
+                  {{ 'Agregar step'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                </button>
+              </div>
+
+              <div id="mailsendvx-steps-board" class="mailsendvx-steps-board"></div>
+
+              <template id="mailsendvx-step-template">
+                <article class="mailsendvx-step-card">
+                  <header class="mailsendvx-step-card__header">
+                    <div>
+                      <span class="mailsendvx-step-card__index"></span>
+                      <strong class="mailsendvx-step-card__title"></strong>
+                    </div>
+                    <div class="mailsendvx-step-card__actions">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-step-action="up">↑</button>
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-step-action="down">↓</button>
+                      <button type="button" class="btn btn-sm btn-outline-danger" data-step-action="remove">{{ 'Quitar'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                    </div>
+                  </header>
+                  <div class="mailsendvx-step-card__body">
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>{{ 'Step ID'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <input type="text" class="form-control" data-step-field="id">
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>{{ 'Plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <select class="form-control" data-step-field="template_id"></select>
+                          <small class="form-text text-muted" data-step-template-help></small>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="form-group">
+                          <label>{{ 'Delay value'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <input type="number" min="0" class="form-control" data-step-field="delay_value">
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group">
+                          <label>{{ 'Unit'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <select class="form-control" data-step-field="delay_unit">
+                            <option value="minute">minute</option>
+                            <option value="hour">hour</option>
+                            <option value="day">day</option>
+                            <option value="week">week</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="form-group">
+                          <label>{{ 'Mode'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <select class="form-control" data-step-field="delay_mode">
+                            <option value="immediate">immediate</option>
+                            <option value="after_trigger">after_trigger</option>
+                            <option value="after_previous_step">after_previous_step</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>{{ 'Conditions JSON'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <textarea class="form-control mailsendvx-code-field" rows="4" spellcheck="false" data-step-field="conditions"></textarea>
+                        </div>
+                      </div>
+                      <div class="col-md-12">
+                        <div class="form-group">
+                          <label>{{ 'Cancel rules JSON'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                          <textarea class="form-control mailsendvx-code-field" rows="4" spellcheck="false" data-step-field="cancel_rules"></textarea>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="form-check mailsendvx-check">
+                      <input class="form-check-input" type="checkbox" data-step-field="active">
+                      <label class="form-check-label">{{ 'Step activo'|trans({}, 'Modules.Mailsendvx.Admin') }}</label>
+                    </div>
+                  </div>
+                </article>
+              </template>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+              <a class="btn btn-outline-secondary" href="{{ path('mailsendvx_flows') }}">{{ 'Restablecer editor'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+              <button type="submit" class="btn btn-primary">{{ 'Guardar flow'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="card mailsendvx-card mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">list_alt</i>
+            {{ 'Flows existentes'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if flows %}
+              <div class="mailsendvx-flow-list">
+                {% for flow in flows %}
+                  <article class="mailsendvx-flow-row">
+                    <div class="mailsendvx-flow-row__headline">
+                      <div>
+                        <div class="mailsendvx-flow-row__title">
+                          <strong>{{ flow.name }}</strong>
+                          <span class="mailsendvx-badge {{ flow.active ? 'mailsendvx-badge--success' : 'mailsendvx-badge--muted' }}">{{ flow.active ? 'Activo'|trans({}, 'Modules.Mailsendvx.Admin') : 'Borrador'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                        </div>
+                        <p>{{ flow.description ?: 'Sin descripción operativa.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+                      </div>
+                      <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_flows', {edit: flow.id_mailsendvx_flow}) }}">{{ 'Editar'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                    </div>
+                    <div class="mailsendvx-flow-row__meta">
+                      <span><code>{{ flow.trigger_event }}</code></span>
+                      <span>{{ flow.trigger_label }}</span>
+                      <span>{{ flow.context_label }}</span>
+                      <span>{{ flow.steps_count }} {{ 'steps'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                      <span>{{ 'v' ~ flow.version }}</span>
+                    </div>
+                    <div class="mailsendvx-flow-row__steps">
+                      {% for step in flow.step_cards %}
+                        <div class="mailsendvx-step-chip">
+                          <strong>{{ step.position }}. {{ step.template_name }}</strong>
+                          <span>{{ step.delay_label }}</span>
+                          <span>{{ step.cancel_rules_count }} {{ 'cancel rules'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </article>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'Aún no hay flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Crea uno desde el editor o activa una receta comercial para dejar la Fase 02 operativa.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-5">
+        <div class="card mailsendvx-card mailsendvx-card--aside">
+          <h3 class="card-header">
+            <i class="material-icons">campaign</i>
+            {{ 'Casos comerciales iniciales'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <div class="mailsendvx-case-grid">
+              {% for preset in preset_catalog %}
+                <article class="mailsendvx-case-card">
+                  <span class="mailsendvx-eyebrow">{{ preset.eyebrow }}</span>
+                  <h4>{{ preset.title }}</h4>
+                  <p>{{ preset.description }}</p>
+                  <div class="mailsendvx-case-card__meta">
+                    <span>{{ supported_context_types[preset.context_type] ?? preset.context_type }}</span>
+                    <span>{{ preset.step_count }} {{ 'steps'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                  </div>
+                  <form method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-flow-save') }}">
+                    <input type="hidden" name="preset_id" value="{{ preset.id }}">
+                    <button type="submit" class="btn btn-outline-primary btn-sm">{{ 'Crear preset'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                  </form>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">queue</i>
+            {{ 'Queue operativa'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if queue_jobs %}
+              <div class="table-responsive">
+                <table class="table mailsendvx-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>{{ 'Estado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Evento'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Destinatario'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Programado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Flow / step'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Operación'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for job in queue_jobs %}
+                      <tr>
+                        <td>#{{ job.id_mailsendvx_queue }}</td>
+                        <td>
+                          <span class="mailsendvx-badge {{ job.status in ['sent'] ? 'mailsendvx-badge--success' : (job.status in ['pending', 'scheduled', 'processing'] ? 'mailsendvx-badge--warning' : (job.status in ['cancelled', 'skipped'] ? 'mailsendvx-badge--muted' : 'mailsendvx-badge--danger')) }}">{{ job.status }}</span>
+                        </td>
+                        <td><code>{{ job.event_name }}</code></td>
+                        <td>{{ job.recipient }}</td>
+                        <td>{{ job.scheduled_at }}</td>
+                        <td>
+                          <div>#{{ job.id_flow ?: '-' }} / {{ job.step_id ?: '-' }}</div>
+                          <div class="mailsendvx-table-meta">T#{{ job.id_template ?: '-' }}</div>
+                        </td>
+                        <td>
+                          {% if job.can_cancel %}
+                            <form method="post" action="{{ path('mailsendvx_queue_cancel', {idQueue: job.id_mailsendvx_queue}) }}" onsubmit="return confirm('{{ '¿Cancelar este job sin borrar el histórico?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                              <input type="hidden" name="_token" value="{{ csrf_token('cancel-queue-' ~ job.id_mailsendvx_queue) }}">
+                              <input type="hidden" name="cancel_reason" value="Cancelled manually from Back Office.">
+                              <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Cancelar'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                            </form>
+                          {% else %}
+                            <span class="mailsendvx-table-meta">{{ job.last_error ?: 'Sin acción manual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'Aún no hay jobs en cola.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Los jobs programados por flows aparecerán aquí con su estado operativo y opción de cancelación cuando aplique.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mt-3">
+          <h3 class="card-header">
+            <i class="material-icons">history</i>
+            {{ 'Logs operativos recientes'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            {% if recent_logs %}
+              <div class="table-responsive">
+                <table class="table mailsendvx-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Fecha'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Evento'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Estado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Template / queue'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for log in recent_logs %}
+                      <tr>
+                        <td>{{ log.date_add }}</td>
+                        <td><code>{{ log.event_name }}</code></td>
+                        <td><span class="mailsendvx-badge {{ log.status in ['sent'] ? 'mailsendvx-badge--success' : (log.status in ['pending', 'scheduled'] ? 'mailsendvx-badge--warning' : (log.status in ['cancelled', 'skipped'] ? 'mailsendvx-badge--muted' : 'mailsendvx-badge--danger')) }}">{{ log.status }}</span></td>
+                        <td>#{{ log.id_template ?: '-' }} / #{{ log.id_queue ?: '-' }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="mailsendvx-empty-state">
+                <h3>{{ 'Sin logs recientes.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+                <p>{{ 'Aquí se concentrarán los últimos cambios de estado de queue y los envíos asociados a tus flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script>
+    (function () {
+      var form = document.getElementById('mailsendvx-flow-form');
+      var stepsInput = document.getElementById('mailsendvx-steps-json');
+      var contextField = document.getElementById('mailsendvx-flow-context');
+      var triggerField = document.getElementById('mailsendvx-flow-trigger');
+      var addStepButton = document.getElementById('mailsendvx-add-step');
+      var stepsBoard = document.getElementById('mailsendvx-steps-board');
+      var stepTemplate = document.getElementById('mailsendvx-step-template');
+      var templates = {{ templates_for_builder|json_encode|raw }};
+      var initialSteps = {{ flowFormData.steps_json|json_encode|raw }};
+      var eventContexts = {{ event_context_map|json_encode|raw }};
+      var steps = Array.isArray(initialSteps) ? initialSteps.slice() : [];
+
+      if (!form || !stepsInput || !contextField || !triggerField || !addStepButton || !stepsBoard || !stepTemplate) {
+        return;
+      }
+
+      function getTemplateOptionsForContext(contextType) {
+        return templates.filter(function (template) {
+          return template.context_type === contextType;
+        });
+      }
+
+      function ensureTriggerCompatibility() {
+        var selectedContext = contextField.value || '';
+        var hasSelected = false;
+
+        Array.prototype.forEach.call(triggerField.options, function (option) {
+          var eventName = option.value || '';
+          if (!eventName) {
+            option.hidden = true;
+            return;
+          }
+
+          var eventContext = eventContexts[eventName] || '';
+          var allowed = eventContext === '' || eventContext === selectedContext;
+          option.hidden = !allowed;
+          option.disabled = !allowed;
+
+          if (allowed && option.value === triggerField.value) {
+            hasSelected = true;
+          }
+        });
+
+        if (!hasSelected) {
+          var firstVisible = Array.prototype.find.call(triggerField.options, function (option) {
+            return !option.hidden && !option.disabled;
+          });
+          if (firstVisible) {
+            triggerField.value = firstVisible.value;
+          }
+        }
+      }
+
+      function serializeConditions(value) {
+        if (typeof value === 'string' && value.trim() !== '') {
+          return value;
+        }
+
+        if (Array.isArray(value) && value.length) {
+          return JSON.stringify(value, null, 2);
+        }
+
+        return '[]';
+      }
+
+      function parseConditions(value) {
+        var normalized = (value || '').trim();
+        if (!normalized) {
+          return [];
+        }
+
+        try {
+          var parsed = JSON.parse(normalized);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          throw new Error('Las condiciones de un step deben ser JSON válido.');
+        }
+      }
+
+      function getDefaultStep() {
+        var contextType = contextField.value || '';
+        var compatibleTemplates = getTemplateOptionsForContext(contextType);
+        var defaultTemplate = compatibleTemplates.length ? compatibleTemplates[0] : null;
+
+        return {
+          id: 'step_' + (steps.length + 1),
+          type: 'email',
+          template_id: defaultTemplate ? parseInt(defaultTemplate.id_mailsendvx_template, 10) : 0,
+          delay: {
+            value: 0,
+            unit: 'hour',
+            mode: 'after_trigger'
+          },
+          conditions: [],
+          cancel_rules: [],
+          active: true
+        };
+      }
+
+      function renderSteps() {
+        stepsBoard.innerHTML = '';
+
+        if (!steps.length) {
+          var emptyState = document.createElement('div');
+          emptyState.className = 'mailsendvx-empty-inline';
+          emptyState.innerHTML = '<strong>{{ "Todavía no agregas steps."|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}</strong><p>{{ "Agrega el primer paso del journey para enlazar una plantilla y su delay."|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}</p>';
+          stepsBoard.appendChild(emptyState);
+          return;
+        }
+
+        steps.forEach(function (step, index) {
+          var node = stepTemplate.content.firstElementChild.cloneNode(true);
+          var title = node.querySelector('.mailsendvx-step-card__title');
+          var indexLabel = node.querySelector('.mailsendvx-step-card__index');
+          var templateField = node.querySelector('[data-step-field="template_id"]');
+          var templateHelp = node.querySelector('[data-step-template-help]');
+          indexLabel.textContent = 'Step ' + (index + 1);
+          title.textContent = step.id || ('step_' + (index + 1));
+
+          node.querySelectorAll('[data-step-action]').forEach(function (button) {
+            button.addEventListener('click', function () {
+              var action = button.getAttribute('data-step-action');
+              if (action === 'remove') {
+                steps.splice(index, 1);
+              }
+              if (action === 'up' && index > 0) {
+                var previous = steps[index - 1];
+                steps[index - 1] = steps[index];
+                steps[index] = previous;
+              }
+              if (action === 'down' && index < steps.length - 1) {
+                var next = steps[index + 1];
+                steps[index + 1] = steps[index];
+                steps[index] = next;
+              }
+
+              syncStepIds();
+              renderSteps();
+            });
+          });
+
+          node.querySelector('[data-step-field="id"]').value = step.id || ('step_' + (index + 1));
+          node.querySelector('[data-step-field="delay_value"]').value = step.delay && typeof step.delay.value !== 'undefined' ? step.delay.value : 0;
+          node.querySelector('[data-step-field="delay_unit"]').value = step.delay && step.delay.unit ? step.delay.unit : 'hour';
+          node.querySelector('[data-step-field="delay_mode"]').value = step.delay && step.delay.mode ? step.delay.mode : 'after_trigger';
+          node.querySelector('[data-step-field="conditions"]').value = serializeConditions(step.conditions);
+          node.querySelector('[data-step-field="cancel_rules"]').value = serializeConditions(step.cancel_rules);
+          node.querySelector('[data-step-field="active"]').checked = step.active !== false;
+
+          getTemplateOptionsForContext(contextField.value || '').forEach(function (template) {
+            var option = document.createElement('option');
+            option.value = template.id_mailsendvx_template;
+            option.textContent = '[' + template.usage_label + '] ' + template.name;
+            option.dataset.usage = template.usage;
+            option.dataset.event = template.event_name || '';
+            templateField.appendChild(option);
+          });
+
+          templateField.value = String(step.template_id || '');
+
+          var updateTemplateHelp = function () {
+            var selectedOption = templateField.options[templateField.selectedIndex];
+            if (!selectedOption) {
+              templateHelp.textContent = '{{ "Selecciona una plantilla compatible."|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}';
+              return;
+            }
+
+            var usage = selectedOption.dataset.usage === 'reusable'
+              ? '{{ "Reusable en flows"|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}'
+              : '{{ "Instantánea: úsala solo si realmente quieres reciclar ese contenido."|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}';
+            var eventName = selectedOption.dataset.event ? ' · ' + selectedOption.dataset.event : '';
+            templateHelp.textContent = usage + eventName;
+          };
+
+          updateTemplateHelp();
+
+          node.querySelectorAll('[data-step-field]').forEach(function (field) {
+            field.addEventListener('input', function () {
+              steps[index] = readStepFromNode(node, index);
+              title.textContent = steps[index].id || ('step_' + (index + 1));
+              if (field === templateField) {
+                updateTemplateHelp();
+              }
+            });
+            field.addEventListener('change', function () {
+              steps[index] = readStepFromNode(node, index);
+              title.textContent = steps[index].id || ('step_' + (index + 1));
+              if (field === templateField) {
+                updateTemplateHelp();
+              }
+            });
+          });
+
+          stepsBoard.appendChild(node);
+        });
+      }
+
+      function readStepFromNode(node, index) {
+        return {
+          id: node.querySelector('[data-step-field="id"]').value.trim() || ('step_' + (index + 1)),
+          type: 'email',
+          template_id: parseInt(node.querySelector('[data-step-field="template_id"]').value || '0', 10),
+          delay: {
+            value: parseInt(node.querySelector('[data-step-field="delay_value"]').value || '0', 10),
+            unit: node.querySelector('[data-step-field="delay_unit"]').value || 'hour',
+            mode: node.querySelector('[data-step-field="delay_mode"]').value || 'after_trigger'
+          },
+          conditions: parseConditions(node.querySelector('[data-step-field="conditions"]').value),
+          cancel_rules: parseConditions(node.querySelector('[data-step-field="cancel_rules"]').value),
+          active: !!node.querySelector('[data-step-field="active"]').checked
+        };
+      }
+
+      function syncStepIds() {
+        steps = steps.map(function (step, index) {
+          if (!step.id || /^step_\d+$/.test(step.id)) {
+            step.id = 'step_' + (index + 1);
+          }
+          return step;
+        });
+      }
+
+      addStepButton.addEventListener('click', function () {
+        steps.push(getDefaultStep());
+        syncStepIds();
+        renderSteps();
+      });
+
+      contextField.addEventListener('change', function () {
+        ensureTriggerCompatibility();
+        steps = steps.map(function (step, index) {
+          var compatibleTemplates = getTemplateOptionsForContext(contextField.value || '');
+          var stillCompatible = compatibleTemplates.some(function (template) {
+            return parseInt(template.id_mailsendvx_template, 10) === parseInt(step.template_id || 0, 10);
+          });
+
+          if (!stillCompatible) {
+            var fallback = compatibleTemplates.length ? compatibleTemplates[0] : null;
+            step.template_id = fallback ? parseInt(fallback.id_mailsendvx_template, 10) : 0;
+          }
+
+          if (!step.id) {
+            step.id = 'step_' + (index + 1);
+          }
+
+          return step;
+        });
+        renderSteps();
+      });
+
+      form.addEventListener('submit', function (event) {
+        try {
+          syncStepIds();
+          stepsInput.value = JSON.stringify(steps);
+        } catch (error) {
+          event.preventDefault();
+          window.alert(error.message || '{{ "No se pudieron serializar los steps del flow."|trans({}, "Modules.Mailsendvx.Admin")|e("js") }}');
+        }
+      });
+
+      ensureTriggerCompatibility();
+      if (!steps.length) {
+        steps.push(getDefaultStep());
+      }
+      syncStepIds();
+      renderSteps();
+    }());
+  </script>
+{% endblock %}

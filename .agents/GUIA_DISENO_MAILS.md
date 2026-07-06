@@ -17,9 +17,42 @@ Si el diseñador quiere ver ejemplos completos del payload disponible por evento
 
 - `modules/mailsendvx/.agents/fixtures/order.json`
 - `modules/mailsendvx/.agents/fixtures/cart.json`
-- `modules/mailsendvx/.agents/fixtures/suscriber.json`
+- `modules/mailsendvx/.agents/fixtures/subscriber.json`
 
 Esos archivos muestran ejemplos actuales del tipo de variables y arreglos que el módulo expone a Twig.
+
+## Dónde revisar la documentación operativa
+
+Además de esta guía, el módulo ahora centraliza en el submenú `Documentación`:
+
+- variables disponibles por tipo de evento,
+- arquitectura de los context builders,
+- checklist de escritura,
+- fixtures de referencia,
+- y los cron que deben configurarse en el servidor.
+
+Esto ayuda a separar la documentación de diseño de la operación técnica del módulo.
+
+## Cron que afectan el comportamiento de los flows
+
+Para diseño y QA hay un punto importante: un flow no depende solo de la plantilla, también depende del worker de queue.
+
+### Queue / flows worker
+
+- Debe ejecutarse en servidor cada minuto.
+- Es el responsable de enviar los pasos con delay.
+- Si un step no es instantáneo, no se enviará al guardar ni al capturar el evento; se enviará cuando llegue su `scheduled_at` y el cron lo procese.
+
+### Detección de carrito abandonado
+
+- Normalmente se recomienda cada 5 minutos.
+- Este cron no envía correos por sí solo.
+- Su trabajo es detectar carritos candidatos y disparar el evento `cart_abandoned`, que luego puede activar plantillas instantáneas o flows.
+
+Conclusión práctica:
+
+- un diseño correcto no garantiza envío automático si el cron de queue no existe,
+- y cuando QA pruebe flows con delay debe validar tanto la plantilla como la ejecución del worker.
 
 ## Arquitectura actual del contexto
 
@@ -496,6 +529,7 @@ Nota:
 
 - `newsletter_registered` usa un payload corto y limpio,
 - no expone productos, categorías, carrito ni reviews.
+- el fixture recomendado para este evento es `subscriber.json`.
 
 ## Variables de Carrito
 

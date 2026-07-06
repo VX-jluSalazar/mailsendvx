@@ -43,6 +43,10 @@ class FlowConditionEvaluator
                 return $actualValue !== null;
             case 'not_exists':
                 return $actualValue === null;
+            case 'empty':
+                return $this->isEmptyValue($actualValue);
+            case 'not_empty':
+                return !$this->isEmptyValue($actualValue);
             case 'neq':
             case '!=':
                 return $actualValue != $expectedValue;
@@ -60,6 +64,21 @@ class FlowConditionEvaluator
                 }
 
                 return is_scalar($actualValue) && is_scalar($expectedValue) && strpos((string) $actualValue, (string) $expectedValue) !== false;
+            case 'starts_with':
+                return is_scalar($actualValue) && is_scalar($expectedValue) && strpos((string) $actualValue, (string) $expectedValue) === 0;
+            case 'ends_with':
+                if (!is_scalar($actualValue) || !is_scalar($expectedValue)) {
+                    return false;
+                }
+
+                $actual = (string) $actualValue;
+                $expected = (string) $expectedValue;
+
+                if ($expected === '') {
+                    return true;
+                }
+
+                return substr($actual, -strlen($expected)) === $expected;
             case 'in':
                 return is_array($expectedValue) && in_array($actualValue, $expectedValue, true);
             case 'not_in':
@@ -69,6 +88,26 @@ class FlowConditionEvaluator
             default:
                 return $actualValue == $expectedValue;
         }
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function isEmptyValue($value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_string($value)) {
+            return trim($value) === '';
+        }
+
+        if (is_array($value)) {
+            return empty($value);
+        }
+
+        return false;
     }
 
     /**

@@ -45,23 +45,39 @@ class MailSendVxMailer
     /**
      * @param array<string, mixed> $variables
      */
-    public function sendEvent(string $eventName, string $recipient, ?string $recipientName, array $variables, int $idLang, int $idShop): bool
+    public function sendEvent(
+        string $eventName,
+        string $recipient,
+        ?string $recipientName,
+        array $variables,
+        int $idLang,
+        int $idShop,
+        ?int $idQueue = null
+    ): bool
     {
         $template = $this->templates->findActiveByEvent($eventName, $idLang, $idShop);
         if (!$template) {
-            $this->logs->add($eventName, 'skipped', $recipient, null, null, $variables, 'No active template found.', $idShop);
+            $this->logs->add($eventName, 'skipped', $recipient, null, $idQueue, $variables, 'No active template found.', $idShop);
 
             return false;
         }
 
-        return $this->sendTemplate($template, $recipient, $recipientName, $variables, $idLang, $idShop);
+        return $this->sendTemplate($template, $recipient, $recipientName, $variables, $idLang, $idShop, $idQueue);
     }
 
     /**
      * @param array<string, mixed> $template
      * @param array<string, mixed> $variables
      */
-    public function sendTemplate(array $template, string $recipient, ?string $recipientName, array $variables, int $idLang, int $idShop): bool
+    public function sendTemplate(
+        array $template,
+        string $recipient,
+        ?string $recipientName,
+        array $variables,
+        int $idLang,
+        int $idShop,
+        ?int $idQueue = null
+    ): bool
     {
         $eventName = (string) ($template['event_name'] ?? '');
         if ($eventName === '' && isset($variables['event']['name']) && is_scalar($variables['event']['name'])) {
@@ -90,7 +106,7 @@ class MailSendVxMailer
                 $sent ? 'sent' : 'failed',
                 $recipient,
                 (int) $template['id_mailsendvx_template'],
-                null,
+                $idQueue,
                 $variables,
                 $sent ? 'Email accepted by PrestaShop mail transport. Delivery depends on SMTP/sendmail and recipient server.' : 'Mail provider returned false.',
                 $idShop
@@ -103,7 +119,7 @@ class MailSendVxMailer
                 'failed',
                 $recipient,
                 (int) $template['id_mailsendvx_template'],
-                null,
+                $idQueue,
                 $variables,
                 $exception->getMessage(),
                 $idShop

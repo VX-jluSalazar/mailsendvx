@@ -14,6 +14,14 @@ mailsendvx_templates:
     _legacy_controller: AdminMailsendvxTemplates
     _legacy_link: AdminMailsendvxTemplates
 
+mailsendvx_flows:
+  path: /mailsendvx/flows
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::indexAction'
+    _legacy_controller: AdminMailsendvxFlows
+    _legacy_link: AdminMailsendvxFlows
+
 mailsendvx_wrappers:
   path: /mailsendvx/wrappers
   methods: [GET, POST]
@@ -55,3 +63,12 @@ mailsendvx_dashboard:
     _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::indexAction'
     _legacy_controller: AdminMailsendvxDashboard
     _legacy_link: AdminMailsendvxDashboard
+
+mailsendvx_queue_cancel:
+  path: /mailsendvx/queue/{idQueue}/cancel
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::cancelQueueJobAction'
+    _legacy_controller: AdminMailsendvxFlows
+  requirements:
+    idQueue: \d+

@@ -2,6 +2,7 @@
 
 namespace Velox\MailSendVx\Controller\Admin;
 
+use Configuration;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
@@ -30,6 +31,8 @@ class DocumentationController extends FrameworkBundleAdminController
             'contextBuilderSections' => $contextBuilderSections,
             'contextSegmentGuide' => $this->getContextSegmentGuide(),
             'abandonedCartSettingsGuide' => $this->getAbandonedCartSettingsGuide(),
+            'cronGuides' => $this->getCronGuides(),
+            'fixtureGuides' => $this->getFixtureGuides(),
         ]);
     }
 
@@ -208,6 +211,64 @@ class DocumentationController extends FrameworkBundleAdminController
             [
                 'key' => 'Abandoned cart batch size',
                 'description' => 'Limita cuantos carritos procesa el cron en cada corrida. Sirve para controlar carga y tiempos de ejecucion.',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function getCronGuides(): array
+    {
+        $token = (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN);
+        $queueCronUrl = $this->getContext()->link->getModuleLink('mailsendvx', 'queuecron', [
+            'token' => $token,
+            'limit' => 50,
+        ], true);
+        $abandonedCartCronUrl = $this->getContext()->link->getModuleLink('mailsendvx', 'abandonedcartcron', [
+            'token' => $token,
+        ], true);
+
+        return [
+            [
+                'title' => 'Queue / flows worker',
+                'frequency' => 'Cada minuto',
+                'importance' => 'Obligatorio',
+                'description' => 'Procesa los correos pendientes o programados de flows. Sin este cron, los steps con delay no se enviaran solos.',
+                'url' => $queueCronUrl,
+                'command' => sprintf('* * * * * /usr/bin/curl -fsS "%s" >/dev/null 2>&1', $queueCronUrl),
+            ],
+            [
+                'title' => 'Deteccion de carrito abandonado',
+                'frequency' => 'Cada 5 minutos',
+                'importance' => 'Recomendado',
+                'description' => 'Escanea carritos candidatos y registra el evento `cart_abandoned`. Si quieres una reaccion mas rapida puedes correrlo cada minuto.',
+                'url' => $abandonedCartCronUrl,
+                'command' => sprintf('*/5 * * * * /usr/bin/curl -fsS "%s" >/dev/null 2>&1', $abandonedCartCronUrl),
+            ],
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, string>>
+     */
+    private function getFixtureGuides(): array
+    {
+        return [
+            [
+                'title' => 'Pedido / order',
+                'path' => 'modules/mailsendvx/.agents/fixtures/order.json',
+                'description' => 'Referencia para `order_created`, `order_status_changed` y variantes `order_status_changed_*`.',
+            ],
+            [
+                'title' => 'Carrito / cart',
+                'path' => 'modules/mailsendvx/.agents/fixtures/cart.json',
+                'description' => 'Referencia para `cart_abandoned`, con `cart.items`, `related_products`, `reviews` y datos de recuperacion.',
+            ],
+            [
+                'title' => 'Newsletter / subscriber',
+                'path' => 'modules/mailsendvx/.agents/fixtures/subscriber.json',
+                'description' => 'Referencia para `newsletter_registered` con `event.newsletter_action`, `shop.*` y `customer.*`.',
             ],
         ];
     }

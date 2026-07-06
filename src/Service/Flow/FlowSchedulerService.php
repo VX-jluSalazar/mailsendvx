@@ -90,7 +90,7 @@ class FlowSchedulerService
                 $scheduledAt = $this->calculateScheduledAt(is_array($step['delay'] ?? null) ? $step['delay'] : [], $baseTime, $previousSchedule);
                 $previousSchedule = $scheduledAt;
 
-                $this->queueRepository->scheduleJob(
+                $scheduledJob = $this->queueRepository->scheduleJob(
                     $eventName,
                     $recipient,
                     $payload,
@@ -101,7 +101,22 @@ class FlowSchedulerService
                     isset($step['id']) ? (string) $step['id'] : null,
                     $idShop
                 );
-                ++$scheduled;
+                if ($scheduledJob) {
+                    ++$scheduled;
+                    continue;
+                }
+
+                ++$skipped;
+                $this->logRepository->add(
+                    $eventName,
+                    'skipped',
+                    $recipient,
+                    isset($step['template_id']) ? (int) $step['template_id'] : null,
+                    null,
+                    $payload,
+                    'Duplicate queue job prevented by scheduler idempotency guard.',
+                    $idShop
+                );
             }
         }
 

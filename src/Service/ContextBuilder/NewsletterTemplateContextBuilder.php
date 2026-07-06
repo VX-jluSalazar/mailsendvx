@@ -64,8 +64,16 @@ class NewsletterTemplateContextBuilder implements DomainTemplateContextBuilderIn
 
     public function buildSampleContext(string $eventName): array
     {
-        $fixturePath = dirname(__DIR__, 2) . '/.agents/fixtures/suscriber.json';
-        if (is_file($fixturePath)) {
+        $fixturePaths = [
+            dirname(__DIR__, 2) . '/.agents/fixtures/subscriber.json',
+            dirname(__DIR__, 2) . '/.agents/fixtures/suscriber.json',
+        ];
+
+        foreach ($fixturePaths as $fixturePath) {
+            if (!is_file($fixturePath)) {
+                continue;
+            }
+
             $decoded = json_decode((string) file_get_contents($fixturePath), true);
             if (is_array($decoded)) {
                 $decoded['event']['name'] = $eventName;

@@ -138,8 +138,12 @@
               <li>{{ 'La detección de carrito abandonado corre desde el endpoint cron del módulo y usa deduplicación por ciclo para no registrar el mismo carrito repetidamente.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
             </ul>
             <p class="mt-3 mb-0">
-              <strong>{{ 'URL del cron'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><br>
+              <strong>{{ 'URL del cron de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><br>
               <code>{{ abandonedCartCronUrl }}</code>
+            </p>
+            <p class="mt-3 mb-0">
+              <strong>{{ 'URL del cron de queue/flows'|trans({}, 'Modules.Mailsendvx.Admin') }}:</strong><br>
+              <code>{{ queueCronUrl }}</code>
             </p>
           </div>
         </div>

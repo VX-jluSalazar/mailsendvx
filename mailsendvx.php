@@ -36,6 +36,7 @@ class Mailsendvx extends Module
 
     public const ADMIN_PARENT_TAB_CLASS = ModuleConstants::ADMIN_PARENT_TAB_CLASS;
     public const ADMIN_CONFIGURE_TAB_CLASS = ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS;
+    public const ADMIN_FLOWS_TAB_CLASS = ModuleConstants::ADMIN_FLOWS_TAB_CLASS;
     public const ADMIN_TEMPLATES_TAB_CLASS = ModuleConstants::ADMIN_TEMPLATES_TAB_CLASS;
     public const ADMIN_WRAPPERS_TAB_CLASS = ModuleConstants::ADMIN_WRAPPERS_TAB_CLASS;
     public const ADMIN_DASHBOARD_TAB_CLASS = ModuleConstants::ADMIN_DASHBOARD_TAB_CLASS;
@@ -83,6 +84,7 @@ class Mailsendvx extends Module
         $controller = Tools::getValue('controller');
         $allowedControllers = [
             self::ADMIN_CONFIGURE_TAB_CLASS,
+            self::ADMIN_FLOWS_TAB_CLASS,
             self::ADMIN_TEMPLATES_TAB_CLASS,
             self::ADMIN_WRAPPERS_TAB_CLASS,
             self::ADMIN_DASHBOARD_TAB_CLASS,

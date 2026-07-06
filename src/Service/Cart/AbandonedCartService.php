@@ -14,8 +14,11 @@ use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Repository\MailSendVxAbandonedCartRepository;
 use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
+use Velox\MailSendVx\Repository\MailSendVxQueueRepository;
+use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
 use Velox\MailSendVx\Service\Flow\FlowSchedulerService;
+use Velox\MailSendVx\Service\Flow\FlowWorkerService;
 use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class AbandonedCartService
@@ -51,9 +54,24 @@ class AbandonedCartService
     private $mailer;
 
     /**
+     * @var MailSendVxQueueRepository
+     */
+    private $queueRepository;
+
+    /**
+     * @var MailSendVxTemplateRepository
+     */
+    private $templateRepository;
+
+    /**
      * @var FlowSchedulerService
      */
     private $flowScheduler;
+
+    /**
+     * @var FlowWorkerService
+     */
+    private $flowWorker;
 
     public function __construct(
         Context $context,
@@ -62,7 +80,10 @@ class AbandonedCartService
         MailSendVxEventRepository $eventRepository,
         MailSendVxLogRepository $logRepository,
         MailSendVxMailer $mailer,
-        FlowSchedulerService $flowScheduler
+        MailSendVxQueueRepository $queueRepository,
+        MailSendVxTemplateRepository $templateRepository,
+        FlowSchedulerService $flowScheduler,
+        FlowWorkerService $flowWorker
     ) {
         $this->context = $context;
         $this->cartContextBuilder = $cartContextBuilder;
@@ -70,7 +91,10 @@ class AbandonedCartService
         $this->eventRepository = $eventRepository;
         $this->logRepository = $logRepository;
         $this->mailer = $mailer;
+        $this->queueRepository = $queueRepository;
+        $this->templateRepository = $templateRepository;
         $this->flowScheduler = $flowScheduler;
+        $this->flowWorker = $flowWorker;
     }
 
     /**
@@ -169,6 +193,12 @@ class AbandonedCartService
             'recovered_at' => date('Y-m-d H:i:s'),
             'last_event_hash' => $existing['last_event_hash'] ?? null,
         ]);
+
+        $this->cancelPendingCartJobs(
+            (int) $order->id_cart,
+            (int) $order->id_shop,
+            sprintf('Queued cart_abandoned jobs cancelled because cart %d was converted into order %d.', (int) $order->id_cart, (int) $order->id)
+        );
     }
 
     private function buildCutoffDate(): DateTimeImmutable
@@ -213,6 +243,11 @@ class AbandonedCartService
                 'recovered_at' => date('Y-m-d H:i:s'),
                 'last_event_hash' => $state['last_event_hash'] ?? null,
             ]);
+            $this->cancelPendingCartJobs(
+                (int) $state['id_cart'],
+                (int) ($state['id_shop'] ?? $this->context->shop->id),
+                sprintf('Queued cart_abandoned jobs cancelled because cart %d is already recovered.', (int) $state['id_cart'])
+            );
             ++$recovered;
         }
 
@@ -285,7 +320,7 @@ class AbandonedCartService
                 (int) ($candidate['id_shop'] ?? $this->context->shop->id)
             );
 
-            $this->flowScheduler->scheduleEvent(
+            $scheduleResult = $this->flowScheduler->scheduleEvent(
                 ModuleConstants::EVENT_CART_ABANDONED,
                 $variables,
                 (int) ($candidate['id_shop'] ?? $this->context->shop->id)
@@ -304,17 +339,36 @@ class AbandonedCartService
                     (int) ($candidate['id_shop'] ?? $this->context->shop->id)
                 );
 
+                $this->triggerFlowWorkerIfNeeded($scheduleResult);
+
                 return true;
             }
 
-            $this->mailer->sendEvent(
-                ModuleConstants::EVENT_CART_ABANDONED,
-                $recipient,
-                !empty($variables['customer']['name']) ? (string) $variables['customer']['name'] : null,
-                $variables,
-                (int) ($variables['shop']['id_lang'] ?? $this->context->language->id),
-                (int) ($variables['shop']['id'] ?? $this->context->shop->id)
-            );
+            $idLang = (int) ($variables['shop']['id_lang'] ?? $this->context->language->id);
+            $idShop = (int) ($variables['shop']['id'] ?? $this->context->shop->id);
+            if ($this->templateRepositoryHasActiveInstantTemplate($idLang, $idShop)) {
+                $this->mailer->sendEvent(
+                    ModuleConstants::EVENT_CART_ABANDONED,
+                    $recipient,
+                    !empty($variables['customer']['name']) ? (string) $variables['customer']['name'] : null,
+                    $variables,
+                    $idLang,
+                    $idShop
+                );
+            } elseif (($scheduleResult['scheduled'] ?? 0) <= 0) {
+                $this->logRepository->add(
+                    ModuleConstants::EVENT_CART_ABANDONED,
+                    'skipped',
+                    $recipient,
+                    null,
+                    null,
+                    $variables,
+                    'No active instant template or flow matched this abandoned cart event.',
+                    $idShop
+                );
+            }
+
+            $this->triggerFlowWorkerIfNeeded($scheduleResult);
 
             return true;
         } catch (Throwable $exception) {
@@ -343,5 +397,86 @@ class AbandonedCartService
         $decoded = json_decode($snapshot, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function cancelPendingCartJobs(int $idCart, int $idShop, string $message): int
+    {
+        $cancelled = 0;
+
+        foreach ($this->queueRepository->findActiveJobsByEvent(ModuleConstants::EVENT_CART_ABANDONED, $idShop) as $job) {
+            $payload = $this->decodeQueuePayload($job);
+            if ($payload === null) {
+                continue;
+            }
+
+            $jobCartId = $payload['cart']['id'] ?? null;
+            if (!is_numeric($jobCartId) || (int) $jobCartId !== $idCart) {
+                continue;
+            }
+
+            $idQueue = (int) ($job['id_mailsendvx_queue'] ?? 0);
+            if ($idQueue <= 0 || !$this->queueRepository->cancelPendingJob($idQueue, $message)) {
+                continue;
+            }
+
+            ++$cancelled;
+            $this->logRepository->add(
+                ModuleConstants::EVENT_CART_ABANDONED,
+                'cancelled',
+                isset($job['recipient']) ? (string) $job['recipient'] : null,
+                !empty($job['id_template']) ? (int) $job['id_template'] : null,
+                $idQueue,
+                $payload,
+                $message,
+                $idShop
+            );
+        }
+
+        return $cancelled;
+    }
+
+    /**
+     * @param array<string, mixed> $job
+     *
+     * @return array<string, mixed>|null
+     */
+    private function decodeQueuePayload(array $job): ?array
+    {
+        $rawPayload = $job['payload_json'] ?? $job['payload'] ?? null;
+        if (!is_string($rawPayload) || $rawPayload === '') {
+            return [];
+        }
+
+        $decoded = json_decode($rawPayload, true);
+
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * @param array<string, int> $scheduleResult
+     */
+    private function triggerFlowWorkerIfNeeded(array $scheduleResult): void
+    {
+        if ((int) ($scheduleResult['scheduled'] ?? 0) <= 0) {
+            return;
+        }
+
+        try {
+            $this->flowWorker->processDueJobs(20);
+        } catch (Throwable $exception) {
+            PrestaShopLogger::addLog(
+                sprintf('Mail Send VX abandoned cart flow worker trigger failed: %s', $exception->getMessage()),
+                2,
+                null,
+                'Module',
+                0,
+                true
+            );
+        }
+    }
+
+    private function templateRepositoryHasActiveInstantTemplate(int $idLang, int $idShop): bool
+    {
+        return $this->templateRepository->hasActiveByEvent(ModuleConstants::EVENT_CART_ABANDONED, $idLang, $idShop);
     }
 }

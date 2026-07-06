@@ -19,8 +19,8 @@
     "id": 10,
     "reference": "RSTIQXSIH",
     "total": 117.30,
-    "date": "2026-05-22 23:35:19",
-    "formated_date": "22 de Junio, 2026",
+    "date": "2026-07-06 18:41:00",
+    "formated_date": "06 de Julio, 2026",
     "status": "Enviado",
     "old_status": "Pago aceptado",
     "payment_method": "Pagos por transferencia bancaria",
@@ -94,12 +94,12 @@
         "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
         "attributes": [
             {
-                "label": "Color",
-                "value": "red"
+                "label": "Presentacion",
+                "value": "30ml"
             },
             {
-                "label": "Size",
-                "value": "Medium"
+                "label": "Aroma",
+                "value": "Natural"
             }
         ]
       },
@@ -119,12 +119,12 @@
         "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
         "attributes": [
             {
-                "label": "Color",
-                "value": "red"
+                "label": "Presentacion",
+                "value": "30ml"
             },
             {
-                "label": "Size",
-                "value": "Medium"
+                "label": "Aroma",
+                "value": "Natural"
             }
         ]
       }

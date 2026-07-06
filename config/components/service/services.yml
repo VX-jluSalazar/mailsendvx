@@ -84,6 +84,18 @@ services:
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $conditionEvaluator: '@prestashop.module.mailsendvx.service.flow_condition_evaluator'
 
+  prestashop.module.mailsendvx.service.flow_worker:
+    class: Velox\MailSendVx\Service\Flow\FlowWorkerService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $conditionEvaluator: '@prestashop.module.mailsendvx.service.flow_condition_evaluator'
+
   prestashop.module.mailsendvx.service.mailer:
     class: Velox\MailSendVx\Service\Mail\MailSendVxMailer
     public: true
@@ -205,6 +217,7 @@ services:
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
       $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
 
   prestashop.module.mailsendvx.service.abandoned_cart:
     class: Velox\MailSendVx\Service\Cart\AbandonedCartService
@@ -216,7 +229,10 @@ services:
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
       $mailer: '@prestashop.module.mailsendvx.service.mailer'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
       $flowScheduler: '@prestashop.module.mailsendvx.service.flow_scheduler'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
 
   prestashop.module.mailsendvx.service.template_content:
     class: Velox\MailSendVx\Service\Template\TemplateContentService
@@ -235,6 +251,18 @@ services:
       $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
+
+  prestashop.module.mailsendvx.service.flow_admin:
+    class: Velox\MailSendVx\Service\Admin\FlowAdminService
+    public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $flowRepository: '@prestashop.module.mailsendvx.repository.flow'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+      $orderStateEventService: '@prestashop.module.mailsendvx.service.order_state_event'
+      $flowWorker: '@prestashop.module.mailsendvx.service.flow_worker'
 
   prestashop.module.mailsendvx.service.template_admin:
     class: Velox\MailSendVx\Service\Template\TemplateAdminService

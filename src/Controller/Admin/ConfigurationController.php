@@ -47,6 +47,10 @@ class ConfigurationController extends FrameworkBundleAdminController
             'abandonedCartCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'abandonedcartcron', [
                 'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),
             ], true),
+            'queueCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'queuecron', [
+                'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),
+                'limit' => 50,
+            ], true),
         ]);
     }
 }

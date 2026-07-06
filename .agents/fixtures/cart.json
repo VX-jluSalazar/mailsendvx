@@ -21,8 +21,8 @@
     "id": 15,
     "url": "https://hemp.desarrollovelox.com/carrito?action=show",
     "recovery_url": "https://hemp.desarrollovelox.com/carrito?action=show",
-    "abandoned_at": "2026-05-22T23:21:30+02:00",
-    "updated_at": "2026-05-22T22:21:30+02:00",
+    "abandoned_at": "2026-07-06T18:39:30-05:00",
+    "updated_at": "2026-07-06T17:39:30-05:00",
     "abandoned_minutes": 60,
     "products_count": 2,
     "total": 117.3,
@@ -61,12 +61,12 @@
         "image_url": "https://hemp.desarrollovelox.com/2-home_default/focus.jpg",
         "attributes": [
           {
-            "label": "Color",
-            "value": "red"
+            "label": "Presentacion",
+            "value": "30ml"
           },
           {
-            "label": "Size",
-            "value": "Medium"
+            "label": "Aroma",
+            "value": "Natural"
           }
         ]
       },
@@ -86,12 +86,12 @@
         "image_url": "https://hemp.desarrollovelox.com/3-home_default/suenos.jpg",
         "attributes": [
           {
-            "label": "Color",
-            "value": "red"
+            "label": "Presentacion",
+            "value": "30ml"
           },
           {
-            "label": "Size",
-            "value": "Medium"
+            "label": "Aroma",
+            "value": "Natural"
           }
         ]
       }

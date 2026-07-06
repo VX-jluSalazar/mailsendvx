@@ -29,6 +29,7 @@ final class ModuleConstants
 
     public const ADMIN_PARENT_TAB_CLASS = 'AdminMailsendvx';
     public const ADMIN_CONFIGURE_TAB_CLASS = 'AdminMailsendvxConfigure';
+    public const ADMIN_FLOWS_TAB_CLASS = 'AdminMailsendvxFlows';
     public const ADMIN_TEMPLATES_TAB_CLASS = 'AdminMailsendvxTemplates';
     public const ADMIN_WRAPPERS_TAB_CLASS = 'AdminMailsendvxWrappers';
     public const ADMIN_DASHBOARD_TAB_CLASS = 'AdminMailsendvxDashboard';

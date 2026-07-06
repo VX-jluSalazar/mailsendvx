@@ -13,6 +13,7 @@ use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
 use Velox\MailSendVx\Service\Flow\FlowSchedulerService;
+use Velox\MailSendVx\Service\Flow\FlowWorkerService;
 use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
 
 class InstantEmailHookService
@@ -57,6 +58,11 @@ class InstantEmailHookService
      */
     private $flowScheduler;
 
+    /**
+     * @var FlowWorkerService
+     */
+    private $flowWorker;
+
     public function __construct(
         Context $context,
         EventTemplateContextService $eventContextService,
@@ -65,7 +71,8 @@ class InstantEmailHookService
         MailSendVxEventRepository $eventRepository,
         MailSendVxLogRepository $logRepository,
         MailSendVxMailer $mailer,
-        FlowSchedulerService $flowScheduler
+        FlowSchedulerService $flowScheduler,
+        FlowWorkerService $flowWorker
     )
     {
         $this->context = $context;
@@ -76,6 +83,7 @@ class InstantEmailHookService
         $this->logRepository = $logRepository;
         $this->mailer = $mailer;
         $this->flowScheduler = $flowScheduler;
+        $this->flowWorker = $flowWorker;
     }
 
     public function handleOrderStatusPostUpdate(array $params, Module $module): void
@@ -235,9 +243,11 @@ class InstantEmailHookService
                 $idShop
             );
 
-            $this->flowScheduler->scheduleEvent($eventName, $variables, $idShop);
+            $scheduleResult = $this->flowScheduler->scheduleEvent($eventName, $variables, $idShop);
+            $hasInstantTemplate = $this->templateRepository->hasActiveByEvent($eventName, $idLang, $idShop);
 
             if (!$recipient || !Validate::isEmail($recipient)) {
+                $this->triggerFlowWorkerIfNeeded($scheduleResult, $module);
                 $this->logRepository->add(
                     $eventName,
                     'skipped',
@@ -252,18 +262,56 @@ class InstantEmailHookService
                 return;
             }
 
-            $this->mailer->sendEvent(
-                $eventName,
-                $recipient,
-                $recipientName,
-                $variables,
-                $idLang,
-                $idShop
-            );
+            if ($hasInstantTemplate) {
+                $this->mailer->sendEvent(
+                    $eventName,
+                    $recipient,
+                    $recipientName,
+                    $variables,
+                    $idLang,
+                    $idShop
+                );
+            } elseif (($scheduleResult['scheduled'] ?? 0) <= 0) {
+                $this->logRepository->add(
+                    $eventName,
+                    'skipped',
+                    $recipient,
+                    null,
+                    null,
+                    $variables,
+                    'No active instant template or flow matched this event.',
+                    $idShop
+                );
+            }
+
+            $this->triggerFlowWorkerIfNeeded($scheduleResult, $module);
         } catch (\Throwable $exception) {
             PrestaShopLogger::addLog(
                 sprintf('Mail Send VX instant email failed: %s', $exception->getMessage()),
                 3,
+                null,
+                'Module',
+                (int) $module->id,
+                true
+            );
+        }
+    }
+
+    /**
+     * @param array<string, int> $scheduleResult
+     */
+    private function triggerFlowWorkerIfNeeded(array $scheduleResult, Module $module): void
+    {
+        if ((int) ($scheduleResult['scheduled'] ?? 0) <= 0) {
+            return;
+        }
+
+        try {
+            $this->flowWorker->processDueJobs(20);
+        } catch (\Throwable $exception) {
+            PrestaShopLogger::addLog(
+                sprintf('Mail Send VX flow worker trigger failed: %s', $exception->getMessage()),
+                2,
                 null,
                 'Module',
                 (int) $module->id,

@@ -2,7 +2,17 @@
 
 ## Estado
 
-Pendiente de implementacion.
+En progreso.
+
+### Resumen actual
+
+- `02A` Implementada en backend.
+- `02B` Implementada en backend y administración de templates.
+- `02C` Implementada en primera iteración funcional de scheduler y queue.
+- `02D` Pendiente de implementación.
+- `02E` Pendiente de implementación.
+- `02F` Pendiente de implementación.
+- `02G` Documentada, pero pendiente de infraestructura y ejecución real.
 
 La base necesaria ya existe:
 
@@ -41,13 +51,13 @@ La regla base queda asi:
 
 ## Subfases documentadas
 
-- `02A` Modelo base de flows: `modules/mailsendvx/.agents/FASE_02A_MODELO_BASE_DE_FLOWS.md`
-- `02B` Templates reutilizables: `modules/mailsendvx/.agents/FASE_02B_TEMPLATES_REUTILIZABLES.md`
-- `02C` Scheduler y queue: `modules/mailsendvx/.agents/FASE_02C_SCHEDULER_Y_QUEUE.md`
-- `02D` Worker, locking e idempotencia: `modules/mailsendvx/.agents/FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md`
-- `02E` Condiciones y cancelaciones: `modules/mailsendvx/.agents/FASE_02E_CONDICIONES_Y_CANCELACIONES.md`
-- `02F` UI operativa y casos comerciales: `modules/mailsendvx/.agents/FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md`
-- `02G` Pruebas automatizadas: `modules/mailsendvx/.agents/FASE_02G_PRUEBAS_AUTOMATIZADAS.md`
+- `02A` Modelo base de flows: `modules/mailsendvx/.agents/FASE_02A_MODELO_BASE_DE_FLOWS.md` - implementada
+- `02B` Templates reutilizables: `modules/mailsendvx/.agents/FASE_02B_TEMPLATES_REUTILIZABLES.md` - implementada
+- `02C` Scheduler y queue: `modules/mailsendvx/.agents/FASE_02C_SCHEDULER_Y_QUEUE.md` - implementada en primera iteración
+- `02D` Worker, locking e idempotencia: `modules/mailsendvx/.agents/FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md` - pendiente
+- `02E` Condiciones y cancelaciones: `modules/mailsendvx/.agents/FASE_02E_CONDICIONES_Y_CANCELACIONES.md` - pendiente
+- `02F` UI operativa y casos comerciales: `modules/mailsendvx/.agents/FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md` - pendiente
+- `02G` Pruebas automatizadas: `modules/mailsendvx/.agents/FASE_02G_PRUEBAS_AUTOMATIZADAS.md` - documentada, no implementada
 
 ## Orden recomendado de implementacion
 
@@ -79,3 +89,18 @@ La prioridad correcta es:
 4. conectar el worker con el mailer Twig ya existente,
 5. recien despues construir la UI operativa completa,
 6. formalizar una suite de pruebas antes de seguir ampliando casos comerciales.
+
+## Nota de estado
+
+Lo ya implementado en código cubre:
+
+- contrato base de flows,
+- templates reutilizables desacoplados de `event_name`,
+- scheduler inicial que crea jobs persistidos desde eventos capturados.
+
+Lo que todavía falta para cerrar Fase 02:
+
+- worker real para procesar jobs,
+- reevaluación completa de condiciones y cancelaciones,
+- UI de flows y panel operativo,
+- infraestructura ejecutable de pruebas automáticas.

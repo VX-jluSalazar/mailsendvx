@@ -1,5 +1,20 @@
 # Fase 02A: modelo base de flows
 
+## Estado
+
+Implementada.
+
+### Alcance ya cubierto
+
+- tabla `mailsendvx_flow` ampliada con `trigger_event`, `context_type`, `description`, `priority`, `version`, `conditions_json` y `steps_json`,
+- validación backend de compatibilidad entre flow, steps y templates,
+- normalización de `steps_json` desde repositorio.
+
+### Pendientes relacionados
+
+- falta UI para crear y editar flows desde Back Office,
+- falta suite automática real para validar esta fase por CLI.
+
 ## Objetivo
 
 Definir el contrato estructural de los flows para que un flujo represente:
