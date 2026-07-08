@@ -98,7 +98,7 @@ class MailSendVxMailer
         $renderedTemplate = $this->renderer->renderTemplate($template, $variables);
         $subject = $renderedTemplate['subject'];
         $wrapperName = (string) ($template['mail_template'] ?? 'mailsendvx_default');
-        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
+        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang, $idShop);
         $wrapperContext = $variables;
         $wrapperContext['mailsendvx_html_content'] = $renderedTemplate['html'];
         $wrapperContext['mailsendvx_text_content'] = $renderedTemplate['text'];

@@ -42,6 +42,13 @@ services:
       $connection: '@doctrine.dbal.default_connection'
       $databasePrefix: '%database_prefix%'
 
+  prestashop.module.mailsendvx.repository.wrapper:
+    class: Velox\MailSendVx\Repository\MailSendVxWrapperRepository
+    public: true
+    arguments:
+      $connection: '@doctrine.dbal.default_connection'
+      $databasePrefix: '%database_prefix%'
+
   prestashop.module.mailsendvx.provider.prestashop_mail:
     class: Velox\MailSendVx\Provider\MailSendVxPrestaShopMailProvider
     public: true
@@ -252,6 +259,9 @@ services:
   prestashop.module.mailsendvx.service.wrapper_manager:
     class: Velox\MailSendVx\Service\Mail\MailTemplateWrapperService
     public: true
+    arguments:
+      $context: "@=service('prestashop.adapter.legacy.context').getContext()"
+      $repository: '@prestashop.module.mailsendvx.repository.wrapper'
 
   prestashop.module.mailsendvx.service.dashboard_view:
     class: Velox\MailSendVx\Service\Admin\DashboardViewService

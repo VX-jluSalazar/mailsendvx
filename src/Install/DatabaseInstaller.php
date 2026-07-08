@@ -32,6 +32,19 @@ class DatabaseInstaller
                 KEY `event_lookup` (`event_name`, `id_shop`, `id_lang`, `active`),
                 KEY `context_lookup` (`context_type`, `id_shop`, `id_lang`, `active`)
             ) ENGINE=' . $engine . ' ' . $charset,
+            'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_wrapper` (
+                `id_mailsendvx_wrapper` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
+                `id_lang` INT UNSIGNED NOT NULL DEFAULT 0,
+                `name` VARCHAR(128) NOT NULL,
+                `html_content` MEDIUMTEXT NULL,
+                `text_content` MEDIUMTEXT NULL,
+                `date_add` DATETIME NOT NULL,
+                `date_upd` DATETIME NOT NULL,
+                PRIMARY KEY (`id_mailsendvx_wrapper`),
+                UNIQUE KEY `uniq_wrapper_scope` (`name`, `id_shop`, `id_lang`),
+                KEY `wrapper_scope` (`id_shop`, `id_lang`, `name`)
+            ) ENGINE=' . $engine . ' ' . $charset,
             'CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'mailsendvx_event` (
                 `id_mailsendvx_event` INT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `id_shop` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -134,6 +147,7 @@ class DatabaseInstaller
         }
 
         return $this->ensureTemplateSchema()
+            && $this->ensureWrapperSchema()
             && $this->ensureFlowSchema()
             && $this->ensureQueueSchema();
     }
@@ -146,6 +160,7 @@ class DatabaseInstaller
             'mailsendvx_flow',
             'mailsendvx_event',
             'mailsendvx_abandoned_cart',
+            'mailsendvx_wrapper',
             'mailsendvx_template',
         ];
 
@@ -184,6 +199,14 @@ class DatabaseInstaller
             && $this->executeSilently('UPDATE `' . $table . '` SET `context_type` = "customer" WHERE (`context_type` IS NULL OR `context_type` = "") AND `trigger_event` = "customer_registered"')
             && $this->executeSilently('UPDATE `' . $table . '` SET `context_type` = "newsletter" WHERE (`context_type` IS NULL OR `context_type` = "") AND `trigger_event` = "newsletter_registered"')
             && $this->ensureIndex($table, 'context_priority', 'ALTER TABLE `' . $table . '` ADD KEY `context_priority` (`context_type`, `priority`, `active`)');
+    }
+
+    private function ensureWrapperSchema(): bool
+    {
+        $table = _DB_PREFIX_ . 'mailsendvx_wrapper';
+
+        return $this->ensureIndex($table, 'uniq_wrapper_scope', 'ALTER TABLE `' . $table . '` ADD UNIQUE KEY `uniq_wrapper_scope` (`name`, `id_shop`, `id_lang`)')
+            && $this->ensureIndex($table, 'wrapper_scope', 'ALTER TABLE `' . $table . '` ADD KEY `wrapper_scope` (`id_shop`, `id_lang`, `name`)');
     }
 
     private function ensureQueueSchema(): bool

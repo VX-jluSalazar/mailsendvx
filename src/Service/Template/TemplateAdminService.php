@@ -159,7 +159,11 @@ class TemplateAdminService
         $previewEventName = $eventName !== '' ? $eventName : (string) ModuleConstants::getDefaultEventForContext($contextType);
         $idLang = $template ? (int) $template['id_lang'] : (int) $this->context->language->id;
         $wrapperName = $template ? (string) $template['mail_template'] : 'mailsendvx_default';
-        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
+        $wrapperContent = $this->wrapperService->getWrapperContent(
+            $wrapperName,
+            $idLang,
+            $template ? (int) $template['id_shop'] : (int) $this->context->shop->id
+        );
 
         return [
             'id_mailsendvx_template' => $template ? (int) $template['id_mailsendvx_template'] : 0,
@@ -226,8 +230,10 @@ class TemplateAdminService
             $wrapperName = 'mailsendvx_default';
         }
 
+        $idShop = (int) ($data['id_shop'] ?? $this->context->shop->id);
+
         if ($wrapperHtml === '' || $wrapperText === '') {
-            $resolvedWrapperContent = $this->resolveWrapperContentForSave($wrapperName, $idLang);
+            $resolvedWrapperContent = $this->resolveWrapperContentForSave($wrapperName, $idLang, $idShop);
             if ($wrapperHtml === '') {
                 $wrapperHtml = $resolvedWrapperContent['html'];
             }
@@ -236,12 +242,12 @@ class TemplateAdminService
             }
         }
 
-        if (!empty($data['save_wrapper_changes']) || !$this->wrapperService->wrapperExists($wrapperName)) {
-            $this->wrapperService->saveWrapperContent($wrapperName, $wrapperHtml, $wrapperText);
+        if (!empty($data['save_wrapper_changes']) || !$this->wrapperService->wrapperExists($wrapperName, $idLang, $idShop)) {
+            $this->wrapperService->saveWrapperContent($wrapperName, $wrapperHtml, $wrapperText, $idLang, $idShop);
         }
 
         return $this->templateRepository->save([
-            'id_shop' => (int) ($data['id_shop'] ?? $this->context->shop->id),
+            'id_shop' => $idShop,
             'id_lang' => $idLang,
             'context_type' => $contextType,
             'event_name' => $eventName,
@@ -259,15 +265,15 @@ class TemplateAdminService
     /**
      * @return array{html: string, text: string}
      */
-    private function resolveWrapperContentForSave(string $wrapperName, int $idLang): array
+    private function resolveWrapperContentForSave(string $wrapperName, int $idLang, int $idShop): array
     {
-        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang);
+        $wrapperContent = $this->wrapperService->getWrapperContent($wrapperName, $idLang, $idShop);
         if ($wrapperContent['html'] !== '' && $wrapperContent['text'] !== '') {
             return $wrapperContent;
         }
 
         if ($wrapperName !== 'mailsendvx_default') {
-            $fallbackContent = $this->wrapperService->getWrapperContent('mailsendvx_default', $idLang);
+            $fallbackContent = $this->wrapperService->getWrapperContent('mailsendvx_default', $idLang, $idShop);
             if ($fallbackContent['html'] !== '' && $fallbackContent['text'] !== '') {
                 return $fallbackContent;
             }

@@ -65,6 +65,15 @@ mailsendvx_template_test:
   requirements:
     idTemplate: \d+
 
+mailsendvx_wrapper_delete:
+  path: /mailsendvx/wrappers/{idWrapper}/delete
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\WrappersController::deleteAction'
+    _legacy_controller: AdminMailsendvxWrappers
+  requirements:
+    idWrapper: \d+
+
 mailsendvx_dashboard:
   path: /mailsendvx/dashboard
   methods: [GET]

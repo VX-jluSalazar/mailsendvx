@@ -108,6 +108,8 @@ class OrderTemplateContextBuilder implements DomainTemplateContextBuilderInterfa
                 'id_lang' => (int) $this->context->language->id,
                 'name' => 'HEMP Ecuador',
                 'url' => 'https://hemp.desarrollovelox.com',
+                'logo_url' => 'https://hemp.desarrollovelox.com/img/logo.jpg',
+                'contact_email' => 'soporte@hemp.desarrollovelox.com',
                 'unsubscribe_url' => 'https://hemp.desarrollovelox.com/module/mailsendvx/unsubscribe?email=jonathan%40velox.ec&token=sample-token&id_shop=1',
             ],
             'customer' => [
