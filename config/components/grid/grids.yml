@@ -1,0 +1,129 @@
+services:
+  prestashop.module.mailsendvx.grid.definition.factory.events:
+    class: Velox\MailSendVx\Grid\Definition\Factory\MailSendVxEventGridDefinitionFactory
+    parent: prestashop.core.grid.definition.factory.abstract_grid_definition
+    public: true
+    arguments:
+      - "@=service('prestashop.adapter.legacy.context').getContext().language.date_format_lite"
+
+  prestashop.module.mailsendvx.grid.definition.factory.logs:
+    class: Velox\MailSendVx\Grid\Definition\Factory\MailSendVxLogGridDefinitionFactory
+    parent: prestashop.core.grid.definition.factory.abstract_grid_definition
+    public: true
+    arguments:
+      - "@=service('prestashop.adapter.legacy.context').getContext().language.date_format_lite"
+
+  prestashop.module.mailsendvx.grid.definition.factory.queue:
+    class: Velox\MailSendVx\Grid\Definition\Factory\MailSendVxQueueGridDefinitionFactory
+    parent: prestashop.core.grid.definition.factory.abstract_grid_definition
+    public: true
+    arguments:
+      - "@=service('prestashop.adapter.legacy.context').getContext().language.date_format_lite"
+      - '@security.csrf.token_manager'
+
+  prestashop.module.mailsendvx.grid.definition.factory.templates:
+    class: Velox\MailSendVx\Grid\Definition\Factory\MailSendVxTemplateGridDefinitionFactory
+    parent: prestashop.core.grid.definition.factory.abstract_grid_definition
+    public: true
+    arguments:
+      - '@security.csrf.token_manager'
+
+  prestashop.module.mailsendvx.grid.query.events:
+    class: Velox\MailSendVx\Grid\Query\MailSendVxEventQueryBuilder
+    parent: prestashop.core.grid.abstract_query_builder
+    public: true
+    arguments:
+      - '@prestashop.core.query.doctrine_search_criteria_applicator'
+
+  prestashop.module.mailsendvx.grid.query.logs:
+    class: Velox\MailSendVx\Grid\Query\MailSendVxLogQueryBuilder
+    parent: prestashop.core.grid.abstract_query_builder
+    public: true
+    arguments:
+      - '@prestashop.core.query.doctrine_search_criteria_applicator'
+
+  prestashop.module.mailsendvx.grid.query.queue:
+    class: Velox\MailSendVx\Grid\Query\MailSendVxQueueQueryBuilder
+    parent: prestashop.core.grid.abstract_query_builder
+    public: true
+    arguments:
+      - '@prestashop.core.query.doctrine_search_criteria_applicator'
+
+  prestashop.module.mailsendvx.grid.query.templates:
+    class: Velox\MailSendVx\Grid\Query\MailSendVxTemplateQueryBuilder
+    parent: prestashop.core.grid.abstract_query_builder
+    public: true
+    arguments:
+      - '@prestashop.core.query.doctrine_search_criteria_applicator'
+
+  prestashop.module.mailsendvx.grid.data.factory.events:
+    class: PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.query.events'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'mailsendvx_events'
+
+  prestashop.module.mailsendvx.grid.data.factory.logs:
+    class: PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.query.logs'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'mailsendvx_logs'
+
+  prestashop.module.mailsendvx.grid.data.factory.queue:
+    class: PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.query.queue'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'mailsendvx_queue'
+
+  prestashop.module.mailsendvx.grid.data.factory.templates:
+    class: PrestaShop\PrestaShop\Core\Grid\Data\Factory\DoctrineGridDataFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.query.templates'
+      - '@prestashop.core.hook.dispatcher'
+      - '@prestashop.core.grid.query.doctrine_query_parser'
+      - 'mailsendvx_templates'
+
+  prestashop.module.mailsendvx.grid.factory.events:
+    class: PrestaShop\PrestaShop\Core\Grid\GridFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.definition.factory.events'
+      - '@prestashop.module.mailsendvx.grid.data.factory.events'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
+  prestashop.module.mailsendvx.grid.factory.logs:
+    class: PrestaShop\PrestaShop\Core\Grid\GridFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.definition.factory.logs'
+      - '@prestashop.module.mailsendvx.grid.data.factory.logs'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
+  prestashop.module.mailsendvx.grid.factory.queue:
+    class: PrestaShop\PrestaShop\Core\Grid\GridFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.definition.factory.queue'
+      - '@prestashop.module.mailsendvx.grid.data.factory.queue'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'
+
+  prestashop.module.mailsendvx.grid.factory.templates:
+    class: PrestaShop\PrestaShop\Core\Grid\GridFactory
+    public: true
+    arguments:
+      - '@prestashop.module.mailsendvx.grid.definition.factory.templates'
+      - '@prestashop.module.mailsendvx.grid.data.factory.templates'
+      - '@prestashop.core.grid.filter.form_factory'
+      - '@prestashop.core.hook.dispatcher'

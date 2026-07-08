@@ -348,6 +348,7 @@ class TemplateAdminService
         );
 
         return [
+            'id_mailsendvx_template' => (int) $template['id_mailsendvx_template'],
             'name' => (string) $template['name'],
             'subject' => $this->templateRenderer->renderSubject((string) $template['subject'], $variables),
             'html' => $this->templateRenderer->renderHtml((string) $template['html_content'], $variables),

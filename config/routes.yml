@@ -56,6 +56,22 @@ mailsendvx_template_delete:
   requirements:
     idTemplate: \d+
 
+mailsendvx_template_bulk_delete:
+  path: /mailsendvx/templates/bulk-delete
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::bulkDeleteAction'
+    _legacy_controller: AdminMailsendvxTemplates
+
+mailsendvx_template_preview:
+  path: /mailsendvx/templates/{idTemplate}/preview
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::previewAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    idTemplate: \d+
+
 mailsendvx_template_test:
   path: /mailsendvx/templates/{idTemplate}/test
   methods: [POST]
@@ -76,7 +92,7 @@ mailsendvx_wrapper_delete:
 
 mailsendvx_dashboard:
   path: /mailsendvx/dashboard
-  methods: [GET]
+  methods: [GET, POST]
   defaults:
     _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::indexAction'
     _legacy_controller: AdminMailsendvxDashboard
@@ -90,3 +106,10 @@ mailsendvx_queue_cancel:
     _legacy_controller: AdminMailsendvxFlows
   requirements:
     idQueue: \d+
+
+mailsendvx_queue_bulk_cancel:
+  path: /mailsendvx/queue/bulk-cancel
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::cancelQueueBulkAction'
+    _legacy_controller: AdminMailsendvxFlows

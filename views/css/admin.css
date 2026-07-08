@@ -881,6 +881,11 @@
   padding: 22px;
 }
 
+.mailsendvx-modal__footer {
+  border-top: 1px solid var(--mailsendvx-line);
+  padding: 18px 22px 22px;
+}
+
 .mailsendvx-log-detail-grid {
   display: grid;
   gap: 12px;
@@ -941,7 +946,8 @@
   }
 
   .mailsendvx-modal__header,
-  .mailsendvx-modal__body {
+  .mailsendvx-modal__body,
+  .mailsendvx-modal__footer {
     padding: 16px;
   }
 
@@ -1040,6 +1046,15 @@
 
 .mailsendvx-test-form .form-control {
   max-width: 220px;
+}
+
+.mailsendvx-modal-feedback {
+  display: none;
+  margin-bottom: 14px;
+}
+
+.mailsendvx-modal-feedback.is-visible {
+  display: block;
 }
 
 .mailsendvx-empty-state {

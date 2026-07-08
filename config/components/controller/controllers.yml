@@ -10,6 +10,9 @@ services:
     public: true
     arguments:
       - '@prestashop.module.mailsendvx.service.template_admin'
+      - '@prestashop.module.mailsendvx.grid.factory.templates'
+      - '@prestashop.module.mailsendvx.grid.definition.factory.templates'
+      - '@prestashop.bundle.grid.response_builder'
     tags:
       - { name: controller.service_arguments }
 
@@ -17,6 +20,9 @@ services:
     public: true
     arguments:
       - '@prestashop.module.mailsendvx.service.flow_admin'
+      - '@prestashop.module.mailsendvx.grid.factory.queue'
+      - '@prestashop.module.mailsendvx.grid.definition.factory.queue'
+      - '@prestashop.bundle.grid.response_builder'
     tags:
       - { name: controller.service_arguments }
 
@@ -41,5 +47,10 @@ services:
     public: true
     arguments:
       - '@prestashop.module.mailsendvx.service.dashboard_view'
+      - '@prestashop.module.mailsendvx.grid.factory.events'
+      - '@prestashop.module.mailsendvx.grid.factory.logs'
+      - '@prestashop.module.mailsendvx.grid.definition.factory.events'
+      - '@prestashop.module.mailsendvx.grid.definition.factory.logs'
+      - '@prestashop.bundle.grid.response_builder'
     tags:
       - { name: controller.service_arguments }

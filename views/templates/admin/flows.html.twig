@@ -23,7 +23,7 @@
         </div>
         <div class="mailsendvx-metric">
           <span class="mailsendvx-metric__label">{{ 'Jobs vigilados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
-          <strong class="mailsendvx-metric__value">{{ queue_jobs|length }}</strong>
+          <strong class="mailsendvx-metric__value">{{ queue_counts.pending + queue_counts.scheduled + queue_counts.processing }}</strong>
         </div>
         <div class="mailsendvx-metric">
           <span class="mailsendvx-metric__label">{{ 'Reusable templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
@@ -401,100 +401,19 @@
           </div>
         </div>
 
-        <div class="card mailsendvx-card mt-3">
-          <h3 class="card-header">
-            <i class="material-icons">queue</i>
-            {{ 'Queue operativa'|trans({}, 'Modules.Mailsendvx.Admin') }}
-          </h3>
-          <div class="card-body">
-            {% if queue_jobs %}
-              <div class="table-responsive">
-                <table class="table mailsendvx-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>{{ 'Estado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Evento'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Destinatario'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Programado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Flow / step'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Operación'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for job in queue_jobs %}
-                      <tr>
-                        <td>#{{ job.id_mailsendvx_queue }}</td>
-                        <td>
-                          <span class="mailsendvx-badge {{ job.status in ['sent'] ? 'mailsendvx-badge--success' : (job.status in ['pending', 'scheduled', 'processing'] ? 'mailsendvx-badge--warning' : (job.status in ['cancelled', 'skipped'] ? 'mailsendvx-badge--muted' : 'mailsendvx-badge--danger')) }}">{{ job.status }}</span>
-                        </td>
-                        <td><code>{{ job.event_name }}</code></td>
-                        <td>{{ job.recipient }}</td>
-                        <td>{{ job.scheduled_at }}</td>
-                        <td>
-                          <div>#{{ job.id_flow ?: '-' }} / {{ job.step_id ?: '-' }}</div>
-                          <div class="mailsendvx-table-meta">T#{{ job.id_template ?: '-' }}</div>
-                        </td>
-                        <td>
-                          {% if job.can_cancel %}
-                            <form method="post" action="{{ path('mailsendvx_queue_cancel', {idQueue: job.id_mailsendvx_queue}) }}" onsubmit="return confirm('{{ '¿Cancelar este job sin borrar el histórico?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
-                              <input type="hidden" name="_token" value="{{ csrf_token('cancel-queue-' ~ job.id_mailsendvx_queue) }}">
-                              <input type="hidden" name="cancel_reason" value="Cancelled manually from Back Office.">
-                              <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Cancelar'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
-                            </form>
-                          {% else %}
-                            <span class="mailsendvx-table-meta">{{ job.last_error ?: 'Sin acción manual'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
-                          {% endif %}
-                        </td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <div class="mailsendvx-empty-state">
-                <h3>{{ 'Aún no hay jobs en cola.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
-                <p>{{ 'Los jobs programados por flows aparecerán aquí con su estado operativo y opción de cancelación cuando aplique.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
-              </div>
-            {% endif %}
-          </div>
+        <div class="mt-3">
+          {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': queueGrid }) }}
         </div>
 
         <div class="card mailsendvx-card mt-3">
           <h3 class="card-header">
             <i class="material-icons">history</i>
-            {{ 'Logs operativos recientes'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            {{ 'Histórico operativo'|trans({}, 'Modules.Mailsendvx.Admin') }}
           </h3>
           <div class="card-body">
-            {% if recent_logs %}
-              <div class="table-responsive">
-                <table class="table mailsendvx-table">
-                  <thead>
-                    <tr>
-                      <th>{{ 'Fecha'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Evento'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Estado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                      <th>{{ 'Template / queue'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for log in recent_logs %}
-                      <tr>
-                        <td>{{ log.date_add }}</td>
-                        <td><code>{{ log.event_name }}</code></td>
-                        <td><span class="mailsendvx-badge {{ log.status in ['sent'] ? 'mailsendvx-badge--success' : (log.status in ['pending', 'scheduled'] ? 'mailsendvx-badge--warning' : (log.status in ['cancelled', 'skipped'] ? 'mailsendvx-badge--muted' : 'mailsendvx-badge--danger')) }}">{{ log.status }}</span></td>
-                        <td>#{{ log.id_template ?: '-' }} / #{{ log.id_queue ?: '-' }}</td>
-                      </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <div class="mailsendvx-empty-state">
-                <h3>{{ 'Sin logs recientes.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
-                <p>{{ 'Aquí se concentrarán los últimos cambios de estado de queue y los envíos asociados a tus flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
-              </div>
-            {% endif %}
+            <p class="mb-0">
+              {{ 'El histórico completo de eventos y logs ahora se consulta desde el dashboard operativo con filtros, orden y paginación.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </p>
           </div>
         </div>
       </div>
@@ -504,6 +423,10 @@
 
 {% block javascripts %}
   {{ parent() }}
+  <script>
+    {{ include('@Modules/mailsendvx/views/js/mailsendvx-grid.bundle.js')|raw }}
+  </script>
+  <script src="{{ asset('themes/default/js/bundle/pagination.js') }}"></script>
   <script>
     (function () {
       var form = document.getElementById('mailsendvx-flow-form');

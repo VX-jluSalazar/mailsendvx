@@ -237,8 +237,6 @@ class FlowAdminService
      */
     public function getOperationsViewData(): array
     {
-        $recentQueue = $this->queueRepository->getRecent(40);
-        $recentLogs = $this->logRepository->getRecent(20);
         $flows = $this->getFlowsForView();
         $templates = $this->getTemplatesForBuilder();
         $activeFlowsCount = 0;
@@ -256,30 +254,11 @@ class FlowAdminService
             }
         }
 
-        foreach ($recentQueue as &$job) {
-            $payload = $this->decodePayload($job['payload_json'] ?? $job['payload'] ?? null);
-            $job['payload_pretty'] = !empty($payload)
-                ? (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                : '{}';
-            $job['can_cancel'] = in_array((string) ($job['status'] ?? ''), ['pending', 'scheduled'], true);
-        }
-        unset($job);
-
-        foreach ($recentLogs as &$log) {
-            $payload = $this->decodePayload($log['payload'] ?? null);
-            $log['payload_pretty'] = !empty($payload)
-                ? (string) json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                : '{}';
-        }
-        unset($log);
-
         return [
             'flows' => $flows,
             'active_flows_count' => $activeFlowsCount,
             'templates_for_builder' => $templates,
             'reusable_templates_count' => $reusableTemplatesCount,
-            'queue_jobs' => $recentQueue,
-            'recent_logs' => $recentLogs,
             'supported_events' => $this->getSupportedEvents(),
             'supported_context_types' => $this->getSupportedContextTypes(),
             'event_context_map' => $this->buildEventContextMap(),

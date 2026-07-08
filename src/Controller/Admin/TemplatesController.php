@@ -2,14 +2,20 @@
 
 namespace Velox\MailSendVx\Controller\Admin;
 
+use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\GridDefinitionFactoryInterface;
+use PrestaShop\PrestaShop\Core\Grid\GridFactoryInterface;
+use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
+use PrestaShopBundle\Service\Grid\ResponseBuilder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Form\FormErrorIterator;
 use Twig\Error\Error as TwigError;
 use Velox\MailSendVx\Form\Type\TemplateFormType;
+use Velox\MailSendVx\Grid\Definition\Factory\MailSendVxTemplateGridDefinitionFactory;
+use Velox\MailSendVx\Grid\Filters\MailSendVxTemplateFilters;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\Template\TemplateAdminService;
-use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 
 class TemplatesController extends FrameworkBundleAdminController
 {
@@ -18,19 +24,51 @@ class TemplatesController extends FrameworkBundleAdminController
      */
     private $templateAdminService;
 
-    public function __construct(TemplateAdminService $templateAdminService)
-    {
+    /**
+     * @var GridFactoryInterface
+     */
+    private $templateGridFactory;
+
+    /**
+     * @var GridDefinitionFactoryInterface
+     */
+    private $templateGridDefinitionFactory;
+
+    /**
+     * @var ResponseBuilder
+     */
+    private $responseBuilder;
+
+    public function __construct(
+        TemplateAdminService $templateAdminService,
+        GridFactoryInterface $templateGridFactory,
+        GridDefinitionFactoryInterface $templateGridDefinitionFactory,
+        ResponseBuilder $responseBuilder
+    ) {
         parent::__construct();
         $this->templateAdminService = $templateAdminService;
+        $this->templateGridFactory = $templateGridFactory;
+        $this->templateGridDefinitionFactory = $templateGridDefinitionFactory;
+        $this->responseBuilder = $responseBuilder;
     }
 
-    public function indexAction(Request $request): Response
+    public function indexAction(Request $request, MailSendVxTemplateFilters $templateFilters): Response
     {
         $editId = $request->query->getInt('edit', 0) ?: null;
-        $previewId = $request->query->getInt('preview', 0) ?: null;
         $eventLabels = $this->templateAdminService->getSupportedEvents();
         $contextLabels = $this->templateAdminService->getSupportedContextTypes();
         $languageChoices = $this->buildLanguageChoices();
+
+        if ($request->isMethod('POST') && $request->request->has(MailSendVxTemplateGridDefinitionFactory::GRID_ID)) {
+            return $this->responseBuilder->buildSearchResponse(
+                $this->templateGridDefinitionFactory,
+                $request,
+                MailSendVxTemplateGridDefinitionFactory::GRID_ID,
+                'mailsendvx_templates',
+                ['edit']
+            );
+        }
+
         $form = $this->createForm(TemplateFormType::class, $this->templateAdminService->getFormData($editId), [
             'event_choices' => array_flip($eventLabels),
             'context_choices' => array_flip($contextLabels),
@@ -65,19 +103,10 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->buildLanguageLabels($languageChoices)
         );
 
-        $preview = null;
-        if ($previewId) {
-            try {
-                $preview = $this->templateAdminService->getPreviewData($previewId);
-            } catch (TwigError $exception) {
-                $this->addFlash('danger', sprintf('Error de sintaxis Twig: %s', $exception->getMessage()));
-            }
-        }
-
         return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
             'templateForm' => $form->createView(),
-            'templates' => $templates,
-            'preview' => $preview,
+            'templatesCount' => count($templates),
+            'templatesGrid' => $this->presentGrid($this->templateGridFactory->getGrid($templateFilters)),
             'currentEditTemplate' => $this->findTemplate($templates, $editId),
             'activeTemplatesCount' => $this->countActiveTemplates($templates),
             'contextLabels' => $contextLabels,
@@ -89,7 +118,10 @@ class TemplatesController extends FrameworkBundleAdminController
 
     public function deleteAction(Request $request, int $idTemplate): Response
     {
-        if (!$this->isCsrfTokenValid('delete-template-' . $idTemplate, (string) $request->request->get('_token'))) {
+        $token = (string) $request->get('_token', $request->request->get('_token'));
+        if (!$this->isCsrfTokenValid('delete-template-' . $idTemplate, $token)
+            && !$this->isCsrfTokenValid('mailsendvx-template-delete', $token)
+        ) {
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
@@ -104,22 +136,111 @@ class TemplatesController extends FrameworkBundleAdminController
         return $this->redirectToRoute('mailsendvx_templates');
     }
 
-    public function sendTestAction(Request $request, int $idTemplate): Response
+    public function bulkDeleteAction(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('test-template-' . $idTemplate, (string) $request->request->get('_token'))) {
+        if (!$this->isCsrfTokenValid('mailsendvx-template-bulk-delete', (string) $request->get('_token'))) {
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
         }
 
-        $result = $this->templateAdminService->sendTest($idTemplate, trim((string) $request->request->get('test_email')));
-        if ($result === true) {
-            $this->addFlash('success', $this->trans('Correo de prueba enviado.', 'Admin.Notifications.Success', []));
-        } else {
-            $this->addFlash('danger', (string) $result);
+        $selectedIds = array_values(array_filter(array_map('intval', (array) $request->request->get(MailSendVxTemplateGridDefinitionFactory::GRID_ID . '_bulk_templates', []))));
+        if (empty($selectedIds)) {
+            $this->addFlash('warning', $this->trans('Selecciona al menos una plantilla.', 'Admin.Notifications.Warning', []));
+
+            return $this->redirectToRoute('mailsendvx_templates');
+        }
+
+        $deleted = 0;
+        foreach ($selectedIds as $idTemplate) {
+            if ($this->templateAdminService->deleteTemplate($idTemplate)) {
+                ++$deleted;
+            }
+        }
+
+        if ($deleted > 0) {
+            $this->addFlash('success', sprintf('%d plantilla(s) eliminada(s).', $deleted));
         }
 
         return $this->redirectToRoute('mailsendvx_templates');
+    }
+
+    public function previewAction(Request $request, int $idTemplate): Response
+    {
+        if (!$request->isXmlHttpRequest()) {
+            $params = [];
+            $editId = $request->query->getInt('edit', 0);
+            if ($editId > 0) {
+                $params['edit'] = $editId;
+            }
+
+            return $this->redirectToRoute('mailsendvx_templates', $params);
+        }
+
+        try {
+            $preview = $this->templateAdminService->getPreviewData($idTemplate);
+
+            return new JsonResponse([
+                'success' => true,
+                'preview' => $preview,
+                'context_message' => $preview['context_source'] === 'historical'
+                    ? $this->trans('Previsualización renderizada con el último payload capturado para este evento.', 'Modules.Mailsendvx.Admin', [])
+                    : $this->trans('Previsualización renderizada con datos de ejemplo para este evento.', 'Modules.Mailsendvx.Admin', []),
+                'test_url' => $this->generateUrl('mailsendvx_template_test', ['idTemplate' => $idTemplate]),
+                'test_token' => $this->get('security.csrf.token_manager')->getToken('test-template-' . $idTemplate)->getValue(),
+            ]);
+        } catch (TwigError $exception) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => sprintf('Error de sintaxis Twig: %s', $exception->getMessage()),
+            ], Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $exception) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => (string) $exception->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
+    public function sendTestAction(Request $request, int $idTemplate): Response
+    {
+        $redirectParams = $this->buildTemplateRedirectParams($request, $idTemplate);
+
+        if (!$this->isCsrfTokenValid('test-template-' . $idTemplate, (string) $request->request->get('_token'))) {
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+            return $this->redirectToRoute('mailsendvx_templates', $redirectParams);
+        }
+
+        $result = $this->templateAdminService->sendTest($idTemplate, trim((string) $request->request->get('test_email')));
+        if ($result === true) {
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse([
+                    'success' => true,
+                    'message' => $this->trans('Correo de prueba enviado.', 'Admin.Notifications.Success', []),
+                ]);
+            }
+
+            $this->addFlash('success', $this->trans('Correo de prueba enviado.', 'Admin.Notifications.Success', []));
+        } else {
+            if ($request->isXmlHttpRequest()) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => (string) $result,
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $this->addFlash('danger', (string) $result);
+        }
+
+        return $this->redirectToRoute('mailsendvx_templates', $redirectParams);
     }
 
     /**
@@ -243,5 +364,25 @@ class TemplatesController extends FrameworkBundleAdminController
         }
 
         return array_values(array_unique($messages));
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function buildTemplateRedirectParams(Request $request, int $idTemplate): array
+    {
+        $params = [];
+
+        $previewId = $request->request->getInt('preview', 0);
+        if ($previewId > 0) {
+            $params['preview'] = $previewId;
+        }
+
+        $editId = $request->request->getInt('edit', 0);
+        if ($editId > 0) {
+            $params['edit'] = $editId;
+        }
+
+        return $params;
     }
 }

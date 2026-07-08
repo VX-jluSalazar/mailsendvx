@@ -2,4 +2,5 @@ imports:
   - { resource: ../common.yml }
   - { resource: "../components/service/*.yml" }
   - { resource: "../components/form/*.yml" }
+  - { resource: "../components/grid/*.yml" }
   - { resource: "../components/controller/*.yml" }
