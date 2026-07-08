@@ -78,8 +78,8 @@ class CartTemplateContextBuilder implements DomainTemplateContextBuilderInterfac
     public function buildHookContext(string $eventName, array $params): array
     {
         $idCart = (int) ($params['id_cart'] ?? 0);
-        $cart = $params['cart'] instanceof Cart ? $params['cart'] : new Cart($idCart);
-        $customer = $params['customer'] instanceof Customer ? $params['customer'] : new Customer((int) $cart->id_customer);
+        $cart = isset($params['cart']) && $params['cart'] instanceof Cart ? $params['cart'] : new Cart($idCart);
+        $customer = isset($params['customer']) && $params['customer'] instanceof Customer ? $params['customer'] : new Customer((int) $cart->id_customer);
         $idLang = (int) ($cart->id_lang ?: $this->context->language->id);
         $idShop = (int) ($cart->id_shop ?: $this->context->shop->id);
         $cartUrl = $this->context->link->getPageLink('cart', true, $idLang, 'action=show');

@@ -151,7 +151,7 @@ class AbandonedCartService
             ++$skipped;
         }
 
-        return [
+        $result = [
             'enabled' => true,
             'abandoned_cart_enabled' => true,
             'processed' => $processed,
@@ -159,8 +159,13 @@ class AbandonedCartService
             'recovered' => $recoveredCount,
             'skipped' => $skipped,
             'cutoff_at' => $cutoff->format(DATE_ATOM),
-            'errors' => $errors,
         ];
+
+        if (!empty($errors)) {
+            $result['errors'] = $errors;
+        }
+
+        return $result;
     }
 
     /**

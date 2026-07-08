@@ -38,6 +38,8 @@ class MailsendvxAbandonedcartcronModuleFrontController extends ModuleFrontContro
 
             if (!$success) {
                 $payload['message'] = 'Abandoned cart cron finished with errors.';
+            } else {
+                unset($payload['result']['errors']);
             }
 
             $this->respondAndExit($payload);
