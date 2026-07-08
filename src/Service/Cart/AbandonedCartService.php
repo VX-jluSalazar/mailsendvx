@@ -16,7 +16,7 @@ use Velox\MailSendVx\Repository\MailSendVxEventRepository;
 use Velox\MailSendVx\Repository\MailSendVxLogRepository;
 use Velox\MailSendVx\Repository\MailSendVxQueueRepository;
 use Velox\MailSendVx\Repository\MailSendVxTemplateRepository;
-use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
+use Velox\MailSendVx\Service\Event\EventTemplateContextService;
 use Velox\MailSendVx\Service\Flow\FlowSchedulerService;
 use Velox\MailSendVx\Service\Flow\FlowWorkerService;
 use Velox\MailSendVx\Service\Mail\MailSendVxMailer;
@@ -29,7 +29,7 @@ class AbandonedCartService
     private $context;
 
     /**
-     * @var CartTemplateContextBuilder
+     * @var EventTemplateContextService
      */
     private $cartContextBuilder;
 
@@ -75,7 +75,7 @@ class AbandonedCartService
 
     public function __construct(
         Context $context,
-        CartTemplateContextBuilder $cartContextBuilder,
+        EventTemplateContextService $cartContextBuilder,
         MailSendVxAbandonedCartRepository $repository,
         MailSendVxEventRepository $eventRepository,
         MailSendVxLogRepository $logRepository,
@@ -134,6 +134,7 @@ class AbandonedCartService
         $captured = 0;
         $skipped = 0;
         $processed = 0;
+        $errors = [];
 
         foreach ($this->repository->findEligibleCarts($cutoff->format('Y-m-d H:i:s'), $batchSize, $requireCustomer, $requireProducts) as $candidate) {
             ++$processed;
@@ -142,7 +143,7 @@ class AbandonedCartService
                 continue;
             }
 
-            if ($this->captureCandidate($candidate)) {
+            if ($this->captureCandidate($candidate, $errors)) {
                 ++$captured;
                 continue;
             }
@@ -158,6 +159,7 @@ class AbandonedCartService
             'recovered' => $recoveredCount,
             'skipped' => $skipped,
             'cutoff_at' => $cutoff->format(DATE_ATOM),
+            'errors' => $errors,
         ];
     }
 
@@ -277,7 +279,7 @@ class AbandonedCartService
     /**
      * @param array<string, mixed> $candidate
      */
-    private function captureCandidate(array $candidate): bool
+    private function captureCandidate(array $candidate, array &$errors): bool
     {
         try {
             $abandonedAt = date('Y-m-d H:i:s');
@@ -372,14 +374,16 @@ class AbandonedCartService
 
             return true;
         } catch (Throwable $exception) {
+            $message = sprintf('Mail Send VX abandoned cart capture failed for cart %d: %s', (int) ($candidate['id_cart'] ?? 0), $exception->getMessage());
             PrestaShopLogger::addLog(
-                sprintf('Mail Send VX abandoned cart capture failed: %s', $exception->getMessage()),
+                $message,
                 3,
                 null,
                 'Module',
                 0,
                 true
             );
+            $errors[] = $message;
 
             return false;
         }

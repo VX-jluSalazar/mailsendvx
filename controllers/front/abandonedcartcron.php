@@ -21,11 +21,33 @@ class MailsendvxAbandonedcartcronModuleFrontController extends ModuleFrontContro
             ]);
         }
 
-        $result = $this->module->get('prestashop.module.mailsendvx.service.abandoned_cart')->processDueCarts();
-        $this->respondAndExit([
-            'success' => true,
-            'result' => $result,
-        ]);
+        try {
+            $service = $this->module->get('prestashop.module.mailsendvx.service.abandoned_cart');
+            $result = $service->processDueCarts();
+            $errors = isset($result['errors']) && is_array($result['errors']) ? $result['errors'] : [];
+            $success = empty($errors);
+
+            if (!$success) {
+                http_response_code(500);
+            }
+
+            $payload = [
+                'success' => $success,
+                'result' => $result,
+            ];
+
+            if (!$success) {
+                $payload['message'] = 'Abandoned cart cron finished with errors.';
+            }
+
+            $this->respondAndExit($payload);
+        } catch (Throwable $exception) {
+            http_response_code(500);
+            $this->respondAndExit([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**

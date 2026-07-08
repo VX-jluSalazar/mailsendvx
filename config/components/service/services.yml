@@ -235,7 +235,7 @@ services:
     public: true
     arguments:
       $context: "@=service('prestashop.adapter.legacy.context').getContext()"
-      $cartContextBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
+      $cartContextBuilder: '@prestashop.module.mailsendvx.service.event_context'
       $repository: '@prestashop.module.mailsendvx.repository.abandoned_cart'
       $eventRepository: '@prestashop.module.mailsendvx.repository.event'
       $logRepository: '@prestashop.module.mailsendvx.repository.log'
