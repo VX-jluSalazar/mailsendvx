@@ -2,8 +2,8 @@
 
 namespace Velox\MailSendVx\Form\Type;
 
-use PrestaShopBundle\Form\Admin\Type\SwitchType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
+use PrestaShopBundle\Form\Admin\Type\SwitchType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -45,14 +45,6 @@ class ConfigurationFormType extends TranslatorAwareType
                     'Días' => 'day',
                     'Semanas' => 'week',
                 ],
-            ])
-            ->add('abandoned_cart_require_customer', SwitchType::class, [
-                'label' => $this->trans('Requerir correo del cliente', 'Modules.Mailsendvx.Admin'),
-                'required' => false,
-            ])
-            ->add('abandoned_cart_require_products', SwitchType::class, [
-                'label' => $this->trans('Requerir productos en el carrito', 'Modules.Mailsendvx.Admin'),
-                'required' => false,
             ])
             ->add('abandoned_cart_cron_batch_size', IntegerType::class, [
                 'label' => $this->trans('Tamaño del lote de carrito abandonado', 'Modules.Mailsendvx.Admin'),

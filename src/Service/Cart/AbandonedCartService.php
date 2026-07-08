@@ -2,6 +2,7 @@
 
 namespace Velox\MailSendVx\Service\Cart;
 
+use Cart;
 use Configuration;
 use Context;
 use DateInterval;
@@ -128,8 +129,8 @@ class AbandonedCartService
 
         $batchSize = max(1, (int) Configuration::get(ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE));
         $cutoff = $this->buildCutoffDate();
-        $requireCustomer = (bool) Configuration::get(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER);
-        $requireProducts = (bool) Configuration::get(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS);
+        $requireCustomer = true;
+        $requireProducts = true;
         $recoveredCount = $this->syncRecoveredCarts($batchSize);
         $captured = 0;
         $skipped = 0;
@@ -187,24 +188,48 @@ class AbandonedCartService
             return;
         }
 
-        $this->repository->saveState([
-            'id_cart' => (int) $order->id_cart,
-            'id_customer' => (int) $order->id_customer,
-            'email' => $existing['email'] ?? null,
-            'id_shop' => (int) $order->id_shop,
-            'id_lang' => (int) $order->id_lang,
-            'status' => 'recovered',
-            'cart_snapshot' => $this->decodeSnapshot($existing['cart_snapshot'] ?? null),
-            'last_activity_at' => date('Y-m-d H:i:s'),
-            'abandoned_at' => $existing['abandoned_at'] ?? null,
-            'recovered_at' => date('Y-m-d H:i:s'),
-            'last_event_hash' => $existing['last_event_hash'] ?? null,
-        ]);
-
-        $this->cancelPendingCartJobs(
-            (int) $order->id_cart,
+        $this->markRecoveredState(
+            $existing,
             (int) $order->id_shop,
             sprintf('Queued cart_abandoned jobs cancelled because cart %d was converted into order %d.', (int) $order->id_cart, (int) $order->id)
+        );
+    }
+
+    public function markRecoveredFromCartActivity(int $idCart, ?int $idShop = null, ?string $lastActivityAt = null): bool
+    {
+        if ($idCart <= 0) {
+            return false;
+        }
+
+        $existing = $this->repository->findByCartId($idCart);
+        if (!$existing || (string) ($existing['status'] ?? '') !== 'abandoned') {
+            return false;
+        }
+
+        $cart = new Cart($idCart);
+        if (!Validate::isLoadedObject($cart)) {
+            return false;
+        }
+
+        $resolvedShopId = $idShop !== null
+            ? $idShop
+            : (int) ($existing['id_shop'] ?? ($cart->id_shop ?: $this->context->shop->id));
+        $activityAt = $lastActivityAt ?: (string) ($cart->date_upd ?: date('Y-m-d H:i:s'));
+        $abandonedAt = (string) ($existing['abandoned_at'] ?? '');
+
+        if ($abandonedAt !== '' && $activityAt !== '' && strtotime($activityAt) <= strtotime($abandonedAt)) {
+            return false;
+        }
+
+        return $this->markRecoveredState(
+            $existing,
+            $resolvedShopId,
+            sprintf('Queued cart_abandoned jobs cancelled because cart %d changed after being marked abandoned.', $idCart),
+            [
+                'id_customer' => (int) $cart->id_customer,
+                'id_lang' => (int) ($cart->id_lang ?: ($existing['id_lang'] ?? $this->context->language->id)),
+                'last_activity_at' => $activityAt,
+            ]
         );
     }
 
@@ -237,24 +262,17 @@ class AbandonedCartService
     {
         $recovered = 0;
         foreach ($this->repository->findRecoverableAbandonedCarts($limit) as $state) {
-            $this->repository->saveState([
-                'id_cart' => (int) $state['id_cart'],
-                'id_customer' => (int) ($state['id_customer'] ?? 0),
-                'email' => $state['email'] ?? null,
-                'id_shop' => (int) ($state['id_shop'] ?? $this->context->shop->id),
-                'id_lang' => (int) ($state['id_lang'] ?? $this->context->language->id),
-                'status' => 'recovered',
-                'cart_snapshot' => $this->decodeSnapshot($state['cart_snapshot'] ?? null),
-                'last_activity_at' => (string) ($state['cart_date_upd'] ?? $state['last_activity_at'] ?? date('Y-m-d H:i:s')),
-                'abandoned_at' => $state['abandoned_at'] ?? null,
-                'recovered_at' => date('Y-m-d H:i:s'),
-                'last_event_hash' => $state['last_event_hash'] ?? null,
-            ]);
-            $this->cancelPendingCartJobs(
-                (int) $state['id_cart'],
+            if (!$this->markRecoveredState(
+                $state,
                 (int) ($state['id_shop'] ?? $this->context->shop->id),
-                sprintf('Queued cart_abandoned jobs cancelled because cart %d is already recovered.', (int) $state['id_cart'])
-            );
+                sprintf('Queued cart_abandoned jobs cancelled because cart %d is already recovered.', (int) $state['id_cart']),
+                [
+                'last_activity_at' => (string) ($state['cart_date_upd'] ?? $state['last_activity_at'] ?? date('Y-m-d H:i:s')),
+                ]
+            )) {
+                continue;
+            }
+
             ++$recovered;
         }
 
@@ -269,6 +287,13 @@ class AbandonedCartService
         $existing = $this->repository->findByCartId((int) $candidate['id_cart']);
         if (!$existing) {
             return true;
+        }
+
+        if (($existing['status'] ?? null) === 'recovered') {
+            $currentActivity = (string) ($candidate['date_upd'] ?? '');
+            $recoveredAt = (string) ($existing['recovered_at'] ?? '');
+
+            return $currentActivity !== '' && $recoveredAt !== '' && strtotime($currentActivity) > strtotime($recoveredAt);
         }
 
         if (($existing['status'] ?? null) !== 'abandoned') {
@@ -406,6 +431,35 @@ class AbandonedCartService
         $decoded = json_decode($snapshot, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @param array<string, mixed> $overrides
+     */
+    private function markRecoveredState(array $state, int $idShop, string $message, array $overrides = []): bool
+    {
+        if ((string) ($state['status'] ?? '') !== 'abandoned') {
+            return false;
+        }
+
+        $this->repository->saveState([
+            'id_cart' => (int) ($state['id_cart'] ?? 0),
+            'id_customer' => (int) ($overrides['id_customer'] ?? $state['id_customer'] ?? 0),
+            'email' => $state['email'] ?? null,
+            'id_shop' => $idShop,
+            'id_lang' => (int) ($overrides['id_lang'] ?? $state['id_lang'] ?? $this->context->language->id),
+            'status' => 'recovered',
+            'cart_snapshot' => $this->decodeSnapshot($state['cart_snapshot'] ?? null),
+            'last_activity_at' => (string) ($overrides['last_activity_at'] ?? $state['last_activity_at'] ?? date('Y-m-d H:i:s')),
+            'abandoned_at' => $state['abandoned_at'] ?? null,
+            'recovered_at' => date('Y-m-d H:i:s'),
+            'last_event_hash' => $state['last_event_hash'] ?? null,
+        ]);
+
+        $this->cancelPendingCartJobs((int) ($state['id_cart'] ?? 0), $idShop, $message);
+
+        return true;
     }
 
     private function cancelPendingCartJobs(int $idCart, int $idShop, string $message): int

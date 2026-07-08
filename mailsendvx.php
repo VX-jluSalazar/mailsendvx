@@ -132,6 +132,28 @@ class Mailsendvx extends Module
         $this->getInstantEmailHookService()->handleNewsletterRegistrationAfter($params, $this);
     }
 
+    public function hookActionCartSave(array $params): void
+    {
+        $cart = $params['cart'] ?? null;
+        $idCart = 0;
+        $idShop = null;
+        $lastActivityAt = null;
+
+        if ($cart instanceof Cart) {
+            $idCart = (int) $cart->id;
+            $idShop = (int) $cart->id_shop;
+            $lastActivityAt = $cart->date_upd ? (string) $cart->date_upd : null;
+        } elseif (isset($params['id_cart'])) {
+            $idCart = (int) $params['id_cart'];
+        }
+
+        if ($idCart <= 0) {
+            return;
+        }
+
+        $this->getAbandonedCartService()->markRecoveredFromCartActivity($idCart, $idShop, $lastActivityAt);
+    }
+
     public function isUsingNewTranslationSystem(): bool
     {
         return true;

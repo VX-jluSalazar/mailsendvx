@@ -85,26 +85,6 @@
                 </div>
               </div>
 
-              <div class="mailsendvx-setting mailsendvx-setting--switch">
-                <div class="mailsendvx-setting__label">
-                  {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_require_customer) }}
-                </div>
-                <div class="mailsendvx-setting__field">
-                  {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_require_customer) }}
-                  {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_require_customer) }}
-                </div>
-              </div>
-
-              <div class="mailsendvx-setting mailsendvx-setting--switch">
-                <div class="mailsendvx-setting__label">
-                  {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_require_products) }}
-                </div>
-                <div class="mailsendvx-setting__field">
-                  {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_require_products) }}
-                  {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_require_products) }}
-                </div>
-              </div>
-
               <div class="mailsendvx-setting">
                 <div class="mailsendvx-setting__label">
                   {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_cron_batch_size) }}
@@ -158,8 +138,6 @@
               <li><strong>{{ 'Habilitar detección de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Activa o desactiva todo el detector de carrito abandonado. Si está deshabilitado, el cron no capturará eventos cart_abandoned.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li><strong>{{ 'Valor del retraso de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Es la parte numérica de la ventana de inactividad, por ejemplo 1, 2 o 24.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li><strong>{{ 'Unidad del retraso de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Es la unidad que acompaña al valor del retraso: minutos, horas, días o semanas.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li><strong>{{ 'Requerir correo del cliente'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Cuando está habilitado, solo se consideran elegibles los carritos con un correo de cliente resoluble.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
-              <li><strong>{{ 'Requerir productos en el carrito'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Cuando está habilitado, los carritos vacíos se ignoran y solo se escanean carritos con productos.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
               <li><strong>{{ 'Tamaño del lote de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>: {{ 'Cantidad máxima de carritos candidatos procesados en cada ejecución del cron.'|trans({}, 'Modules.Mailsendvx.Admin') }}</li>
             </ul>
           </div>

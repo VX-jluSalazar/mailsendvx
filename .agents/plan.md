@@ -11,6 +11,7 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | `FASE_00_BASE_MODULO.md` | Fase 0 | Diseno tecnico, instalacion, hooks, tablas, servicios base, configuracion y logs. |
 | `FASE_01_EMAILS_INSTANTANEOS.md` | Fase 1 | Correos disparados por eventos inmediatos como cambio de estado, registro de cliente y newsletter. |
 | `FASE_01C_ABANDONED_CART.md` | Fase 1C | Deteccion de carrito abandonado, dedupe por ciclo, evento `cart_abandoned` y uso inmediato en templates. |
+| `FASE_01E_RECUPERACION_INMEDIATA_CARRITO_POR_HOOK.md` | Fase 1E | Recuperacion inmediata de carritos abandonados por hook, con cancelacion temprana de jobs pendientes. |
 | `FASE_02_FLUJOS_AUTOMATIZADOS.md` | Fase 2 | Vision general de flows, templates reutilizables, cola, worker, condiciones y UI operativa. |
 | `FASE_02A_MODELO_BASE_DE_FLOWS.md` | Fase 2A | Modelo base de flow, steps, trigger y `context_type`. |
 | `FASE_02B_TEMPLATES_REUTILIZABLES.md` | Fase 2B | Templates desacoplados de `event_name` y compatibles por `context_type`. |
@@ -28,11 +29,12 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | 2 | Fase 1.1 a 1.3 | Primeros eventos capturados y emails instantaneos funcionales. |
 | 3 | Fase 1.4 a 1.8 | Plantillas simples, variables, preview, prueba de envio y logs. |
 | 4 | Fase 01C | Evento `cart_abandoned`, criterio de abandono y dedupe por cron. |
-| 5 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
-| 6 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
-| 7 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
-| 8 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
-| 9 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
+| 5 | Fase 01E | Recuperacion inmediata por hook y cancelacion temprana de jobs de carrito abandonado. |
+| 6 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
+| 7 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
+| 8 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
+| 9 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
+| 10 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
 
 ## Arquitectura objetivo
 
@@ -154,5 +156,6 @@ Esto alinea envio real, previews, fixtures y documentacion con una sola estructu
 - Fase 1 ya incorpora el refactor principal de eventos instantaneos de estado.
 - Fase 1 todavia requiere validacion funcional real, limpieza documental y pequenos ajustes de consistencia.
 - Fase 01C debe introducir `cart_abandoned` como evento estable y deduplicado antes de usarlo en automatizaciones.
+- Fase 01E debe reducir la dependencia exclusiva del cron para marcar recuperacion de carrito y cancelar jobs pendientes en tiempo oportuno.
 - Fase 2 debe construir sus flujos postcompra sobre `order_status_changed` y `order_status_changed_{state_key}`, y debe consumir `cart_abandoned` desde Fase 01C en lugar de redefinirlo.
 - Fase 3 debe usar esta misma taxonomia para plantillas predisenadas y previews reales por estado.
