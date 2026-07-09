@@ -180,11 +180,100 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function initDashboardContent() {
     initGrid('mailsendvx_events');
     initGrid('mailsendvx_logs');
     initGrid('mailsendvx_queue');
-    initGrid('mailsendvx_templates');
     initTemplatePreviewModal();
+  }
+
+  function setActiveDashboardTab(tabName) {
+    var tabs = document.querySelectorAll('[data-dashboard-tab]');
+    var panels = document.querySelector('[data-dashboard-panels]');
+
+    Array.prototype.forEach.call(tabs, function (tab) {
+      tab.classList.toggle('is-active', tab.getAttribute('data-dashboard-tab') === tabName);
+    });
+
+    if (panels) {
+      panels.setAttribute('data-active-tab', tabName);
+    }
+  }
+
+  function initDashboardTabs() {
+    var tabsRoot = document.querySelector('[data-dashboard-tabs]');
+    var panelsRoot = document.querySelector('[data-dashboard-panels]');
+
+    if (!tabsRoot || !panelsRoot || tabsRoot.getAttribute('data-dashboard-tabs-ready') === '1') {
+      return;
+    }
+
+    tabsRoot.setAttribute('data-dashboard-tabs-ready', '1');
+
+    tabsRoot.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-dashboard-tab]');
+      var currentTab = panelsRoot.getAttribute('data-active-tab');
+      var targetTab;
+      var url;
+
+      if (!trigger) {
+        return;
+      }
+
+      targetTab = trigger.getAttribute('data-dashboard-tab');
+      if (!targetTab || targetTab === currentTab) {
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+      url = new window.URL(trigger.href, window.location.origin);
+      url.searchParams.set('ajax_tab', '1');
+
+      tabsRoot.classList.add('is-loading');
+      panelsRoot.classList.add('is-loading');
+
+      window.fetch(url.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          return response.json().then(function (payload) {
+            return {
+              ok: response.ok,
+              payload: payload
+            };
+          });
+        })
+        .then(function (result) {
+          if (!result.ok || !result.payload.html) {
+            throw new Error('No se pudo cargar la tab del dashboard.');
+          }
+
+          panelsRoot.innerHTML = result.payload.html;
+          setActiveDashboardTab(result.payload.activeTab || targetTab);
+          initDashboardContent();
+        })
+        .catch(function () {
+          window.location.href = trigger.href;
+        })
+        .finally(function () {
+          tabsRoot.classList.remove('is-loading');
+          panelsRoot.classList.remove('is-loading');
+        });
+    });
+  }
+
+  window.mailsendvxAdmin = window.mailsendvxAdmin || {};
+  window.mailsendvxAdmin.initDashboardContent = initDashboardContent;
+  window.mailsendvxAdmin.initDashboardTabs = initDashboardTabs;
+
+  document.addEventListener('DOMContentLoaded', function () {
+    initDashboardContent();
+    initGrid('mailsendvx_templates');
+    initDashboardTabs();
   });
 })();

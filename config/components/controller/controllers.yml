@@ -1,8 +1,6 @@
 services:
   Velox\MailSendVx\Controller\Admin\ConfigurationController:
     public: true
-    arguments:
-      - '@prestashop.module.mailsendvx.form.configuration_data_handler'
     tags:
       - { name: controller.service_arguments }
 
@@ -48,9 +46,12 @@ services:
     arguments:
       - '@prestashop.module.mailsendvx.service.dashboard_view'
       - '@prestashop.module.mailsendvx.grid.factory.events'
+      - '@prestashop.module.mailsendvx.grid.factory.queue'
       - '@prestashop.module.mailsendvx.grid.factory.logs'
       - '@prestashop.module.mailsendvx.grid.definition.factory.events'
+      - '@prestashop.module.mailsendvx.grid.definition.factory.queue'
       - '@prestashop.module.mailsendvx.grid.definition.factory.logs'
       - '@prestashop.bundle.grid.response_builder'
+      - '@prestashop.module.mailsendvx.form.configuration_data_handler'
     tags:
       - { name: controller.service_arguments }

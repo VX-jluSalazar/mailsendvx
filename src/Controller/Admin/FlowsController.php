@@ -135,7 +135,7 @@ class FlowsController extends FrameworkBundleAdminController
             $this->addFlash('danger', (string) $exception->getMessage());
         }
 
-        return $this->redirectToRoute('mailsendvx_flows');
+        return $this->redirect($this->getQueueReturnUrl($request));
     }
 
     public function cancelQueueBulkAction(Request $request): Response
@@ -174,6 +174,13 @@ class FlowsController extends FrameworkBundleAdminController
             $this->addFlash('danger', $error);
         }
 
-        return $this->redirectToRoute('mailsendvx_flows');
+        return $this->redirect($this->getQueueReturnUrl($request));
+    }
+
+    private function getQueueReturnUrl(Request $request): string
+    {
+        $referer = (string) $request->headers->get('referer', '');
+
+        return $referer !== '' ? $referer : $this->generateUrl('mailsendvx_flows');
     }
 }

@@ -1,0 +1,117 @@
+{% form_theme configurationForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+
+{% if activeTab == 'events' %}
+  <section class="mailsendvx-tab-panel is-active" data-tab-panel="events">
+    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': eventsGrid }) }}
+  </section>
+{% elseif activeTab == 'queue' %}
+  <section class="mailsendvx-tab-panel is-active" data-tab-panel="queue">
+    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': queueGrid }) }}
+  </section>
+{% elseif activeTab == 'logs' %}
+  <section class="mailsendvx-tab-panel is-active" data-tab-panel="logs">
+    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': logsGrid }) }}
+  </section>
+{% elseif activeTab == 'configuration' %}
+  <section class="mailsendvx-tab-panel is-active" data-tab-panel="configuration">
+    {{ form_start(configurationForm, {attr: {class: 'mailsendvx-form'}}) }}
+      <div class="row">
+        <div class="col-xl-12">
+          <div class="card mailsendvx-card">
+            <h3 class="card-header">
+              <i class="material-icons">settings</i>
+              {{ 'Configuración general'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </h3>
+            <div class="card-body">
+              <div class="form-wrapper">
+                {{ form_errors(configurationForm) }}
+                {{ form_row(configurationForm.mailsendvx_configuration.enabled) }}
+                {{ form_row(configurationForm.mailsendvx_configuration.provider) }}
+                {{ form_row(configurationForm.mailsendvx_configuration.debug) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="card mailsendvx-card mt-3">
+            <h3 class="card-header">
+              <i class="material-icons">shopping_cart</i>
+              {{ 'Configuración de carrito abandonado'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-inline-note">
+                {{ 'Estos ajustes controlan cuándo un carrito se considera abandonado y con qué intensidad el cron escanea candidatos.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </div>
+              <div class="mailsendvx-settings-grid">
+                <div class="mailsendvx-setting mailsendvx-setting--switch">
+                  <div class="mailsendvx-setting__label">
+                    <span class="mailsendvx-setting__label-row">
+                      {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_enabled) }}
+                      <span class="mailsendvx-help-icon" title="{{ 'Activa o desactiva la detección completa de carrito abandonado.'|trans({}, 'Modules.Mailsendvx.Admin') }}" aria-label="{{ 'Ayuda'|trans({}, 'Admin.Global') }}">
+                        <i class="material-icons">info</i>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="mailsendvx-setting__field">
+                    {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_enabled) }}
+                    {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_enabled) }}
+                  </div>
+                </div>
+
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__label">
+                    <span class="mailsendvx-setting__label-row">
+                      {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_delay_value) }}
+                      <span class="mailsendvx-help-icon" title="{{ 'Valor numérico de la ventana de inactividad antes de considerar un carrito como abandonado.'|trans({}, 'Modules.Mailsendvx.Admin') }}" aria-label="{{ 'Ayuda'|trans({}, 'Admin.Global') }}">
+                        <i class="material-icons">info</i>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="mailsendvx-setting__field">
+                    {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_delay_value) }}
+                    {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_delay_value) }}
+                  </div>
+                </div>
+
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__label">
+                    <span class="mailsendvx-setting__label-row">
+                      {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_delay_unit) }}
+                      <span class="mailsendvx-help-icon" title="{{ 'Unidad de tiempo usada por el retraso: minutos, horas, días o semanas.'|trans({}, 'Modules.Mailsendvx.Admin') }}" aria-label="{{ 'Ayuda'|trans({}, 'Admin.Global') }}">
+                        <i class="material-icons">info</i>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="mailsendvx-setting__field">
+                    {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_delay_unit) }}
+                    {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_delay_unit) }}
+                  </div>
+                </div>
+
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__label">
+                    <span class="mailsendvx-setting__label-row">
+                      {{ form_label(configurationForm.mailsendvx_configuration.abandoned_cart_cron_batch_size) }}
+                      <span class="mailsendvx-help-icon" title="{{ 'Cantidad máxima de carritos candidatos procesados en cada ejecución del cron.'|trans({}, 'Modules.Mailsendvx.Admin') }}" aria-label="{{ 'Ayuda'|trans({}, 'Admin.Global') }}">
+                        <i class="material-icons">info</i>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="mailsendvx-setting__field">
+                    {{ form_widget(configurationForm.mailsendvx_configuration.abandoned_cart_cron_batch_size) }}
+                    {{ form_errors(configurationForm.mailsendvx_configuration.abandoned_cart_cron_batch_size) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer text-right">
+              <button type="submit" class="btn btn-primary">
+                {{ 'Guardar cambios'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {{ form_rest(configurationForm) }}
+    {{ form_end(configurationForm, {'render_rest': false}) }}
+  </section>
+{% endif %}

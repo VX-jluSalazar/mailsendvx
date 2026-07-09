@@ -1,3 +1,4 @@
+{% form_theme configurationForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
 {% extends '@PrestaShop/Admin/layout.html.twig' %}
 
 {% block content %}
@@ -26,41 +27,23 @@
       </div>
     </div>
 
-    <div class="row">
-      <div class="col-xl-4">
-        <div class="card mailsendvx-card mailsendvx-card--aside">
-          <h3 class="card-header">
-            <i class="material-icons">pulse_alert</i>
-            {{ 'Estado de la cola'|trans({}, 'Modules.Mailsendvx.Admin') }}
-          </h3>
-          <div class="card-body">
-            <div class="mailsendvx-signal {{ pending_count > 0 ? 'mailsendvx-signal--warning' : 'mailsendvx-signal--healthy' }}">
-              <strong>
-                {% if pending_count > 0 %}
-                  {{ 'Hay envíos pendientes que requieren revisión.'|trans({}, 'Modules.Mailsendvx.Admin') }}
-                {% else %}
-                  {{ 'No hay envíos pendientes en este momento.'|trans({}, 'Modules.Mailsendvx.Admin') }}
-                {% endif %}
-              </strong>
-              <p>
-                {% if scheduled_count > 0 %}
-                  {{ 'Hay correos en cola programados para procesarse.'|trans({}, 'Modules.Mailsendvx.Admin') }}
-                {% else %}
-                  {{ 'La cola está estable y no hay correos programados en espera.'|trans({}, 'Modules.Mailsendvx.Admin') }}
-                {% endif %}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <nav class="mailsendvx-tabs" data-dashboard-tabs aria-label="{{ 'Secciones del dashboard'|trans({}, 'Modules.Mailsendvx.Admin') }}">
+      <a class="mailsendvx-tab {{ activeTab == 'events' ? 'is-active' : '' }}" data-dashboard-tab="events" href="{{ path('mailsendvx_dashboard', {tab: 'events'}) }}">
+        {{ 'Eventos capturados'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </a>
+      <a class="mailsendvx-tab {{ activeTab == 'queue' ? 'is-active' : '' }}" data-dashboard-tab="queue" href="{{ path('mailsendvx_dashboard', {tab: 'queue'}) }}">
+        {{ 'Estado de la cola'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </a>
+      <a class="mailsendvx-tab {{ activeTab == 'logs' ? 'is-active' : '' }}" data-dashboard-tab="logs" href="{{ path('mailsendvx_dashboard', {tab: 'logs'}) }}">
+        {{ 'Logs operativos'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </a>
+      <a class="mailsendvx-tab {{ activeTab == 'configuration' ? 'is-active' : '' }}" data-dashboard-tab="configuration" href="{{ path('mailsendvx_dashboard', {tab: 'configuration'}) }}">
+        {{ 'Configuracion'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </a>
+    </nav>
 
-      <div class="col-xl-8">
-        {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': eventsGrid }) }}
-
-        <div class="mt-3">
-          {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': logsGrid }) }}
-        </div>
-      </div>
+    <div class="mailsendvx-tab-panels" data-dashboard-panels data-active-tab="{{ activeTab }}">
+      {{ include('@Modules/mailsendvx/views/templates/admin/dashboard_tab_panels.html.twig') }}
     </div>
   </section>
 {% endblock %}

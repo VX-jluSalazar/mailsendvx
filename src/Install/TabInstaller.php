@@ -11,6 +11,8 @@ class TabInstaller
 {
     public function install(string $moduleName): bool
     {
+        $this->deleteTabIfExists(ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS);
+
         $idParent = $this->createOrUpdateAdminTab(
             $moduleName,
             ModuleConstants::ADMIN_PARENT_TAB_CLASS,
@@ -59,20 +61,12 @@ class TabInstaller
             3
         ) && $this->createOrUpdateAdminTab(
             $moduleName,
-            ModuleConstants::ADMIN_CONFIGURE_TAB_CLASS,
-            'Configuracion',
-            $idParent,
-            'settings',
-            'mailsendvx_configuration',
-            4
-        ) && $this->createOrUpdateAdminTab(
-            $moduleName,
             ModuleConstants::ADMIN_DOCUMENTATION_TAB_CLASS,
             'Documentacion',
             $idParent,
             'description',
             'mailsendvx_documentation',
-            5
+            4
         );
     }
 
@@ -130,5 +124,18 @@ class TabInstaller
     private function getConfigureSectionTabId(): int
     {
         return (int) Tab::getIdFromClassName(ModuleConstants::ADMIN_CONFIGURE_SECTION_CLASS);
+    }
+
+    private function deleteTabIfExists(string $className): void
+    {
+        $idTab = (int) Tab::getIdFromClassName($className);
+        if (!$idTab) {
+            return;
+        }
+
+        $tab = new Tab($idTab);
+        if (Validate::isLoadedObject($tab)) {
+            $tab->delete();
+        }
     }
 }

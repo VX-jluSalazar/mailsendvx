@@ -132,6 +132,56 @@
     #fff;
 }
 
+.mailsendvx-tabs {
+  border-bottom: 1px solid var(--mailsendvx-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+}
+
+.mailsendvx-tab {
+  background: #fff;
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 999px;
+  color: var(--mailsendvx-muted);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 12px 16px;
+  text-decoration: none;
+  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.mailsendvx-tab:hover,
+.mailsendvx-tab:focus {
+  border-color: rgba(15, 118, 110, 0.32);
+  color: var(--mailsendvx-ink);
+  text-decoration: none;
+}
+
+.mailsendvx-tab.is-active {
+  background: var(--mailsendvx-accent);
+  border-color: var(--mailsendvx-accent);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.18);
+  color: #fff;
+}
+
+.mailsendvx-tab-panels {
+  min-width: 0;
+}
+
+.mailsendvx-tab-panels.is-loading {
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+.mailsendvx-tabs.is-loading {
+  pointer-events: none;
+}
+
 .mailsendvx-inline-note {
   background: var(--mailsendvx-accent-soft);
   border: 1px solid rgba(15, 118, 110, 0.16);
@@ -961,6 +1011,35 @@
   color: #677786;
 }
 
+.mailsendvx-info-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mailsendvx-info-card {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(32, 50, 67, 0.08);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.mailsendvx-info-card span {
+  color: var(--mailsendvx-muted);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.mailsendvx-info-card strong {
+  color: var(--mailsendvx-ink);
+  display: block;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
 .mailsendvx-template-actions {
   min-width: 360px;
 }
@@ -993,8 +1072,33 @@
   padding-top: 10px;
 }
 
+.mailsendvx-setting__label-row {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
 .mailsendvx-setting__label label {
   margin-bottom: 0;
+}
+
+.mailsendvx-help-icon {
+  align-items: center;
+  background: #edf3f7;
+  border: 1px solid var(--mailsendvx-line);
+  border-radius: 999px;
+  color: var(--mailsendvx-muted);
+  cursor: help;
+  display: inline-flex;
+  height: 20px;
+  justify-content: center;
+  vertical-align: middle;
+  width: 20px;
+}
+
+.mailsendvx-help-icon .material-icons {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .mailsendvx-setting__field .form-group {
