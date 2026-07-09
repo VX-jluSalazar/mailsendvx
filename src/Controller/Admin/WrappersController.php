@@ -40,82 +40,28 @@ class WrappersController extends FrameworkBundleAdminController
 
     public function indexAction(Request $request): Response
     {
-        $selectedWrapper = trim((string) $request->get('wrapper', 'mailsendvx_default'));
-        if ($selectedWrapper === '') {
-            $selectedWrapper = 'mailsendvx_default';
-        }
-
-        $selectedLangId = $request->query->getInt('id_lang', (int) $this->getContext()->language->id);
         $selectedShopId = (int) $this->getContext()->shop->id;
-
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('mailsendvx-wrapper-save', (string) $request->request->get('_token'))) {
-                $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
-
-                return $this->redirectToRoute('mailsendvx_wrappers', [
-                    'wrapper' => $selectedWrapper,
-                    'id_lang' => $selectedLangId,
-                ]);
-            }
-
-            $selectedWrapper = trim((string) $request->request->get('wrapper_name', $selectedWrapper));
-            $selectedLangId = (int) $request->request->get('id_lang', $selectedLangId);
-            $wrapperHtml = (string) $request->request->get('wrapper_html', '');
-            $wrapperText = trim((string) $request->request->get('wrapper_text', ''));
-
-            if ($wrapperText === '' && $wrapperHtml !== '') {
-                $wrapperText = str_replace(
-                    '{{ mailsendvx_html_content|raw }}',
-                    '{{ mailsendvx_text_content }}',
-                    $this->templateContentService->generateTextContentFromHtml($wrapperHtml)
-                );
-            }
-
-            try {
-                $savedWrapper = $this->wrapperService->saveWrapperContent(
-                    $selectedWrapper,
-                    $wrapperHtml,
-                    $wrapperText,
-                    $selectedLangId,
-                    $selectedShopId
-                );
-                $this->addFlash('success', $this->trans('Wrapper guardado para la tienda actual.', 'Admin.Notifications.Success', []));
-
-                return $this->redirectToRoute('mailsendvx_wrappers', [
-                    'wrapper' => $savedWrapper,
-                    'id_lang' => $selectedLangId,
-                ]);
-            } catch (\Throwable $exception) {
-                $this->addFlash('danger', (string) $exception->getMessage());
-            }
-        }
-
-        $wrapperContent = $this->wrapperService->getWrapperContent($selectedWrapper, $selectedLangId, $selectedShopId);
         $languages = Language::getLanguages(false);
         $languageLabels = $this->buildLanguageLabels($languages);
-        $selectedLanguageCode = '';
-        foreach ($languages as $language) {
-            if ((int) $language['id_lang'] === $selectedLangId) {
-                $selectedLanguageCode = strtoupper((string) ($language['iso_code'] ?? ''));
-                break;
-            }
-        }
 
-        return $this->render('@Modules/mailsendvx/views/templates/admin/wrappers.html.twig', [
-            'wrappers' => $this->templateAdminService->getWrapperChoices(),
+        return $this->render('@Modules/mailsendvx/views/templates/admin/wrappers_list.html.twig', [
+            'wrappersCount' => count($this->templateAdminService->getWrapperChoices()),
             'wrapperRows' => $this->decorateWrapperRows(
                 $this->wrapperService->getWrappersTableRows($selectedShopId),
                 $languageLabels
             ),
-            'selectedWrapper' => $selectedWrapper,
-            'selectedLangId' => $selectedLangId,
-            'selectedLanguageCode' => $selectedLanguageCode,
-            'languages' => $languages,
-            'wrapperHtml' => $wrapperContent['html'],
-            'wrapperText' => $wrapperContent['text'],
             'shopName' => (string) $this->getContext()->shop->name,
-            'shopId' => $selectedShopId,
         ]);
+    }
+
+    public function createAction(Request $request): Response
+    {
+        return $this->renderWrapperForm($request, '', (int) $this->getContext()->language->id, false);
+    }
+
+    public function editAction(Request $request, string $wrapperName, int $idLang): Response
+    {
+        return $this->renderWrapperForm($request, $wrapperName, $idLang, true);
     }
 
     public function deleteAction(Request $request, int $idWrapper): Response
@@ -173,5 +119,79 @@ class WrappersController extends FrameworkBundleAdminController
         unset($row);
 
         return $rows;
+    }
+
+    private function renderWrapperForm(Request $request, string $selectedWrapper, int $selectedLangId, bool $isEdit): Response
+    {
+        $selectedWrapper = trim($selectedWrapper);
+        if ($selectedWrapper === '') {
+            $selectedWrapper = 'mailsendvx_default';
+        }
+
+        $selectedShopId = (int) $this->getContext()->shop->id;
+
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('mailsendvx-wrapper-save', (string) $request->request->get('_token'))) {
+                $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+                return $this->redirectToRoute($isEdit ? 'mailsendvx_wrapper_edit' : 'mailsendvx_wrapper_create', $isEdit ? [
+                    'wrapperName' => $selectedWrapper,
+                    'idLang' => $selectedLangId,
+                ] : []);
+            }
+
+            $selectedWrapper = trim((string) $request->request->get('wrapper_name', $selectedWrapper));
+            $selectedLangId = (int) $request->request->get('id_lang', $selectedLangId);
+            $wrapperHtml = (string) $request->request->get('wrapper_html', '');
+            $wrapperText = trim((string) $request->request->get('wrapper_text', ''));
+
+            if ($wrapperText === '' && $wrapperHtml !== '') {
+                $wrapperText = str_replace(
+                    '{{ mailsendvx_html_content|raw }}',
+                    '{{ mailsendvx_text_content }}',
+                    $this->templateContentService->generateTextContentFromHtml($wrapperHtml)
+                );
+            }
+
+            try {
+                $savedWrapper = $this->wrapperService->saveWrapperContent(
+                    $selectedWrapper,
+                    $wrapperHtml,
+                    $wrapperText,
+                    $selectedLangId,
+                    $selectedShopId
+                );
+                $this->addFlash('success', $this->trans('Wrapper guardado para la tienda actual.', 'Admin.Notifications.Success', []));
+
+                return $this->redirectToRoute('mailsendvx_wrapper_edit', [
+                    'wrapperName' => $savedWrapper,
+                    'idLang' => $selectedLangId,
+                ]);
+            } catch (\Throwable $exception) {
+                $this->addFlash('danger', (string) $exception->getMessage());
+            }
+        }
+
+        $wrapperContent = $this->wrapperService->getWrapperContent($selectedWrapper, $selectedLangId, $selectedShopId);
+        $languages = Language::getLanguages(false);
+        $selectedLanguageCode = '';
+        foreach ($languages as $language) {
+            if ((int) $language['id_lang'] === $selectedLangId) {
+                $selectedLanguageCode = strtoupper((string) ($language['iso_code'] ?? ''));
+                break;
+            }
+        }
+
+        return $this->render('@Modules/mailsendvx/views/templates/admin/wrapper_form.html.twig', [
+            'wrappers' => $this->templateAdminService->getWrapperChoices(),
+            'selectedWrapper' => $selectedWrapper,
+            'selectedLangId' => $selectedLangId,
+            'selectedLanguageCode' => $selectedLanguageCode,
+            'languages' => $languages,
+            'wrapperHtml' => $wrapperContent['html'],
+            'wrapperText' => $wrapperContent['text'],
+            'shopName' => (string) $this->getContext()->shop->name,
+            'isEdit' => $isEdit,
+        ]);
     }
 }

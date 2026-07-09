@@ -1,0 +1,187 @@
+{% form_theme templateForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ currentEditTemplate ? 'Editar plantilla'|trans({}, 'Modules.Mailsendvx.Admin') : 'Crear plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">
+          {% if currentEditTemplate %}
+            {{ currentEditTemplate.name }}
+          {% else %}
+            {{ 'Nueva plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          {% endif %}
+        </h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Configura el contexto, el contenido y el wrapper reutilizando el formulario actual del módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ templatesCount }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Active'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ activeTemplatesCount }}</strong>
+        </div>
+      </div>
+    </div>
+
+    {{ form_start(templateForm, {attr: {class: 'mailsendvx-form form-horizontal'}}) }}
+    <div class="card mailsendvx-card">
+      <h3 class="card-header">
+        <i class="material-icons">mail</i>
+        {% if currentEditTemplate %}
+          {{ 'Editar plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}: {{ currentEditTemplate.name }}
+        {% else %}
+          {{ 'Crear plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        {% endif %}
+      </h3>
+      <div class="card-body">
+        <div class="mailsendvx-inline-note">
+          {{ 'Las plantillas con evento funcionan como disparos instantáneos. Si guardas una activa para el mismo evento, idioma y tienda, la anterior se desactivará automáticamente. Si dejas el evento vacío, la plantilla queda reutilizable para flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </div>
+        <div class="form-wrapper">
+          {{ form_errors(templateForm) }}
+          {{ form_row(templateForm.id_mailsendvx_template) }}
+
+          <div class="row">
+            <div class="col-md-12">
+              {{ form_row(templateForm.context_type) }}
+            </div>
+            <div class="col-md-12">
+              {{ form_label(templateForm.event_name) }}
+              {{ form_errors(templateForm.event_name) }}
+              {{ form_widget(templateForm.event_name) }}
+              <div class="col-md-12">
+                <p class="form-text text-muted mailsendvx-event-code-help">
+                  {{ 'Código del evento seleccionado:'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                  <code id="mailsendvx-event-code">{{ templateForm.event_name.vars.value ?: '' }}</code>
+                </p>
+                <p class="form-text text-muted">
+                  {{ 'Solo se muestran como válidos los eventos compatibles con el context_type actual.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              {{ form_row(templateForm.template_name) }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              {{ form_row(templateForm.subject) }}
+            </div>
+            <div class="col-md-12">
+              {{ form_row(templateForm.active) }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              {{ form_row(templateForm.mail_template) }}
+            </div>
+            <div class="col-md-12">
+              {{ form_row(templateForm.id_lang) }}
+            </div>
+            <div class="col-md-12">
+              {{ form_row(templateForm.id_shop) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mailsendvx-card mt-3">
+      <h3 class="card-header">
+        <i class="material-icons">article</i>
+        {{ 'Contenido de la plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
+      </h3>
+      <div class="card-body">
+        <div class="mailsendvx-inline-note">
+          {{ 'La versión en texto plano se genera desde el HTML cada vez que guardas, por lo que el editor HTML es la fuente principal.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </div>
+        <div class="form-wrapper">
+          {{ form_row(templateForm.html_content) }}
+          {{ form_row(templateForm.text_content) }}
+        </div>
+      </div>
+      <div class="card-footer d-flex justify-content-between align-items-center">
+        <a class="btn btn-outline-secondary" href="{{ path('mailsendvx_templates') }}">
+          {{ 'Volver al listado'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </a>
+        <button type="submit" class="btn btn-primary">
+          {{ 'Guardar plantilla'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </button>
+      </div>
+    </div>
+    {{ form_rest(templateForm) }}
+    {{ form_end(templateForm, {'render_rest': false}) }}
+  </section>
+{% endblock %}
+
+{% block javascripts %}
+  {{ parent() }}
+  <script>
+    {{ include('@Modules/mailsendvx/views/js/mailsendvx-grid.bundle.js')|raw }}
+  </script>
+  <script src="{{ asset('themes/default/js/bundle/pagination.js') }}"></script>
+  <script>
+    (function () {
+      var contextField = document.getElementById('{{ templateForm.context_type.vars.id }}');
+      var eventField = document.getElementById('{{ templateForm.event_name.vars.id }}');
+      var eventCode = document.getElementById('mailsendvx-event-code');
+      var eventContextMap = {{ eventContextMap|json_encode|raw }};
+
+      if (!contextField || !eventField || !eventCode) {
+        return;
+      }
+
+      var syncEventChoices = function () {
+        var selectedContext = contextField.value || '';
+        var hasSelectedOption = false;
+
+        Array.prototype.forEach.call(eventField.options, function (option) {
+          if (!option.value) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+          }
+
+          var matches = eventContextMap[option.value] === selectedContext;
+          option.hidden = !matches;
+          option.disabled = !matches;
+
+          if (matches && option.value === eventField.value) {
+            hasSelectedOption = true;
+          }
+        });
+
+        if (eventField.value && !hasSelectedOption) {
+          eventField.value = '';
+        }
+      };
+
+      var syncEventCode = function () {
+        eventCode.textContent = eventField.value || '';
+      };
+
+      syncEventChoices();
+      syncEventCode();
+      contextField.addEventListener('change', function () {
+        syncEventChoices();
+        syncEventCode();
+      });
+      eventField.addEventListener('change', syncEventCode);
+    })();
+  </script>
+{% endblock %}

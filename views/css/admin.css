@@ -121,6 +121,18 @@
   background: var(--mailsendvx-panel);
 }
 
+.mailsendvx-card-header-actions {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mailsendvx-card-header-copy {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+}
+
 .mailsendvx-doc-card {
   display: grid;
   gap: 18px;

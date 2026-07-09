@@ -1,35 +1,82 @@
 (function () {
+  function getGridRoot(gridId) {
+    return document.getElementById(gridId + '_grid')
+      || document.getElementById(gridId)
+      || document.querySelector('[data-grid-id="' + gridId + '"]');
+  }
+
+  function getGridExtension(extensions, names) {
+    var index;
+
+    for (index = 0; index < names.length; index += 1) {
+      if (extensions[names[index]]) {
+        return extensions[names[index]];
+      }
+    }
+
+    return null;
+  }
+
   function initGrid(gridId, options) {
-    if (!window.prestashop || !window.prestashop.component || !document.getElementById(gridId + '_grid')) {
+    var root = getGridRoot(gridId);
+    var grid;
+    var extensions;
+    var Extension;
+
+    if (!window.prestashop || !window.prestashop.component || !window.prestashop.component.Grid || !root) {
       return;
     }
 
-    var grid = new window.prestashop.component.Grid(gridId);
-    var extensions = window.prestashop.component.GridExtensions || {};
+    if (root.getAttribute('data-mailsendvx-grid-ready') === '1') {
+      return;
+    }
 
-    if (extensions.ReloadListExtension) {
-      grid.addExtension(new extensions.ReloadListExtension());
+    root.setAttribute('data-mailsendvx-grid-ready', '1');
+    grid = new window.prestashop.component.Grid(gridId);
+    extensions = window.prestashop.component.GridExtensions || {};
+
+    Extension = getGridExtension(extensions, ['ReloadListExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.SortingExtension) {
-      grid.addExtension(new extensions.SortingExtension());
+
+    Extension = getGridExtension(extensions, ['SortingExtension', 'ColumnSortingExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.FiltersResetExtension) {
-      grid.addExtension(new extensions.FiltersResetExtension());
+
+    Extension = getGridExtension(extensions, ['FiltersResetExtension', 'ResetFiltersExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.SubmitRowActionExtension) {
-      grid.addExtension(new extensions.SubmitRowActionExtension());
+
+    Extension = getGridExtension(extensions, ['SubmitRowActionExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.SubmitBulkActionExtension) {
-      grid.addExtension(new extensions.SubmitBulkActionExtension());
+
+    Extension = getGridExtension(extensions, ['SubmitBulkActionExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.BulkActionCheckboxExtension) {
-      grid.addExtension(new extensions.BulkActionCheckboxExtension());
+
+    Extension = getGridExtension(extensions, ['BulkActionCheckboxExtension', 'BulkActionExtension', 'BulkActionsExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (extensions.FiltersSubmitButtonEnablerExtension) {
-      grid.addExtension(new extensions.FiltersSubmitButtonEnablerExtension());
+
+    Extension = getGridExtension(extensions, ['FiltersSubmitButtonEnablerExtension']);
+    if (Extension) {
+      grid.addExtension(new Extension());
     }
-    if (options && options.position && extensions.PositionExtension) {
-      grid.addExtension(new extensions.PositionExtension(grid));
+
+    Extension = getGridExtension(extensions, ['PositionExtension']);
+    if (options && options.position && Extension) {
+      grid.addExtension(new Extension(grid));
+    }
+
+    if (typeof grid.init === 'function') {
+      grid.init();
     }
   }
 

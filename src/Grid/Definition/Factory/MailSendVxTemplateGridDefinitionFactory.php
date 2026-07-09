@@ -135,8 +135,8 @@ final class MailSendVxTemplateGridDefinitionFactory extends AbstractGridDefiniti
                                     ->setName($this->trans('Edit', [], 'Admin.Actions'))
                                     ->setIcon('edit')
                                     ->setOptions([
-                                        'route' => 'mailsendvx_templates',
-                                        'route_param_name' => 'edit',
+                                        'route' => 'mailsendvx_template_edit',
+                                        'route_param_name' => 'idTemplate',
                                         'route_param_field' => 'id_mailsendvx_template',
                                         'use_inline_display' => true,
                                     ])

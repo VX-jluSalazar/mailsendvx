@@ -54,9 +54,7 @@ class TemplatesController extends FrameworkBundleAdminController
 
     public function indexAction(Request $request, MailSendVxTemplateFilters $templateFilters): Response
     {
-        $editId = $request->query->getInt('edit', 0) ?: null;
         $eventLabels = $this->templateAdminService->getSupportedEvents();
-        $contextLabels = $this->templateAdminService->getSupportedContextTypes();
         $languageChoices = $this->buildLanguageChoices();
 
         if ($request->isMethod('POST') && $request->request->has(MailSendVxTemplateGridDefinitionFactory::GRID_ID)) {
@@ -64,37 +62,8 @@ class TemplatesController extends FrameworkBundleAdminController
                 $this->templateGridDefinitionFactory,
                 $request,
                 MailSendVxTemplateGridDefinitionFactory::GRID_ID,
-                'mailsendvx_templates',
-                ['edit']
+                'mailsendvx_templates'
             );
-        }
-
-        $form = $this->createForm(TemplateFormType::class, $this->templateAdminService->getFormData($editId), [
-            'event_choices' => array_flip($eventLabels),
-            'context_choices' => array_flip($contextLabels),
-            'wrapper_choices' => array_flip($this->templateAdminService->getWrapperChoices()),
-            'language_choices' => $languageChoices,
-            'default_shop_id' => (int) $this->getContext()->shop->id,
-        ]);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                $saved = $this->templateAdminService->saveTemplate($form->getData());
-                if ($saved) {
-                    $this->addFlash('success', $this->trans('Plantilla guardada.', 'Admin.Notifications.Success', []));
-
-                    return $this->redirectToRoute('mailsendvx_templates');
-                }
-
-                $this->addFlash('danger', $this->trans('No se pudo guardar la plantilla.', 'Modules.Mailsendvx.Admin', []));
-            } catch (\Throwable $exception) {
-                $this->addFlash('danger', (string) $exception->getMessage());
-            }
-        } elseif ($form->isSubmitted()) {
-            foreach ($this->flattenFormErrors($form->getErrors(true)) as $errorMessage) {
-                $this->addFlash('danger', $errorMessage);
-            }
         }
 
         $templates = $this->decorateTemplates(
@@ -103,17 +72,23 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->buildLanguageLabels($languageChoices)
         );
 
-        return $this->render('@Modules/mailsendvx/views/templates/admin/templates.html.twig', [
-            'templateForm' => $form->createView(),
+        return $this->render('@Modules/mailsendvx/views/templates/admin/templates_list.html.twig', [
             'templatesCount' => count($templates),
             'templatesGrid' => $this->presentGrid($this->templateGridFactory->getGrid($templateFilters)),
-            'currentEditTemplate' => $this->findTemplate($templates, $editId),
             'activeTemplatesCount' => $this->countActiveTemplates($templates),
-            'contextLabels' => $contextLabels,
-            'eventContextMap' => $this->buildEventContextMap($eventLabels),
             'defaultTestEmail' => (string) ($this->getContext()->employee->email ?? ''),
             'shopName' => (string) $this->getContext()->shop->name,
         ]);
+    }
+
+    public function createAction(Request $request): Response
+    {
+        return $this->renderTemplateForm($request, null);
+    }
+
+    public function editAction(Request $request, int $idTemplate): Response
+    {
+        return $this->renderTemplateForm($request, $idTemplate);
     }
 
     public function deleteAction(Request $request, int $idTemplate): Response
@@ -168,13 +143,13 @@ class TemplatesController extends FrameworkBundleAdminController
     public function previewAction(Request $request, int $idTemplate): Response
     {
         if (!$request->isXmlHttpRequest()) {
-            $params = [];
             $editId = $request->query->getInt('edit', 0);
+
             if ($editId > 0) {
-                $params['edit'] = $editId;
+                return $this->redirectToRoute('mailsendvx_template_edit', ['idTemplate' => $editId]);
             }
 
-            return $this->redirectToRoute('mailsendvx_templates', $params);
+            return $this->redirectToRoute('mailsendvx_templates');
         }
 
         try {
@@ -204,8 +179,6 @@ class TemplatesController extends FrameworkBundleAdminController
 
     public function sendTestAction(Request $request, int $idTemplate): Response
     {
-        $redirectParams = $this->buildTemplateRedirectParams($request, $idTemplate);
-
         if (!$this->isCsrfTokenValid('test-template-' . $idTemplate, (string) $request->request->get('_token'))) {
             if ($request->isXmlHttpRequest()) {
                 return new JsonResponse([
@@ -216,7 +189,7 @@ class TemplatesController extends FrameworkBundleAdminController
 
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
-            return $this->redirectToRoute('mailsendvx_templates', $redirectParams);
+            return $this->redirect($this->getTemplateReturnUrl($request));
         }
 
         $result = $this->templateAdminService->sendTest($idTemplate, trim((string) $request->request->get('test_email')));
@@ -240,7 +213,7 @@ class TemplatesController extends FrameworkBundleAdminController
             $this->addFlash('danger', (string) $result);
         }
 
-        return $this->redirectToRoute('mailsendvx_templates', $redirectParams);
+        return $this->redirect($this->getTemplateReturnUrl($request));
     }
 
     /**
@@ -367,22 +340,101 @@ class TemplatesController extends FrameworkBundleAdminController
     }
 
     /**
-     * @return array<string, int>
+     * @return string
      */
-    private function buildTemplateRedirectParams(Request $request, int $idTemplate): array
+    private function getTemplateReturnUrl(Request $request): string
     {
-        $params = [];
-
-        $previewId = $request->request->getInt('preview', 0);
-        if ($previewId > 0) {
-            $params['preview'] = $previewId;
-        }
-
         $editId = $request->request->getInt('edit', 0);
         if ($editId > 0) {
-            $params['edit'] = $editId;
+            return $this->generateUrl('mailsendvx_template_edit', ['idTemplate' => $editId]);
         }
 
-        return $params;
+        return $this->generateUrl('mailsendvx_templates');
+    }
+
+    private function renderTemplateForm(Request $request, ?int $editId): Response
+    {
+        $eventLabels = $this->templateAdminService->getSupportedEvents();
+        $contextLabels = $this->templateAdminService->getSupportedContextTypes();
+        $languageChoices = $this->buildLanguageChoices();
+        $templates = $this->decorateTemplates(
+            $this->templateAdminService->getTemplates(),
+            $eventLabels,
+            $this->buildLanguageLabels($languageChoices)
+        );
+
+        $form = $this->createForm(TemplateFormType::class, $this->templateAdminService->getFormData($editId), [
+            'event_choices' => array_flip($eventLabels),
+            'context_choices' => array_flip($contextLabels),
+            'wrapper_choices' => array_flip($this->templateAdminService->getWrapperChoices()),
+            'language_choices' => $languageChoices,
+            'default_shop_id' => (int) $this->getContext()->shop->id,
+        ]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $saved = $this->templateAdminService->saveTemplate($form->getData());
+                if ($saved) {
+                    $savedId = (int) ($form->getData()['id_mailsendvx_template'] ?? 0);
+                    if ($savedId <= 0) {
+                        $savedId = $this->findLastSavedTemplateId($form->getData());
+                    }
+
+                    $this->addFlash('success', $this->trans('Plantilla guardada.', 'Admin.Notifications.Success', []));
+
+                    if ($savedId > 0) {
+                        return $this->redirectToRoute('mailsendvx_template_edit', ['idTemplate' => $savedId]);
+                    }
+
+                    return $this->redirectToRoute('mailsendvx_templates');
+                }
+
+                $this->addFlash('danger', $this->trans('No se pudo guardar la plantilla.', 'Modules.Mailsendvx.Admin', []));
+            } catch (\Throwable $exception) {
+                $this->addFlash('danger', (string) $exception->getMessage());
+            }
+        } elseif ($form->isSubmitted()) {
+            foreach ($this->flattenFormErrors($form->getErrors(true)) as $errorMessage) {
+                $this->addFlash('danger', $errorMessage);
+            }
+        }
+
+        return $this->render('@Modules/mailsendvx/views/templates/admin/template_form.html.twig', [
+            'templateForm' => $form->createView(),
+            'templatesCount' => count($templates),
+            'currentEditTemplate' => $this->findTemplate($templates, $editId),
+            'activeTemplatesCount' => $this->countActiveTemplates($templates),
+            'eventContextMap' => $this->buildEventContextMap($eventLabels),
+            'shopName' => (string) $this->getContext()->shop->name,
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function findLastSavedTemplateId(array $data): int
+    {
+        foreach ($this->templateAdminService->getTemplates() as $template) {
+            if ((string) ($template['name'] ?? '') !== (string) ($data['template_name'] ?? '')) {
+                continue;
+            }
+
+            if ((string) ($template['subject'] ?? '') !== (string) ($data['subject'] ?? '')) {
+                continue;
+            }
+
+            if ((int) ($template['id_lang'] ?? 0) !== (int) ($data['id_lang'] ?? 0)) {
+                continue;
+            }
+
+            if ((int) ($template['id_shop'] ?? 0) !== (int) ($data['id_shop'] ?? 0)) {
+                continue;
+            }
+
+            return (int) ($template['id_mailsendvx_template'] ?? 0);
+        }
+
+        return 0;
     }
 }

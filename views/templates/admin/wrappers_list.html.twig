@@ -1,0 +1,93 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Control de layout'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Gestiona wrappers persistidos por tienda e idioma, manteniendo como fallback los archivos base del módulo.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Shop'|trans({}, 'Admin.Global') }}</span>
+          <strong class="mailsendvx-metric__value">{{ shopName }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Wrappers disponibles'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ wrappersCount }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Registros'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ wrapperRows|length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mailsendvx-card">
+      <div class="card-header mailsendvx-card-header-actions">
+        <div class="mailsendvx-card-header-copy">
+          <i class="material-icons">list</i>
+          <span>{{ 'Wrappers'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        </div>
+        <a class="btn btn-primary" href="{{ path('mailsendvx_wrapper_create') }}">
+          {{ 'Crear wrapper'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </a>
+      </div>
+      <div class="card-body">
+        {% if wrapperRows %}
+          <div class="table-responsive">
+            <table class="table mailsendvx-table">
+              <thead>
+                <tr>
+                  <th>{{ 'Name'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Language'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Shop'|trans({}, 'Admin.Global') }}</th>
+                  <th>{{ 'Origen'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                  <th>{{ 'Actualizado'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                  <th>{{ 'Actions'|trans({}, 'Admin.Actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for wrapper in wrapperRows %}
+                  <tr>
+                    <td>
+                      <strong>{{ wrapper.name }}</strong>
+                      {% if wrapper.id_mailsendvx_wrapper %}
+                        <div class="mailsendvx-table-meta">#{{ wrapper.id_mailsendvx_wrapper }}</div>
+                      {% endif %}
+                    </td>
+                    <td>{{ wrapper.language_label }}</td>
+                    <td>{{ wrapper.shop_label }}</td>
+                    <td>
+                      <span class="mailsendvx-badge {{ wrapper.source_badge_class }}">{{ wrapper.source_label }}</span>
+                    </td>
+                    <td>{{ wrapper.date_upd ?: '-' }}</td>
+                    <td class="mailsendvx-template-actions">
+                      <div class="mailsendvx-action-row">
+                        <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_wrapper_edit', {wrapperName: wrapper.name, idLang: wrapper.id_lang}) }}">{{ 'Editar'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                        {% if wrapper.id_mailsendvx_wrapper %}
+                          <form method="post" action="{{ path('mailsendvx_wrapper_delete', {idWrapper: wrapper.id_mailsendvx_wrapper}) }}" class="mailsendvx-inline-form" onsubmit="return confirm('{{ '¿Eliminar este wrapper persistido de la tienda actual?'|trans({}, 'Modules.Mailsendvx.Admin')|e('js') }}');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete-wrapper-' ~ wrapper.id_mailsendvx_wrapper) }}">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">{{ 'Eliminar'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="mailsendvx-empty-state">
+            <h3>{{ 'Aún no hay wrappers.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+            <p>{{ 'Puedes empezar editando mailsendvx_default o crear una nueva clave reutilizable para esta tienda.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

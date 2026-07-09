@@ -14,6 +14,22 @@ mailsendvx_templates:
     _legacy_controller: AdminMailsendvxTemplates
     _legacy_link: AdminMailsendvxTemplates
 
+mailsendvx_template_create:
+  path: /mailsendvx/templates/create
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::createAction'
+    _legacy_controller: AdminMailsendvxTemplates
+
+mailsendvx_template_edit:
+  path: /mailsendvx/templates/{idTemplate}/edit
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::editAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    idTemplate: \d+
+
 mailsendvx_flows:
   path: /mailsendvx/flows
   methods: [GET, POST]
@@ -29,6 +45,23 @@ mailsendvx_wrappers:
     _controller: 'Velox\MailSendVx\Controller\Admin\WrappersController::indexAction'
     _legacy_controller: AdminMailsendvxWrappers
     _legacy_link: AdminMailsendvxWrappers
+
+mailsendvx_wrapper_create:
+  path: /mailsendvx/wrappers/create
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\WrappersController::createAction'
+    _legacy_controller: AdminMailsendvxWrappers
+
+mailsendvx_wrapper_edit:
+  path: /mailsendvx/wrappers/{wrapperName}/{idLang}/edit
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\WrappersController::editAction'
+    _legacy_controller: AdminMailsendvxWrappers
+  requirements:
+    wrapperName: '[A-Za-z0-9_]+'
+    idLang: \d+
 
 mailsendvx_documentation:
   path: /mailsendvx/documentation
