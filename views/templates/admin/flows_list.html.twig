@@ -1,0 +1,88 @@
+{% extends '@PrestaShop/Admin/layout.html.twig' %}
+
+{% block content %}
+  <section class="mailsendvx-shell">
+    <div class="mailsendvx-hero mailsendvx-hero--operations">
+      <div class="mailsendvx-hero__copy">
+        <span class="mailsendvx-eyebrow">{{ 'Mesa operativa'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h1 class="mailsendvx-page-title">{{ 'Flows, cola y recetas comerciales'|trans({}, 'Modules.Mailsendvx.Admin') }}</h1>
+        <p class="mailsendvx-page-subtitle">
+          {{ 'Consulta los flujos existentes y abre su edición en una pantalla dedicada para mantener una operación más clara.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </p>
+        <div class="mailsendvx-route-strip" aria-hidden="true">
+          <span>Trigger</span>
+          <span>Steps</span>
+          <span>Queue</span>
+          <span>Resultado</span>
+        </div>
+      </div>
+      <div class="mailsendvx-status-cluster">
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Flows activos'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ active_flows_count }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Jobs vigilados'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ queue_counts.pending + queue_counts.scheduled + queue_counts.processing }}</strong>
+        </div>
+        <div class="mailsendvx-metric">
+          <span class="mailsendvx-metric__label">{{ 'Reusable templates'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+          <strong class="mailsendvx-metric__value">{{ reusable_templates_count }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mailsendvx-card">
+      <div class="card-header mailsendvx-card-header-actions">
+        <div class="mailsendvx-card-header-copy">
+          <i class="material-icons">list_alt</i>
+          <span>{{ 'Flows existentes'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        </div>
+        <a class="btn btn-primary" href="{{ path('mailsendvx_flow_create') }}">
+          {{ 'Crear flujo'|trans({}, 'Modules.Mailsendvx.Admin') }}
+        </a>
+      </div>
+      <div class="card-body">
+        {% if flows %}
+          <div class="mailsendvx-flow-list">
+            {% for flow in flows %}
+              <article class="mailsendvx-flow-row">
+                <div class="mailsendvx-flow-row__headline">
+                  <div>
+                    <div class="mailsendvx-flow-row__title">
+                      <strong>{{ flow.name }}</strong>
+                      <span class="mailsendvx-badge {{ flow.active ? 'mailsendvx-badge--success' : 'mailsendvx-badge--muted' }}">{{ flow.active ? 'Activo'|trans({}, 'Modules.Mailsendvx.Admin') : 'Borrador'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    </div>
+                    <p>{{ flow.description ?: 'Sin descripción operativa.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+                  </div>
+                  <a class="btn btn-outline-secondary btn-sm" href="{{ path('mailsendvx_flow_edit', {idFlow: flow.id_mailsendvx_flow}) }}">{{ 'Editar'|trans({}, 'Modules.Mailsendvx.Admin') }}</a>
+                </div>
+                <div class="mailsendvx-flow-row__meta">
+                  <span><code>{{ flow.trigger_event }}</code></span>
+                  <span>{{ flow.trigger_label }}</span>
+                  <span>{{ flow.context_label }}</span>
+                  <span>{{ flow.steps_count }} {{ 'steps'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                  <span>{{ 'v' ~ flow.version }}</span>
+                </div>
+                <div class="mailsendvx-flow-row__steps">
+                  {% for step in flow.step_cards %}
+                    <div class="mailsendvx-step-chip">
+                      <strong>{{ step.position }}. {{ step.template_name }}</strong>
+                      <span>{{ step.delay_label }}</span>
+                      <span>{{ step.cancel_rules_count }} {{ 'cancel rules'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="mailsendvx-empty-state">
+            <h3>{{ 'Aún no hay flows.'|trans({}, 'Modules.Mailsendvx.Admin') }}</h3>
+            <p>{{ 'Crea uno desde el editor o activa una receta comercial para dejar la Fase 02 operativa.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}

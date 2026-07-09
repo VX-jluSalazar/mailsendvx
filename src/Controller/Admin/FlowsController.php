@@ -9,7 +9,6 @@ use PrestaShopBundle\Service\Grid\ResponseBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Velox\MailSendVx\Grid\Definition\Factory\MailSendVxQueueGridDefinitionFactory;
-use Velox\MailSendVx\Grid\Filters\MailSendVxQueueFilters;
 use Velox\MailSendVx\Service\Admin\FlowAdminService;
 
 class FlowsController extends FrameworkBundleAdminController
@@ -48,69 +47,49 @@ class FlowsController extends FrameworkBundleAdminController
         $this->responseBuilder = $responseBuilder;
     }
 
-    public function indexAction(Request $request, MailSendVxQueueFilters $queueFilters): Response
+    public function indexAction(Request $request): Response
     {
-        $editId = $request->query->getInt('edit', 0) ?: null;
-
-        if ($request->isMethod('POST') && $request->request->has(MailSendVxQueueGridDefinitionFactory::GRID_ID)) {
-            return $this->responseBuilder->buildSearchResponse(
-                $this->queueGridDefinitionFactory,
-                $request,
-                MailSendVxQueueGridDefinitionFactory::GRID_ID,
-                'mailsendvx_flows',
-                ['edit']
-            );
-        }
-
-        if ($request->isMethod('POST')) {
-            if (!$this->isCsrfTokenValid('mailsendvx-flow-save', (string) $request->request->get('_token'))) {
-                $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
-
-                return $this->redirectToRoute('mailsendvx_flows', $editId ? ['edit' => $editId] : []);
-            }
-
-            try {
-                $presetId = trim((string) $request->request->get('preset_id', ''));
-                $runQueueNow = (string) $request->request->get('run_queue_now', '');
-                if ($runQueueNow === '1') {
-                    $result = $this->flowAdminService->runQueueWorker((int) $request->request->get('queue_limit', 50));
-                    $this->addFlash('success', sprintf(
-                        'Queue procesada. Encontrados: %d, enviados: %d, reintentos: %d, cancelados: %d, skipped: %d.',
-                        (int) ($result['found'] ?? 0),
-                        (int) ($result['sent'] ?? 0),
-                        (int) ($result['retry_scheduled'] ?? 0),
-                        (int) ($result['cancelled'] ?? 0),
-                        (int) ($result['skipped'] ?? 0)
-                    ));
-
-                    return $this->redirectToRoute('mailsendvx_flows');
-                }
-
-                if ($presetId !== '') {
-                    $this->flowAdminService->createPresetFlow($presetId);
-                    $this->addFlash('success', $this->trans('Preset comercial creado.', 'Admin.Notifications.Success', []));
-
-                    return $this->redirectToRoute('mailsendvx_flows');
-                }
-
-                $this->flowAdminService->saveFlow($request->request->all());
-                $this->addFlash('success', $this->trans('Flow guardado.', 'Admin.Notifications.Success', []));
-
-                return $this->redirectToRoute('mailsendvx_flows');
-            } catch (\Throwable $exception) {
-                $this->addFlash('danger', (string) $exception->getMessage());
-            }
-        }
-
-        return $this->render('@Modules/mailsendvx/views/templates/admin/flows.html.twig', array_merge(
+        return $this->render('@Modules/mailsendvx/views/templates/admin/flows_list.html.twig', array_merge(
             $this->flowAdminService->getOperationsViewData(),
             [
                 'shopName' => (string) $this->getContext()->shop->name,
-                'flowFormData' => $this->flowAdminService->getFlowFormData($editId),
-                'currentEditFlowId' => $editId,
-                'queueGrid' => $this->presentGrid($this->queueGridFactory->getGrid($queueFilters)),
             ]
         ));
+    }
+
+    public function createAction(Request $request): Response
+    {
+        return $this->renderFlowForm($request, null);
+    }
+
+    public function editAction(Request $request, int $idFlow): Response
+    {
+        return $this->renderFlowForm($request, $idFlow);
+    }
+
+    public function runQueueNowAction(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('mailsendvx-flow-save', (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        try {
+            $result = $this->flowAdminService->runQueueWorker((int) $request->request->get('queue_limit', 50));
+            $this->addFlash('success', sprintf(
+                'Queue procesada. Encontrados: %d, enviados: %d, reintentos: %d, cancelados: %d, skipped: %d.',
+                (int) ($result['found'] ?? 0),
+                (int) ($result['sent'] ?? 0),
+                (int) ($result['retry_scheduled'] ?? 0),
+                (int) ($result['cancelled'] ?? 0),
+                (int) ($result['skipped'] ?? 0)
+            ));
+        } catch (\Throwable $exception) {
+            $this->addFlash('danger', (string) $exception->getMessage());
+        }
+
+        return $this->redirect($this->getQueueReturnUrl($request));
     }
 
     public function cancelQueueJobAction(Request $request, int $idQueue): Response
@@ -182,5 +161,76 @@ class FlowsController extends FrameworkBundleAdminController
         $referer = (string) $request->headers->get('referer', '');
 
         return $referer !== '' ? $referer : $this->generateUrl('mailsendvx_flows');
+    }
+
+    private function renderFlowForm(Request $request, ?int $editId): Response
+    {
+        if ($request->isMethod('POST')) {
+            if (!$this->isCsrfTokenValid('mailsendvx-flow-save', (string) $request->request->get('_token'))) {
+                $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+                return $this->redirectToRoute($editId ? 'mailsendvx_flow_edit' : 'mailsendvx_flow_create', $editId ? ['idFlow' => $editId] : []);
+            }
+
+            try {
+                $presetId = trim((string) $request->request->get('preset_id', ''));
+                if ($presetId !== '') {
+                    $this->flowAdminService->createPresetFlow($presetId);
+                    $this->addFlash('success', $this->trans('Preset comercial creado.', 'Admin.Notifications.Success', []));
+
+                    return $this->redirectToRoute('mailsendvx_flows');
+                }
+
+                $this->flowAdminService->saveFlow($request->request->all());
+                $savedId = (int) ($request->request->get('id_mailsendvx_flow', 0) ?: 0);
+                if ($savedId <= 0) {
+                    $savedId = $this->findLastSavedFlowId($request->request->all());
+                }
+                $this->addFlash('success', $this->trans('Flow guardado.', 'Admin.Notifications.Success', []));
+
+                return $savedId > 0
+                    ? $this->redirectToRoute('mailsendvx_flow_edit', ['idFlow' => $savedId])
+                    : $this->redirectToRoute('mailsendvx_flows');
+            } catch (\Throwable $exception) {
+                $this->addFlash('danger', (string) $exception->getMessage());
+            }
+        }
+
+        return $this->render('@Modules/mailsendvx/views/templates/admin/flow_form.html.twig', array_merge(
+            $this->flowAdminService->getOperationsViewData(),
+            [
+                'shopName' => (string) $this->getContext()->shop->name,
+                'flowFormData' => $this->flowAdminService->getFlowFormData($editId),
+                'currentEditFlowId' => $editId,
+            ]
+        ));
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function findLastSavedFlowId(array $payload): int
+    {
+        $name = trim((string) ($payload['name'] ?? ''));
+        $triggerEvent = trim((string) ($payload['trigger_event'] ?? ''));
+        $contextType = trim((string) ($payload['context_type'] ?? ''));
+
+        foreach ($this->flowAdminService->getFlowsForView() as $flow) {
+            if ((string) ($flow['name'] ?? '') !== $name) {
+                continue;
+            }
+
+            if ((string) ($flow['trigger_event'] ?? '') !== $triggerEvent) {
+                continue;
+            }
+
+            if ((string) ($flow['context_type'] ?? '') !== $contextType) {
+                continue;
+            }
+
+            return (int) ($flow['id_mailsendvx_flow'] ?? 0);
+        }
+
+        return 0;
     }
 }

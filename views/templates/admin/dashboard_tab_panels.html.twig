@@ -6,6 +6,19 @@
   </section>
 {% elseif activeTab == 'queue' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="queue">
+    <div class="card mailsendvx-card mailsendvx-card--aside mb-3">
+      <div class="card-body mailsendvx-inline-action">
+        <div>
+          <strong>{{ 'Los steps programados necesitan que corra el worker de queue.'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
+          <p>{{ 'El primer mail puede salir al instante, pero los siguientes sólo se enviarán después de su fecha programada cuando ejecutes el cron o lances el worker manualmente desde aquí.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
+        </div>
+        <form method="post" action="{{ path('mailsendvx_queue_run') }}" class="mailsendvx-inline-runner">
+          <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-flow-save') }}">
+          <input type="hidden" name="queue_limit" value="50">
+          <button type="submit" class="btn btn-primary">{{ 'Procesar queue ahora'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+        </form>
+      </div>
+    </div>
     {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': queueGrid }) }}
   </section>
 {% elseif activeTab == 'logs' %}

@@ -121,6 +121,12 @@
   background: var(--mailsendvx-panel);
 }
 
+.mailsendvx-flow-footer-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
 .mailsendvx-card-header-actions {
   align-items: center;
   display: flex;
@@ -142,6 +148,10 @@
   background:
     linear-gradient(180deg, rgba(223, 245, 239, 0.52) 0%, rgba(255, 255, 255, 0) 100%),
     #fff;
+}
+
+.mailsendvx-collapsible-card[hidden] {
+  display: none !important;
 }
 
 .mailsendvx-tabs {

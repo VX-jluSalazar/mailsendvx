@@ -38,6 +38,22 @@ mailsendvx_flows:
     _legacy_controller: AdminMailsendvxFlows
     _legacy_link: AdminMailsendvxFlows
 
+mailsendvx_flow_create:
+  path: /mailsendvx/flows/create
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::createAction'
+    _legacy_controller: AdminMailsendvxFlows
+
+mailsendvx_flow_edit:
+  path: /mailsendvx/flows/{idFlow}/edit
+  methods: [GET, POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::editAction'
+    _legacy_controller: AdminMailsendvxFlows
+  requirements:
+    idFlow: \d+
+
 mailsendvx_wrappers:
   path: /mailsendvx/wrappers
   methods: [GET, POST]
@@ -139,6 +155,13 @@ mailsendvx_queue_cancel:
     _legacy_controller: AdminMailsendvxFlows
   requirements:
     idQueue: \d+
+
+mailsendvx_queue_run:
+  path: /mailsendvx/queue/run
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::runQueueNowAction'
+    _legacy_controller: AdminMailsendvxFlows
 
 mailsendvx_queue_bulk_cancel:
   path: /mailsendvx/queue/bulk-cancel
