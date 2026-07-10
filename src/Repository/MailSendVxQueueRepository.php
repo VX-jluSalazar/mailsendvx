@@ -277,6 +277,20 @@ class MailSendVxQueueRepository extends AbstractMailSendVxRepository
         return $result ?: false;
     }
 
+    public function clearTerminalJobs(): int
+    {
+        return $this->connection->executeStatement(
+            'DELETE FROM `' . $this->getTableName('mailsendvx_queue') . '`
+            WHERE `status` IN (:sentStatus, :failedStatus, :cancelledStatus, :skippedStatus)',
+            [
+                'sentStatus' => 'sent',
+                'failedStatus' => 'failed',
+                'cancelledStatus' => 'cancelled',
+                'skippedStatus' => 'skipped',
+            ]
+        );
+    }
+
     /**
      * @param array<string, mixed> $data
      */

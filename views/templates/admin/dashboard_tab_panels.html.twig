@@ -2,7 +2,16 @@
 
 {% if activeTab == 'events' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="events">
-    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': eventsGrid }) }}
+    <div
+      class="mailsendvx-grid-shell"
+      data-mailsendvx-ajax-grid="1"
+      data-grid-id="mailsendvx_events"
+      data-grid-panel-endpoint="{{ path('mailsendvx_dashboard_grid', {gridId: 'mailsendvx_events', tab: 'events'}) }}"
+      data-grid-tab="events"
+      data-grid-ajax-actions="0"
+    >
+      {{ include('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', {'grid': eventsGrid }) }}
+    </div>
   </section>
 {% elseif activeTab == 'queue' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="queue">
@@ -12,18 +21,55 @@
           <strong>{{ 'Los steps programados necesitan que corra el worker de queue.'|trans({}, 'Modules.Mailsendvx.Admin') }}</strong>
           <p>{{ 'El primer mail puede salir al instante, pero los siguientes sólo se enviarán después de su fecha programada cuando ejecutes el cron o lances el worker manualmente desde aquí.'|trans({}, 'Modules.Mailsendvx.Admin') }}</p>
         </div>
-        <form method="post" action="{{ path('mailsendvx_queue_run') }}" class="mailsendvx-inline-runner">
+        <div class="mailsendvx-inline-actions-stack">
+        <form
+          method="post"
+          action="{{ path('mailsendvx_queue_run') }}"
+          class="mailsendvx-inline-runner"
+          data-mailsendvx-ajax-form="1"
+          data-refresh-grid-id="mailsendvx_queue"
+        >
           <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-flow-save') }}">
           <input type="hidden" name="queue_limit" value="50">
           <button type="submit" class="btn btn-primary">{{ 'Procesar queue ahora'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
         </form>
+        <form
+          method="post"
+          action="{{ path('mailsendvx_queue_clear') }}"
+          class="mailsendvx-inline-runner"
+          data-mailsendvx-ajax-form="1"
+          data-refresh-grid-id="mailsendvx_queue"
+          data-confirm-message="{{ '¿Limpiar el histórico terminal de la queue? Se conservarán jobs pending, scheduled y processing.'|trans({}, 'Modules.Mailsendvx.Admin') }}"
+        >
+          <input type="hidden" name="_token" value="{{ csrf_token('mailsendvx-queue-clear') }}">
+          <button type="submit" class="btn btn-outline-danger">{{ 'Limpiar tabla'|trans({}, 'Modules.Mailsendvx.Admin') }}</button>
+        </form>
+        </div>
       </div>
     </div>
-    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': queueGrid }) }}
+    <div
+      class="mailsendvx-grid-shell"
+      data-mailsendvx-ajax-grid="1"
+      data-grid-id="mailsendvx_queue"
+      data-grid-panel-endpoint="{{ path('mailsendvx_dashboard_grid', {gridId: 'mailsendvx_queue', tab: 'queue'}) }}"
+      data-grid-tab="queue"
+      data-grid-ajax-actions="1"
+    >
+      {{ include('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', {'grid': queueGrid }) }}
+    </div>
   </section>
 {% elseif activeTab == 'logs' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="logs">
-    {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': logsGrid }) }}
+    <div
+      class="mailsendvx-grid-shell"
+      data-mailsendvx-ajax-grid="1"
+      data-grid-id="mailsendvx_logs"
+      data-grid-panel-endpoint="{{ path('mailsendvx_dashboard_grid', {gridId: 'mailsendvx_logs', tab: 'logs'}) }}"
+      data-grid-tab="logs"
+      data-grid-ajax-actions="0"
+    >
+      {{ include('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', {'grid': logsGrid }) }}
+    </div>
   </section>
 {% elseif activeTab == 'configuration' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="configuration">

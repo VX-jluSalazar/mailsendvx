@@ -947,6 +947,12 @@
   margin: 0;
 }
 
+.mailsendvx-modal__subtitle {
+  color: var(--mailsendvx-muted);
+  margin: 8px 0 0;
+  max-width: 62ch;
+}
+
 .mailsendvx-modal__body {
   max-height: calc(100vh - 170px);
   overflow: auto;
@@ -1003,6 +1009,13 @@
   padding: 14px 16px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.mailsendvx-log-block__content--code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow: auto;
 }
 
 @media (max-width: 991px) {
@@ -1174,6 +1187,13 @@
   max-width: 220px;
 }
 
+.mailsendvx-inline-actions-stack {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .mailsendvx-modal-feedback {
   display: none;
   margin-bottom: 14px;
@@ -1225,6 +1245,42 @@
 .mailsendvx-signal--warning {
   background: var(--mailsendvx-warning-soft);
   color: #7a5713;
+}
+
+.mailsendvx-grid-shell {
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+
+.mailsendvx-grid-shell.is-loading {
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.mailsendvx-grid-shell.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(241, 245, 249, 0.16), rgba(148, 163, 184, 0.16), rgba(241, 245, 249, 0.16));
+  animation: mailsendvx-grid-pulse 1.1s ease-in-out infinite;
+}
+
+.mailsendvx-grid-feedback {
+  margin-bottom: 1rem;
+}
+
+@keyframes mailsendvx-grid-pulse {
+  0% {
+    opacity: 0.15;
+  }
+
+  50% {
+    opacity: 0.38;
+  }
+
+  100% {
+    opacity: 0.15;
+  }
 }
 
 @media (max-width: 1199.98px) {

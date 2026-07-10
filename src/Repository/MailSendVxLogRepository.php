@@ -46,4 +46,21 @@ class MailSendVxLogRepository extends AbstractMailSendVxRepository
 
         return $queryBuilder->execute()->fetchAllAssociative();
     }
+
+    /**
+     * @return array<string, mixed>|false
+     */
+    public function findById(int $idLog)
+    {
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_log'))
+            ->where('id_mailsendvx_log = :idLog')
+            ->setParameter('idLog', $idLog);
+
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
+    }
 }

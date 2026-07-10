@@ -6,9 +6,11 @@ use PrestaShop\PrestaShop\Core\Grid\Definition\Factory\GridDefinitionFactoryInte
 use PrestaShop\PrestaShop\Core\Grid\GridFactoryInterface;
 use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use PrestaShopBundle\Service\Grid\ResponseBuilder;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Velox\MailSendVx\Grid\Definition\Factory\MailSendVxQueueGridDefinitionFactory;
+use Velox\MailSendVx\Service\Admin\AdminAjaxResponseBuilder;
 use Velox\MailSendVx\Service\Admin\FlowAdminService;
 
 class FlowsController extends FrameworkBundleAdminController
@@ -33,11 +35,17 @@ class FlowsController extends FrameworkBundleAdminController
      */
     private $responseBuilder;
 
+    /**
+     * @var AdminAjaxResponseBuilder
+     */
+    private $ajaxResponseBuilder;
+
     public function __construct(
         FlowAdminService $flowAdminService,
         GridFactoryInterface $queueGridFactory,
         GridDefinitionFactoryInterface $queueGridDefinitionFactory,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
+        AdminAjaxResponseBuilder $ajaxResponseBuilder
     )
     {
         parent::__construct();
@@ -45,6 +53,7 @@ class FlowsController extends FrameworkBundleAdminController
         $this->queueGridFactory = $queueGridFactory;
         $this->queueGridDefinitionFactory = $queueGridDefinitionFactory;
         $this->responseBuilder = $responseBuilder;
+        $this->ajaxResponseBuilder = $ajaxResponseBuilder;
     }
 
     public function indexAction(Request $request): Response
@@ -70,22 +79,54 @@ class FlowsController extends FrameworkBundleAdminController
     public function runQueueNowAction(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('mailsendvx-flow-save', (string) $request->request->get('_token'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        if (!$this->isGranted('update', (string) $request->attributes->get('_legacy_controller', 'AdminMailsendvxDashboard'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('No tienes permisos para procesar la queue.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_FORBIDDEN
+                );
+            }
+
+            $this->addFlash('danger', $this->trans('No tienes permisos para procesar la queue.', 'Admin.Notifications.Error', []));
 
             return $this->redirect($this->getQueueReturnUrl($request));
         }
 
         try {
             $result = $this->flowAdminService->runQueueWorker((int) $request->request->get('queue_limit', 50));
-            $this->addFlash('success', sprintf(
+            $message = sprintf(
                 'Queue procesada. Encontrados: %d, enviados: %d, reintentos: %d, cancelados: %d, skipped: %d.',
                 (int) ($result['found'] ?? 0),
                 (int) ($result['sent'] ?? 0),
                 (int) ($result['retry_scheduled'] ?? 0),
                 (int) ($result['cancelled'] ?? 0),
                 (int) ($result['skipped'] ?? 0)
-            ));
+            );
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createSuccessResponse([
+                    'stats' => $result,
+                ], $message);
+            }
+
+            $this->addFlash('success', $message);
         } catch (\Throwable $exception) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse((string) $exception->getMessage(), Response::HTTP_BAD_REQUEST);
+            }
+
             $this->addFlash('danger', (string) $exception->getMessage());
         }
 
@@ -98,9 +139,29 @@ class FlowsController extends FrameworkBundleAdminController
         if (!$this->isCsrfTokenValid('cancel-queue-' . $idQueue, $token)
             && !$this->isCsrfTokenValid('mailsendvx-queue-cancel', $token)
         ) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
-            return $this->redirectToRoute('mailsendvx_flows');
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        if (!$this->isGranted('delete', (string) $request->attributes->get('_legacy_controller', 'AdminMailsendvxDashboard'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('No tienes permisos para cancelar jobs.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_FORBIDDEN
+                );
+            }
+
+            $this->addFlash('danger', $this->trans('No tienes permisos para cancelar jobs.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
         }
 
         try {
@@ -109,8 +170,17 @@ class FlowsController extends FrameworkBundleAdminController
                 $idQueue,
                 $reason !== '' ? $reason : 'Cancelled manually from Back Office.'
             );
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createSuccessResponse([], $this->trans('Job cancelado.', 'Admin.Notifications.Success', []));
+            }
+
             $this->addFlash('success', $this->trans('Job cancelado.', 'Admin.Notifications.Success', []));
         } catch (\Throwable $exception) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse((string) $exception->getMessage(), Response::HTTP_BAD_REQUEST);
+            }
+
             $this->addFlash('danger', (string) $exception->getMessage());
         }
 
@@ -120,16 +190,43 @@ class FlowsController extends FrameworkBundleAdminController
     public function cancelQueueBulkAction(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('mailsendvx-queue-bulk-cancel', (string) $request->get('_token'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
-            return $this->redirectToRoute('mailsendvx_flows');
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        if (!$this->isGranted('delete', (string) $request->attributes->get('_legacy_controller', 'AdminMailsendvxDashboard'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('No tienes permisos para cancelar jobs.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_FORBIDDEN
+                );
+            }
+
+            $this->addFlash('danger', $this->trans('No tienes permisos para cancelar jobs.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
         }
 
         $selectedIds = array_values(array_filter(array_map('intval', (array) $request->request->get(MailSendVxQueueGridDefinitionFactory::GRID_ID . '_bulk_queue', []))));
         if (empty($selectedIds)) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('Selecciona al menos un job para cancelar.', 'Admin.Notifications.Warning', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('warning', $this->trans('Selecciona al menos un job para cancelar.', 'Admin.Notifications.Warning', []));
 
-            return $this->redirectToRoute('mailsendvx_flows');
+            return $this->redirect($this->getQueueReturnUrl($request));
         }
 
         $cancelled = 0;
@@ -146,11 +243,79 @@ class FlowsController extends FrameworkBundleAdminController
         }
 
         if ($cancelled > 0) {
+            if ($request->isXmlHttpRequest()) {
+                $message = sprintf('%d job(s) cancelado(s).', $cancelled);
+                if (!empty($errors)) {
+                    $message .= ' ' . implode(' ', $errors);
+                }
+
+                return $this->ajaxResponseBuilder->createSuccessResponse([], $message);
+            }
+
             $this->addFlash('success', sprintf('%d job(s) cancelado(s).', $cancelled));
         }
 
         foreach ($errors as $error) {
             $this->addFlash('danger', $error);
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                !empty($errors) ? implode(' ', $errors) : $this->trans('No se pudo cancelar ningún job.', 'Admin.Notifications.Error', []),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        return $this->redirect($this->getQueueReturnUrl($request));
+    }
+
+    public function clearQueueAction(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('mailsendvx-queue-clear', (string) $request->request->get('_token'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
+            $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        if (!$this->isGranted('delete', (string) $request->attributes->get('_legacy_controller', 'AdminMailsendvxDashboard'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('No tienes permisos para limpiar la queue.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_FORBIDDEN
+                );
+            }
+
+            $this->addFlash('danger', $this->trans('No tienes permisos para limpiar la queue.', 'Admin.Notifications.Error', []));
+
+            return $this->redirect($this->getQueueReturnUrl($request));
+        }
+
+        try {
+            $deleted = $this->flowAdminService->clearQueueHistory();
+            $message = $deleted > 0
+                ? sprintf('%d registro(s) terminal(es) eliminados de la queue.', $deleted)
+                : $this->trans('No había registros terminales para limpiar.', 'Modules.Mailsendvx.Admin', []);
+
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createSuccessResponse([
+                    'deleted' => $deleted,
+                ], $message);
+            }
+
+            $this->addFlash('success', $message);
+        } catch (\Throwable $exception) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse((string) $exception->getMessage(), Response::HTTP_BAD_REQUEST);
+            }
+
+            $this->addFlash('danger', (string) $exception->getMessage());
         }
 
         return $this->redirect($this->getQueueReturnUrl($request));
@@ -160,7 +325,7 @@ class FlowsController extends FrameworkBundleAdminController
     {
         $referer = (string) $request->headers->get('referer', '');
 
-        return $referer !== '' ? $referer : $this->generateUrl('mailsendvx_flows');
+        return $referer !== '' ? $referer : $this->generateUrl('mailsendvx_dashboard_queue');
     }
 
     private function renderFlowForm(Request $request, ?int $editId): Response

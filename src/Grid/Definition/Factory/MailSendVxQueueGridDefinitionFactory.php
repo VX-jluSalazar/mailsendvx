@@ -8,6 +8,7 @@ use PrestaShop\PrestaShop\Core\Grid\Action\Bulk\Type\SubmitBulkAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\GridActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\GridActionCollectionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\LinkRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\SubmitRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Type\SimpleGridAction;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
@@ -32,22 +33,15 @@ final class MailSendVxQueueGridDefinitionFactory extends AbstractGridDefinitionF
     public const GRID_ID = 'mailsendvx_queue';
 
     /**
-     * @var string
-     */
-    private $contextDateFormat;
-
-    /**
      * @var CsrfTokenManagerInterface
      */
     private $csrfTokenManager;
 
     public function __construct(
         HookDispatcherInterface $hookDispatcher,
-        string $contextDateFormat,
         CsrfTokenManagerInterface $csrfTokenManager
     ) {
         parent::__construct($hookDispatcher);
-        $this->contextDateFormat = $contextDateFormat;
         $this->csrfTokenManager = $csrfTokenManager;
     }
 
@@ -104,7 +98,7 @@ final class MailSendVxQueueGridDefinitionFactory extends AbstractGridDefinitionF
                     ->setName($this->trans('Programado', [], 'Modules.Mailsendvx.Admin'))
                     ->setOptions([
                         'field' => 'scheduled_at',
-                        'format' => $this->contextDateFormat,
+                        'format' => 'd/m/Y H:i:s',
                     ])
             )
             ->add(
@@ -133,6 +127,23 @@ final class MailSendVxQueueGridDefinitionFactory extends AbstractGridDefinitionF
                     ->setName($this->trans('Actions', [], 'Admin.Global'))
                     ->setOptions([
                         'actions' => (new RowActionCollection())
+                            ->add(
+                                (new LinkRowAction('detail'))
+                                    ->setName($this->trans('Detalle', [], 'Modules.Mailsendvx.Admin'))
+                                    ->setIcon('visibility')
+                                    ->setOptions([
+                                        'route' => 'mailsendvx_dashboard_detail',
+                                        'route_param_name' => 'recordId',
+                                        'route_param_field' => 'id_mailsendvx_queue',
+                                        'extra_route_params' => [
+                                            'gridId' => self::GRID_ID,
+                                        ],
+                                        'attr' => [
+                                            'class' => 'js-mailsendvx-grid-detail',
+                                        ],
+                                        'use_inline_display' => true,
+                                    ])
+                            )
                             ->add(
                                 (new SubmitRowAction('cancel'))
                                     ->setName($this->trans('Cancelar', [], 'Modules.Mailsendvx.Admin'))
@@ -192,7 +203,7 @@ final class MailSendVxQueueGridDefinitionFactory extends AbstractGridDefinitionF
                     ->setTypeOptions([
                         'reset_route' => 'admin_common_reset_search_by_filter_id',
                         'reset_route_params' => ['filterId' => self::GRID_ID],
-                        'redirect_route' => 'mailsendvx_flows',
+                        'redirect_route' => 'mailsendvx_dashboard_queue',
                     ])
                     ->setAssociatedColumn('actions')
             );
@@ -242,4 +253,3 @@ final class MailSendVxQueueGridDefinitionFactory extends AbstractGridDefinitionF
         ];
     }
 }
-

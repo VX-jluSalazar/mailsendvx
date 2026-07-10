@@ -4,7 +4,10 @@ namespace Velox\MailSendVx\Grid\Definition\Factory;
 
 use PrestaShop\PrestaShop\Core\Grid\Action\GridActionCollection;
 use PrestaShop\PrestaShop\Core\Grid\Action\GridActionCollectionInterface;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\LinkRowAction;
 use PrestaShop\PrestaShop\Core\Grid\Action\Type\SimpleGridAction;
+use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollection;
 use PrestaShop\PrestaShop\Core\Grid\Column\ColumnCollectionInterface;
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\DataColumn;
@@ -103,6 +106,30 @@ final class MailSendVxEventGridDefinitionFactory extends AbstractGridDefinitionF
                     ->setOptions([
                         'field' => 'payload_excerpt',
                     ])
+            )
+            ->add(
+                (new ActionColumn('actions'))
+                    ->setName($this->trans('Actions', [], 'Admin.Actions'))
+                    ->setOptions([
+                        'actions' => (new RowActionCollection())
+                            ->add(
+                                (new LinkRowAction('detail'))
+                                    ->setName($this->trans('Detalle', [], 'Modules.Mailsendvx.Admin'))
+                                    ->setIcon('visibility')
+                                    ->setOptions([
+                                        'route' => 'mailsendvx_dashboard_detail',
+                                        'route_param_name' => 'recordId',
+                                        'route_param_field' => 'id_mailsendvx_event',
+                                        'extra_route_params' => [
+                                            'gridId' => self::GRID_ID,
+                                        ],
+                                        'attr' => [
+                                            'class' => 'js-mailsendvx-grid-detail',
+                                        ],
+                                        'use_inline_display' => true,
+                                    ])
+                            ),
+                    ])
             );
     }
 
@@ -155,7 +182,7 @@ final class MailSendVxEventGridDefinitionFactory extends AbstractGridDefinitionF
                         'reset_route_params' => ['filterId' => self::GRID_ID],
                         'redirect_route' => 'mailsendvx_dashboard',
                     ])
-                    ->setAssociatedColumn('payload_excerpt')
+                    ->setAssociatedColumn('actions')
             );
     }
 
@@ -186,4 +213,3 @@ final class MailSendVxEventGridDefinitionFactory extends AbstractGridDefinitionF
         ];
     }
 }
-

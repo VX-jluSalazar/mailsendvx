@@ -14,6 +14,15 @@ mailsendvx_templates:
     _legacy_controller: AdminMailsendvxTemplates
     _legacy_link: AdminMailsendvxTemplates
 
+mailsendvx_templates_grid:
+  path: /mailsendvx/templates/grid/{gridId}
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::gridAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    gridId: mailsendvx_templates
+
 mailsendvx_template_create:
   path: /mailsendvx/templates/create
   methods: [GET, POST]
@@ -121,6 +130,15 @@ mailsendvx_template_preview:
   requirements:
     idTemplate: \d+
 
+mailsendvx_template_detail:
+  path: /mailsendvx/templates/{idTemplate}/detail
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\TemplatesController::detailAction'
+    _legacy_controller: AdminMailsendvxTemplates
+  requirements:
+    idTemplate: \d+
+
 mailsendvx_template_test:
   path: /mailsendvx/templates/{idTemplate}/test
   methods: [POST]
@@ -147,12 +165,41 @@ mailsendvx_dashboard:
     _legacy_controller: AdminMailsendvxDashboard
     _legacy_link: AdminMailsendvxDashboard
 
+mailsendvx_dashboard_queue:
+  path: /mailsendvx/dashboard/queue
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::indexAction'
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard
+    tab: queue
+
+mailsendvx_dashboard_grid:
+  path: /mailsendvx/dashboard/grid/{gridId}
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::gridAction'
+    _legacy_controller: AdminMailsendvxDashboard
+  requirements:
+    gridId: mailsendvx_events|mailsendvx_queue|mailsendvx_logs
+
+mailsendvx_dashboard_detail:
+  path: /mailsendvx/dashboard/detail/{gridId}/{recordId}
+  methods: [GET]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\DashboardController::detailAction'
+    _legacy_controller: AdminMailsendvxDashboard
+  requirements:
+    gridId: mailsendvx_events|mailsendvx_queue|mailsendvx_logs
+    recordId: \d+
+
 mailsendvx_queue_cancel:
   path: /mailsendvx/queue/{idQueue}/cancel
   methods: [POST]
   defaults:
     _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::cancelQueueJobAction'
-    _legacy_controller: AdminMailsendvxFlows
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard
   requirements:
     idQueue: \d+
 
@@ -161,11 +208,21 @@ mailsendvx_queue_run:
   methods: [POST]
   defaults:
     _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::runQueueNowAction'
-    _legacy_controller: AdminMailsendvxFlows
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard
 
 mailsendvx_queue_bulk_cancel:
   path: /mailsendvx/queue/bulk-cancel
   methods: [POST]
   defaults:
     _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::cancelQueueBulkAction'
-    _legacy_controller: AdminMailsendvxFlows
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard
+
+mailsendvx_queue_clear:
+  path: /mailsendvx/queue/clear
+  methods: [POST]
+  defaults:
+    _controller: 'Velox\MailSendVx\Controller\Admin\FlowsController::clearQueueAction'
+    _legacy_controller: AdminMailsendvxDashboard
+    _legacy_link: AdminMailsendvxDashboard

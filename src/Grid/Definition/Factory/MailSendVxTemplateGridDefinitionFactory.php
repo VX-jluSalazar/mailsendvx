@@ -131,6 +131,20 @@ final class MailSendVxTemplateGridDefinitionFactory extends AbstractGridDefiniti
                     ->setOptions([
                         'actions' => (new RowActionCollection())
                             ->add(
+                                (new LinkRowAction('detail'))
+                                    ->setName($this->trans('Detalle', [], 'Modules.Mailsendvx.Admin'))
+                                    ->setIcon('visibility')
+                                    ->setOptions([
+                                        'route' => 'mailsendvx_template_detail',
+                                        'route_param_name' => 'idTemplate',
+                                        'route_param_field' => 'id_mailsendvx_template',
+                                        'attr' => [
+                                            'class' => 'js-mailsendvx-grid-detail',
+                                        ],
+                                        'use_inline_display' => true,
+                                    ])
+                            )
+                            ->add(
                                 (new LinkRowAction('edit'))
                                     ->setName($this->trans('Edit', [], 'Admin.Actions'))
                                     ->setIcon('edit')

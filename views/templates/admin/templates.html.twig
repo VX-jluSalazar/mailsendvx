@@ -147,7 +147,15 @@
         {{ 'Templates'|trans({}, 'Modules.Mailsendvx.Admin') }}
       </h3>
       <div class="card-body">
-        {{ include('@PrestaShop/Admin/Common/Grid/grid_panel.html.twig', {'grid': templatesGrid }) }}
+        <div
+          class="mailsendvx-grid-shell"
+          data-mailsendvx-ajax-grid="1"
+          data-grid-id="mailsendvx_templates"
+          data-grid-panel-endpoint="{{ path('mailsendvx_templates_grid', {gridId: 'mailsendvx_templates'}) }}"
+          data-grid-ajax-actions="1"
+        >
+          {{ include('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', {'grid': templatesGrid }) }}
+        </div>
       </div>
     </div>
   </section>
@@ -186,6 +194,7 @@
         </div>
       </div>
     </div>
+    {{ include('@Modules/mailsendvx/views/templates/admin/partials/detail_modal.html.twig') }}
 {% endblock %}
 
 {% block javascripts %}

@@ -1,0 +1,19 @@
+<div class="mailsendvx-log-detail-grid">
+  {% for item in detail.meta %}
+    <article class="mailsendvx-log-detail">
+      <span>{{ item.label }}</span>
+      <strong>{{ item.value ?: '-' }}</strong>
+    </article>
+  {% endfor %}
+</div>
+
+{% for block in detail.blocks %}
+  <section class="mailsendvx-log-block">
+    <span class="mailsendvx-log-block__label">{{ block.label }}</span>
+    {% if block.code %}
+      <pre class="mailsendvx-log-block__content mailsendvx-log-block__content--code">{{ block.content }}</pre>
+    {% else %}
+      <div class="mailsendvx-log-block__content">{{ block.content }}</div>
+    {% endif %}
+  </section>
+{% endfor %}

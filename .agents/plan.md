@@ -19,7 +19,13 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | `FASE_02D_WORKER_LOCKING_E_IDEMPOTENCIA.md` | Fase 2D | Worker, locking, idempotencia y reintentos. |
 | `FASE_02E_CONDICIONES_Y_CANCELACIONES.md` | Fase 2E | Condiciones de flow y step, cancelaciones y reevaluaciones. |
 | `FASE_02F_UI_OPERATIVA_Y_CASOS_COMERCIALES.md` | Fase 2F | UI operativa y primeros flujos comerciales. |
-| `FASE_03_MAQUETADOR_VISUAL.md` | Fase 3 | Editor visual, bloques, JSON de diseno, renderizado responsive y previews con datos reales. |
+| `FASE_03_AJUSTES_FRONT.md` | Fase 3 | Ajustes front del Dashboard con Grid AJAX reutilizable, operativa de queue, modales de detalle y navegacion parcial. |
+| `FASE_03A_AUDITORIA_GRIDS_Y_BRECHAS.md` | Fase 3A | Auditoria de tablas/grids actuales y brechas tecnicas para migracion AJAX. |
+| `FASE_03B_INFRAESTRUCTURA_AJAX_COMUN.md` | Fase 3B | Base comun JS y de endpoints para refresh parcial, mensajes y acciones AJAX. |
+| `FASE_03C_QUEUE_OPERATIVA_Y_ACCIONES_AJAX.md` | Fase 3C | Correcciones y mejoras operativas de queue, incluyendo cancelacion y limpieza por AJAX. |
+| `FASE_03D_MODAL_DETALLE_Y_ACCIONES_MASIVAS.md` | Fase 3D | Modal reutilizable por fila y acciones agrupadas para grids del Dashboard. |
+| `FASE_03E_NAVEGACION_AJAX_Y_CIERRE_OPERATIVO.md` | Fase 3E | Busqueda, orden, paginacion y refresh por AJAX con cierre operativo de la fase. |
+| `FASE_03_MAQUETADOR_VISUAL.md` | Fase 4 | Editor visual, bloques, JSON de diseno, renderizado responsive y previews con datos reales. |
 
 ## Roadmap recomendado
 
@@ -33,8 +39,9 @@ El objetivo del modulo es construir un motor de envio y automatizacion de emails
 | 6 | Fase 2.1 a 2.4 | Cola y cron operativos para emails diferidos. |
 | 7 | Fase 2.5 a 2.8 | Flujos comerciales: carrito abandonado, postcompra y suscriptores. |
 | 8 | Fase 2.9 a 2.12 | Condiciones, cancelaciones, reintentos y monitoreo. |
-| 9 | Fase 3.1 a 3.4 | Editor avanzado y renderizador por bloques. |
-| 10 | Fase 3.5 a 3.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
+| 9 | Fase 3A a 3E | Ajuste operativo del Dashboard: auditoria, infraestructura AJAX comun y cierre de grids. |
+| 10 | Fase 4.1 a 4.4 | Editor avanzado y renderizador por bloques. |
+| 11 | Fase 4.5 a 4.10 | Variables visuales, bloques dinamicos, templates predisenados y preview real. |
 
 ## Arquitectura objetivo
 

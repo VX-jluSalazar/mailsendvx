@@ -305,6 +305,11 @@ class FlowAdminService
         return true;
     }
 
+    public function clearQueueHistory(): int
+    {
+        return $this->queueRepository->clearTerminalJobs();
+    }
+
     public function createPresetFlow(string $presetId): bool
     {
         $preset = $this->buildPresetDefinition($presetId);

@@ -1,0 +1,19 @@
+<div class="mailsendvx-modal" id="mailsendvx-detail-modal" hidden>
+  <div class="mailsendvx-modal__backdrop" data-detail-close></div>
+  <div class="mailsendvx-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="mailsendvx-detail-modal-title">
+    <div class="mailsendvx-modal__header">
+      <div>
+        <span class="mailsendvx-eyebrow" id="mailsendvx-detail-modal-eyebrow">{{ 'Detalle'|trans({}, 'Modules.Mailsendvx.Admin') }}</span>
+        <h3 id="mailsendvx-detail-modal-title" class="mailsendvx-modal__title"></h3>
+        <p class="mailsendvx-modal__subtitle" id="mailsendvx-detail-modal-summary"></p>
+      </div>
+      <button type="button" class="close" aria-label="{{ 'Cerrar'|trans({}, 'Admin.Actions') }}" data-detail-close>
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="mailsendvx-modal__body">
+      <div class="alert alert-danger mailsendvx-modal-feedback" id="mailsendvx-detail-feedback" role="alert"></div>
+      <div id="mailsendvx-detail-content"></div>
+    </div>
+  </div>
+</div>

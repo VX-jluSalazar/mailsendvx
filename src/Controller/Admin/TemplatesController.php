@@ -15,6 +15,8 @@ use Velox\MailSendVx\Form\Type\TemplateFormType;
 use Velox\MailSendVx\Grid\Definition\Factory\MailSendVxTemplateGridDefinitionFactory;
 use Velox\MailSendVx\Grid\Filters\MailSendVxTemplateFilters;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\Admin\AdminAjaxResponseBuilder;
+use Velox\MailSendVx\Service\Admin\AdminGridRecordDetailProvider;
 use Velox\MailSendVx\Service\Template\TemplateAdminService;
 
 class TemplatesController extends FrameworkBundleAdminController
@@ -39,17 +41,31 @@ class TemplatesController extends FrameworkBundleAdminController
      */
     private $responseBuilder;
 
+    /**
+     * @var AdminAjaxResponseBuilder
+     */
+    private $ajaxResponseBuilder;
+
+    /**
+     * @var AdminGridRecordDetailProvider
+     */
+    private $gridRecordDetailProvider;
+
     public function __construct(
         TemplateAdminService $templateAdminService,
         GridFactoryInterface $templateGridFactory,
         GridDefinitionFactoryInterface $templateGridDefinitionFactory,
-        ResponseBuilder $responseBuilder
+        ResponseBuilder $responseBuilder,
+        AdminAjaxResponseBuilder $ajaxResponseBuilder,
+        AdminGridRecordDetailProvider $gridRecordDetailProvider
     ) {
         parent::__construct();
         $this->templateAdminService = $templateAdminService;
         $this->templateGridFactory = $templateGridFactory;
         $this->templateGridDefinitionFactory = $templateGridDefinitionFactory;
         $this->responseBuilder = $responseBuilder;
+        $this->ajaxResponseBuilder = $ajaxResponseBuilder;
+        $this->gridRecordDetailProvider = $gridRecordDetailProvider;
     }
 
     public function indexAction(Request $request, MailSendVxTemplateFilters $templateFilters): Response
@@ -81,6 +97,53 @@ class TemplatesController extends FrameworkBundleAdminController
         ]);
     }
 
+    public function gridAction(Request $request, MailSendVxTemplateFilters $templateFilters, string $gridId): JsonResponse
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('Esta operación solo está disponible mediante AJAX.', 'Admin.Notifications.Error', []),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        if ($gridId !== MailSendVxTemplateGridDefinitionFactory::GRID_ID) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('La grid solicitada no es válida.', 'Admin.Notifications.Error', []),
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        return $this->ajaxResponseBuilder->createSuccessResponse([
+            'gridId' => $gridId,
+            'html' => $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', [
+                'grid' => $this->presentGrid($this->templateGridFactory->getGrid($templateFilters)),
+            ]),
+        ]);
+    }
+
+    public function detailAction(Request $request, int $idTemplate): JsonResponse
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('Esta operación solo está disponible mediante AJAX.', 'Admin.Notifications.Error', []),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        try {
+            $detail = $this->gridRecordDetailProvider->getTemplateDetail($idTemplate);
+
+            return $this->ajaxResponseBuilder->createSuccessResponse([
+                'detail' => $detail,
+                'html' => $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/detail_modal_content.html.twig', [
+                    'detail' => $detail,
+                ]),
+            ]);
+        } catch (\Throwable $exception) {
+            return $this->ajaxResponseBuilder->createErrorResponse((string) $exception->getMessage(), Response::HTTP_NOT_FOUND);
+        }
+    }
+
     public function createAction(Request $request): Response
     {
         return $this->renderTemplateForm($request, null);
@@ -103,8 +166,19 @@ class TemplatesController extends FrameworkBundleAdminController
         }
 
         if ($this->templateAdminService->deleteTemplate($idTemplate)) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createSuccessResponse([], $this->trans('Plantilla eliminada.', 'Admin.Notifications.Success', []));
+            }
+
             $this->addFlash('success', $this->trans('Plantilla eliminada.', 'Admin.Notifications.Success', []));
         } else {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('No se pudo eliminar la plantilla.', 'Modules.Mailsendvx.Admin', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('danger', $this->trans('No se pudo eliminar la plantilla.', 'Modules.Mailsendvx.Admin', []));
         }
 
@@ -114,6 +188,13 @@ class TemplatesController extends FrameworkBundleAdminController
     public function bulkDeleteAction(Request $request): Response
     {
         if (!$this->isCsrfTokenValid('mailsendvx-template-bulk-delete', (string) $request->get('_token'))) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('danger', $this->trans('El token de seguridad no es válido. Recarga la página e inténtalo de nuevo.', 'Admin.Notifications.Error', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
@@ -121,6 +202,13 @@ class TemplatesController extends FrameworkBundleAdminController
 
         $selectedIds = array_values(array_filter(array_map('intval', (array) $request->request->get(MailSendVxTemplateGridDefinitionFactory::GRID_ID . '_bulk_templates', []))));
         if (empty($selectedIds)) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createErrorResponse(
+                    $this->trans('Selecciona al menos una plantilla.', 'Admin.Notifications.Warning', []),
+                    Response::HTTP_BAD_REQUEST
+                );
+            }
+
             $this->addFlash('warning', $this->trans('Selecciona al menos una plantilla.', 'Admin.Notifications.Warning', []));
 
             return $this->redirectToRoute('mailsendvx_templates');
@@ -134,7 +222,18 @@ class TemplatesController extends FrameworkBundleAdminController
         }
 
         if ($deleted > 0) {
+            if ($request->isXmlHttpRequest()) {
+                return $this->ajaxResponseBuilder->createSuccessResponse([], sprintf('%d plantilla(s) eliminada(s).', $deleted));
+            }
+
             $this->addFlash('success', sprintf('%d plantilla(s) eliminada(s).', $deleted));
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('No se pudo eliminar ninguna plantilla.', 'Modules.Mailsendvx.Admin', []),
+                Response::HTTP_BAD_REQUEST
+            );
         }
 
         return $this->redirectToRoute('mailsendvx_templates');

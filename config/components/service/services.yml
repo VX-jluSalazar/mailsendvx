@@ -271,6 +271,19 @@ services:
       $templateRepository: '@prestashop.module.mailsendvx.repository.template'
       $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
 
+  prestashop.module.mailsendvx.service.admin_ajax_response_builder:
+    class: Velox\MailSendVx\Service\Admin\AdminAjaxResponseBuilder
+    public: true
+
+  prestashop.module.mailsendvx.service.admin_grid_record_detail:
+    class: Velox\MailSendVx\Service\Admin\AdminGridRecordDetailProvider
+    public: true
+    arguments:
+      $eventRepository: '@prestashop.module.mailsendvx.repository.event'
+      $queueRepository: '@prestashop.module.mailsendvx.repository.queue'
+      $logRepository: '@prestashop.module.mailsendvx.repository.log'
+      $templateRepository: '@prestashop.module.mailsendvx.repository.template'
+
   prestashop.module.mailsendvx.service.flow_admin:
     class: Velox\MailSendVx\Service\Admin\FlowAdminService
     public: true

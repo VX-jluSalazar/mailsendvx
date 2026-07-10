@@ -70,4 +70,21 @@ class MailSendVxEventRepository extends AbstractMailSendVxRepository
 
         return $result ?: false;
     }
+
+    /**
+     * @return array<string, mixed>|false
+     */
+    public function findById(int $idEvent)
+    {
+        $queryBuilder = $this->createQueryBuilder();
+        $queryBuilder
+            ->select('*')
+            ->from($this->getTableName('mailsendvx_event'))
+            ->where('id_mailsendvx_event = :idEvent')
+            ->setParameter('idEvent', $idEvent, ParameterType::INTEGER);
+
+        $result = $queryBuilder->execute()->fetchAssociative();
+
+        return $result ?: false;
+    }
 }

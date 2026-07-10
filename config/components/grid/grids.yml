@@ -18,7 +18,6 @@ services:
     parent: prestashop.core.grid.definition.factory.abstract_grid_definition
     public: true
     arguments:
-      - "@=service('prestashop.adapter.legacy.context').getContext().language.date_format_lite"
       - '@security.csrf.token_manager'
 
   prestashop.module.mailsendvx.grid.definition.factory.templates:

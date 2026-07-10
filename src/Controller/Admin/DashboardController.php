@@ -18,6 +18,8 @@ use Velox\MailSendVx\Grid\Filters\MailSendVxEventFilters;
 use Velox\MailSendVx\Grid\Filters\MailSendVxLogFilters;
 use Velox\MailSendVx\Grid\Filters\MailSendVxQueueFilters;
 use Velox\MailSendVx\ModuleConstants;
+use Velox\MailSendVx\Service\Admin\AdminAjaxResponseBuilder;
+use Velox\MailSendVx\Service\Admin\AdminGridRecordDetailProvider;
 use Velox\MailSendVx\Service\Admin\DashboardViewService;
 
 class DashboardController extends FrameworkBundleAdminController
@@ -67,6 +69,16 @@ class DashboardController extends FrameworkBundleAdminController
      */
     private $formHandler;
 
+    /**
+     * @var AdminAjaxResponseBuilder
+     */
+    private $ajaxResponseBuilder;
+
+    /**
+     * @var AdminGridRecordDetailProvider
+     */
+    private $gridRecordDetailProvider;
+
     public function __construct(
         DashboardViewService $dashboardViewService,
         GridFactoryInterface $eventGridFactory,
@@ -76,7 +88,9 @@ class DashboardController extends FrameworkBundleAdminController
         GridDefinitionFactoryInterface $queueGridDefinitionFactory,
         GridDefinitionFactoryInterface $logGridDefinitionFactory,
         ResponseBuilder $responseBuilder,
-        FormHandlerInterface $formHandler
+        FormHandlerInterface $formHandler,
+        AdminAjaxResponseBuilder $ajaxResponseBuilder,
+        AdminGridRecordDetailProvider $gridRecordDetailProvider
     )
     {
         parent::__construct();
@@ -89,6 +103,8 @@ class DashboardController extends FrameworkBundleAdminController
         $this->logGridDefinitionFactory = $logGridDefinitionFactory;
         $this->responseBuilder = $responseBuilder;
         $this->formHandler = $formHandler;
+        $this->ajaxResponseBuilder = $ajaxResponseBuilder;
+        $this->gridRecordDetailProvider = $gridRecordDetailProvider;
     }
 
     public function indexAction(
@@ -98,7 +114,7 @@ class DashboardController extends FrameworkBundleAdminController
         MailSendVxLogFilters $logFilters
     ): Response
     {
-        $activeTab = $this->resolveActiveTab((string) $request->query->get('tab', 'events'));
+        $activeTab = $this->resolveActiveTab((string) $request->query->get('tab', (string) $request->attributes->get('tab', 'events')));
 
         if ($request->isMethod('POST')) {
             if ($request->request->has(MailSendVxEventGridDefinitionFactory::GRID_ID)) {
@@ -182,10 +198,97 @@ class DashboardController extends FrameworkBundleAdminController
         return $this->render('@Modules/mailsendvx/views/templates/admin/dashboard.html.twig', $viewData);
     }
 
+    public function gridAction(
+        Request $request,
+        MailSendVxEventFilters $eventFilters,
+        MailSendVxQueueFilters $queueFilters,
+        MailSendVxLogFilters $logFilters,
+        string $gridId
+    ): JsonResponse {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('Esta operación solo está disponible mediante AJAX.', 'Admin.Notifications.Error', []),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        $activeTab = $this->resolveActiveTab((string) $request->query->get('tab', $this->resolveTabByGridId($gridId)));
+        $gridHtml = $this->renderDashboardGrid($gridId, $eventFilters, $queueFilters, $logFilters);
+
+        return $this->ajaxResponseBuilder->createSuccessResponse([
+            'gridId' => $gridId,
+            'html' => $gridHtml,
+            'activeTab' => $activeTab,
+        ]);
+    }
+
+    public function detailAction(Request $request, string $gridId, int $recordId): JsonResponse
+    {
+        if (!$request->isXmlHttpRequest()) {
+            return $this->ajaxResponseBuilder->createErrorResponse(
+                $this->trans('Esta operación solo está disponible mediante AJAX.', 'Admin.Notifications.Error', []),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        try {
+            $detail = $this->gridRecordDetailProvider->getDashboardRecordDetail($gridId, $recordId);
+
+            return $this->ajaxResponseBuilder->createSuccessResponse([
+                'detail' => $detail,
+                'html' => $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/detail_modal_content.html.twig', [
+                    'detail' => $detail,
+                ]),
+            ]);
+        } catch (\Throwable $exception) {
+            return $this->ajaxResponseBuilder->createErrorResponse((string) $exception->getMessage(), Response::HTTP_NOT_FOUND);
+        }
+    }
+
     private function resolveActiveTab(string $tab): string
     {
         $allowedTabs = ['events', 'queue', 'logs', 'configuration'];
 
         return in_array($tab, $allowedTabs, true) ? $tab : 'events';
+    }
+
+    private function resolveTabByGridId(string $gridId): string
+    {
+        if ($gridId === MailSendVxQueueGridDefinitionFactory::GRID_ID) {
+            return 'queue';
+        }
+
+        if ($gridId === MailSendVxLogGridDefinitionFactory::GRID_ID) {
+            return 'logs';
+        }
+
+        return 'events';
+    }
+
+    private function renderDashboardGrid(
+        string $gridId,
+        MailSendVxEventFilters $eventFilters,
+        MailSendVxQueueFilters $queueFilters,
+        MailSendVxLogFilters $logFilters
+    ): string {
+        if ($gridId === MailSendVxEventGridDefinitionFactory::GRID_ID) {
+            return $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', [
+                'grid' => $this->presentGrid($this->eventGridFactory->getGrid($eventFilters)),
+            ]);
+        }
+
+        if ($gridId === MailSendVxQueueGridDefinitionFactory::GRID_ID) {
+            return $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', [
+                'grid' => $this->presentGrid($this->queueGridFactory->getGrid($queueFilters)),
+            ]);
+        }
+
+        if ($gridId === MailSendVxLogGridDefinitionFactory::GRID_ID) {
+            return $this->renderView('@Modules/mailsendvx/views/templates/admin/partials/grid_panel.html.twig', [
+                'grid' => $this->presentGrid($this->logGridFactory->getGrid($logFilters)),
+            ]);
+        }
+
+        throw $this->createNotFoundException(sprintf('Grid "%s" no soportada.', $gridId));
     }
 }
