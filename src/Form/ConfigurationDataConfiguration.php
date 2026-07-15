@@ -28,6 +28,9 @@ class ConfigurationDataConfiguration implements DataConfigurationInterface
             'abandoned_cart_delay_value' => (int) ($this->configuration->get(ModuleConstants::CONFIG_ABANDONED_CART_DELAY_VALUE) ?: 1),
             'abandoned_cart_delay_unit' => (string) ($this->configuration->get(ModuleConstants::CONFIG_ABANDONED_CART_DELAY_UNIT) ?: 'hour'),
             'abandoned_cart_cron_batch_size' => (int) ($this->configuration->get(ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE) ?: 100),
+            'primary_500' => (string) ($this->configuration->get(ModuleConstants::CONFIG_COLOR_PRIMARY_500) ?: '#1B3A5C'),
+            'secondary_500' => (string) ($this->configuration->get(ModuleConstants::CONFIG_COLOR_SECONDARY_500) ?: '#C4690A'),
+            'neutral_500' => (string) ($this->configuration->get(ModuleConstants::CONFIG_COLOR_NEUTRAL_500) ?: '#6E6A62'),
         ];
     }
 
@@ -42,6 +45,9 @@ class ConfigurationDataConfiguration implements DataConfigurationInterface
         $this->configuration->set(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER, true);
         $this->configuration->set(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS, true);
         $this->configuration->set(ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE, max(1, (int) ($configuration['abandoned_cart_cron_batch_size'] ?? 100)));
+        $this->configuration->set(ModuleConstants::CONFIG_COLOR_PRIMARY_500, $this->normalizeHexColor((string) ($configuration['primary_500'] ?? ''), '#1B3A5C'));
+        $this->configuration->set(ModuleConstants::CONFIG_COLOR_SECONDARY_500, $this->normalizeHexColor((string) ($configuration['secondary_500'] ?? ''), '#C4690A'));
+        $this->configuration->set(ModuleConstants::CONFIG_COLOR_NEUTRAL_500, $this->normalizeHexColor((string) ($configuration['neutral_500'] ?? ''), '#6E6A62'));
 
         return [];
     }
@@ -49,5 +55,23 @@ class ConfigurationDataConfiguration implements DataConfigurationInterface
     public function validateConfiguration(array $configuration): bool
     {
         return true;
+    }
+
+    private function normalizeHexColor(string $value, string $fallback): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return $fallback;
+        }
+
+        if (preg_match('/^#([0-9a-fA-F]{3})$/', $value, $matches)) {
+            $value = '#' . $matches[1][0] . $matches[1][0] . $matches[1][1] . $matches[1][1] . $matches[1][2] . $matches[1][2];
+        }
+
+        if (!preg_match('/^#[0-9a-fA-F]{6}$/', $value)) {
+            return $fallback;
+        }
+
+        return strtoupper($value);
     }
 }

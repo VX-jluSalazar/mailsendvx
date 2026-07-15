@@ -99,6 +99,11 @@ class Mailsendvx extends Module
         if (file_exists($cssPath)) {
             $this->context->controller->addCSS($this->_path . 'views/css/admin.css?v=' . (string) filemtime($cssPath));
         }
+
+        $jsPath = __DIR__ . '/views/js/mailsendvx-admin.js';
+        if (file_exists($jsPath)) {
+            $this->context->controller->addJS($this->_path . 'views/js/mailsendvx-admin.js?v=' . (string) filemtime($jsPath));
+        }
     }
 
     public function getContent(): string

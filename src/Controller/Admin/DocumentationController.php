@@ -10,6 +10,7 @@ use PrestaShopBundle\Controller\Admin\FrameworkBundleAdminController;
 use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\Documentation\FixtureGeneratorService;
 use Velox\MailSendVx\Service\Template\TemplateAdminService;
+use Velox\MailSendVx\Service\Theme\ColorPaletteProvider;
 
 class DocumentationController extends FrameworkBundleAdminController
 {
@@ -23,11 +24,17 @@ class DocumentationController extends FrameworkBundleAdminController
      */
     private $fixtureGenerator;
 
-    public function __construct(TemplateAdminService $templateAdminService, FixtureGeneratorService $fixtureGenerator)
+    /**
+     * @var ColorPaletteProvider
+     */
+    private $colorPaletteProvider;
+
+    public function __construct(TemplateAdminService $templateAdminService, FixtureGeneratorService $fixtureGenerator, ColorPaletteProvider $colorPaletteProvider)
     {
         parent::__construct();
         $this->templateAdminService = $templateAdminService;
         $this->fixtureGenerator = $fixtureGenerator;
+        $this->colorPaletteProvider = $colorPaletteProvider;
     }
 
     public function indexAction(Request $request): Response
@@ -47,6 +54,7 @@ class DocumentationController extends FrameworkBundleAdminController
             'cronGuides' => $this->getCronGuides(),
             'fixtureGuides' => $this->getFixtureGuides(),
             'fixtureSyncError' => $fixtureSyncError,
+            'colorPaletteGuide' => $this->colorPaletteProvider->getDocumentationGuide(),
         ]);
     }
 

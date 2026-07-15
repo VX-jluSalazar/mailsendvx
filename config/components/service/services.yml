@@ -69,6 +69,12 @@ services:
     arguments:
       $twigEngine: '@prestashop.module.mailsendvx.service.template_engine.twig'
 
+  prestashop.module.mailsendvx.service.color_palette:
+    class: Velox\MailSendVx\Service\Theme\ColorPaletteProvider
+    public: true
+    arguments:
+      $configuration: '@prestashop.adapter.legacy.configuration'
+
   prestashop.module.mailsendvx.service.logger:
     class: Velox\MailSendVx\Service\Support\MailSendVxLogger
     public: true
@@ -216,6 +222,7 @@ services:
       $customerBuilder: '@prestashop.module.mailsendvx.service.context_builder.customer'
       $newsletterBuilder: '@prestashop.module.mailsendvx.service.context_builder.newsletter'
       $cartBuilder: '@prestashop.module.mailsendvx.service.context_builder.cart'
+      $colorPaletteProvider: '@prestashop.module.mailsendvx.service.color_palette'
 
   prestashop.module.mailsendvx.service.fixture_generator:
     class: Velox\MailSendVx\Service\Documentation\FixtureGeneratorService

@@ -1,0 +1,15 @@
+{% use '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+
+{% block color_picker_widget %}
+  {% apply spaceless %}
+    {% set attr = attr|merge({'class': ((attr.class|default('') ~ ' form-control')|trim)}) %}
+    <div class="input-group colorpicker-component mailsendvx-colorpicker">
+      <input type="text" {{ block('widget_attributes') }} {% if value is not empty %}value="{{ value }}" {% endif %}/>
+      <div class="input-group-append">
+        <span class="input-group-text colorpicker-input-addon">
+          <i></i>
+        </span>
+      </div>
+    </div>
+  {% endapply %}
+{% endblock color_picker_widget %}

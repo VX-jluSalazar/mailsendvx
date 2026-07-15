@@ -149,7 +149,8 @@ class DatabaseInstaller
         return $this->ensureTemplateSchema()
             && $this->ensureWrapperSchema()
             && $this->ensureFlowSchema()
-            && $this->ensureQueueSchema();
+            && $this->ensureQueueSchema()
+            && $this->seedInitialData();
     }
 
     public function uninstall(): bool
@@ -289,5 +290,181 @@ class DatabaseInstaller
     private function executeSilently(string $sql): bool
     {
         return (bool) Db::getInstance()->execute($sql);
+    }
+
+    private function seedInitialData(): bool
+    {
+        if (!$this->shouldRunSeedStatements()) {
+            return true;
+        }
+
+        $seedStatements = $this->loadSeedStatements();
+        if (empty($seedStatements)) {
+            return true;
+        }
+
+        foreach ($seedStatements as $statement) {
+            $preparedStatement = str_replace('`ps_', '`' . _DB_PREFIX_, $statement);
+
+            if (!Db::getInstance()->execute($preparedStatement)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function tableHasRows(string $table): bool
+    {
+        $result = Db::getInstance()->executeS('SELECT 1 FROM `' . bqSQL($table) . '` LIMIT 1');
+
+        return is_array($result) && !empty($result);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function loadSeedStatements(): array
+    {
+        $seedStatements = $this->loadSeedStatementsFromPhpFile();
+        if (!empty($seedStatements)) {
+            return $seedStatements;
+        }
+
+        return $this->loadSeedStatementsFromSqlDump();
+    }
+
+    /**
+     * @return string[]
+     */
+    private function loadSeedStatementsFromPhpFile(): array
+    {
+        $seedFile = __DIR__ . '/SeedData.php';
+        if (!is_file($seedFile) || !is_readable($seedFile)) {
+            return [];
+        }
+
+        $seedStatements = require $seedFile;
+        if (is_string($seedStatements) && trim($seedStatements) !== '') {
+            return $this->splitSqlStatements($seedStatements);
+        }
+
+        if (is_array($seedStatements)) {
+            return $this->normalizeSeedStatements($seedStatements);
+        }
+
+        $rawContents = trim((string) file_get_contents($seedFile));
+        if ($rawContents === '' || strpos($rawContents, 'INSERT INTO') === false) {
+            return [];
+        }
+
+        return $this->splitSqlStatements($rawContents);
+    }
+
+    /**
+     * @return string[]
+     */
+    private function loadSeedStatementsFromSqlDump(): array
+    {
+        $sqlFile = dirname(__DIR__, 2) . '/.agents/u858172769_smartstoren (1).sql';
+        if (!is_file($sqlFile) || !is_readable($sqlFile)) {
+            return [];
+        }
+
+        $contents = (string) file_get_contents($sqlFile);
+        if ($contents === '') {
+            return [];
+        }
+
+        return $this->splitSqlStatements($contents);
+    }
+
+    /**
+     * @param array<int|string, mixed> $seedStatements
+     *
+     * @return string[]
+     */
+    private function normalizeSeedStatements(array $seedStatements): array
+    {
+        $normalizedStatements = [];
+
+        foreach ($seedStatements as $statement) {
+            if (is_string($statement) && trim($statement) !== '') {
+                $normalizedStatements[] = trim($statement);
+            }
+        }
+
+        return $normalizedStatements;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function splitSqlStatements(string $contents): array
+    {
+        $statements = [];
+        $currentStatement = '';
+        $length = strlen($contents);
+        $inSingleQuote = false;
+        $inDoubleQuote = false;
+        $escaped = false;
+
+        for ($index = 0; $index < $length; ++$index) {
+            $character = $contents[$index];
+            $currentStatement .= $character;
+
+            if ($escaped) {
+                $escaped = false;
+                continue;
+            }
+
+            if ($character === '\\') {
+                $escaped = true;
+                continue;
+            }
+
+            if ($character === "'" && !$inDoubleQuote) {
+                $inSingleQuote = !$inSingleQuote;
+                continue;
+            }
+
+            if ($character === '"' && !$inSingleQuote) {
+                $inDoubleQuote = !$inDoubleQuote;
+                continue;
+            }
+
+            if ($character === ';' && !$inSingleQuote && !$inDoubleQuote) {
+                $statement = trim($currentStatement);
+                if ($statement !== '') {
+                    $statements[] = $statement;
+                }
+
+                $currentStatement = '';
+            }
+        }
+
+        $tailStatement = trim($currentStatement);
+        if ($tailStatement !== '') {
+            $statements[] = $tailStatement;
+        }
+
+        return $statements;
+    }
+
+    private function shouldRunSeedStatements(): bool
+    {
+        $tables = [
+            _DB_PREFIX_ . 'mailsendvx_wrapper',
+            _DB_PREFIX_ . 'mailsendvx_template',
+            _DB_PREFIX_ . 'mailsendvx_flow',
+        ];
+
+        foreach ($tables as $table) {
+            if ($this->tableHasRows($table)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

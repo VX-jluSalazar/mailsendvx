@@ -218,6 +218,20 @@
   margin-top: 8px;
 }
 
+.mailsendvx-color-chip {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.mailsendvx-color-chip__swatch {
+  border: 1px solid rgba(32, 50, 67, 0.12);
+  border-radius: 999px;
+  display: inline-block;
+  height: 14px;
+  width: 14px;
+}
+
 .mailsendvx-event-code-help code {
   background: #f5f9fb;
   border: 1px solid var(--mailsendvx-line);

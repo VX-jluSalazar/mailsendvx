@@ -21,6 +21,7 @@ use Velox\MailSendVx\ModuleConstants;
 use Velox\MailSendVx\Service\Admin\AdminAjaxResponseBuilder;
 use Velox\MailSendVx\Service\Admin\AdminGridRecordDetailProvider;
 use Velox\MailSendVx\Service\Admin\DashboardViewService;
+use Velox\MailSendVx\Service\Theme\ColorPaletteProvider;
 
 class DashboardController extends FrameworkBundleAdminController
 {
@@ -79,6 +80,11 @@ class DashboardController extends FrameworkBundleAdminController
      */
     private $gridRecordDetailProvider;
 
+    /**
+     * @var ColorPaletteProvider
+     */
+    private $colorPaletteProvider;
+
     public function __construct(
         DashboardViewService $dashboardViewService,
         GridFactoryInterface $eventGridFactory,
@@ -90,7 +96,8 @@ class DashboardController extends FrameworkBundleAdminController
         ResponseBuilder $responseBuilder,
         FormHandlerInterface $formHandler,
         AdminAjaxResponseBuilder $ajaxResponseBuilder,
-        AdminGridRecordDetailProvider $gridRecordDetailProvider
+        AdminGridRecordDetailProvider $gridRecordDetailProvider,
+        ColorPaletteProvider $colorPaletteProvider
     )
     {
         parent::__construct();
@@ -105,6 +112,7 @@ class DashboardController extends FrameworkBundleAdminController
         $this->formHandler = $formHandler;
         $this->ajaxResponseBuilder = $ajaxResponseBuilder;
         $this->gridRecordDetailProvider = $gridRecordDetailProvider;
+        $this->colorPaletteProvider = $colorPaletteProvider;
     }
 
     public function indexAction(
@@ -177,6 +185,7 @@ class DashboardController extends FrameworkBundleAdminController
                 'logsGrid' => $this->presentGrid($this->logGridFactory->getGrid($logFilters)),
                 'configurationForm' => $form->createView(),
                 'configurationData' => (array) ($form->getData()['mailsendvx_configuration'] ?? []),
+                'generatedColorPalette' => $this->colorPaletteProvider->getDocumentationGuide(),
                 'shopName' => (string) $this->getContext()->shop->name,
                 'abandonedCartCronUrl' => $this->getContext()->link->getModuleLink('mailsendvx', 'abandonedcartcron', [
                     'token' => (string) Configuration::get(ModuleConstants::CONFIG_CRON_TOKEN),

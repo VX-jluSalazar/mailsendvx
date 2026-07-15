@@ -7,6 +7,7 @@ use Velox\MailSendVx\Service\ContextBuilder\CartTemplateContextBuilder;
 use Velox\MailSendVx\Service\ContextBuilder\CustomerTemplateContextBuilder;
 use Velox\MailSendVx\Service\ContextBuilder\NewsletterTemplateContextBuilder;
 use Velox\MailSendVx\Service\ContextBuilder\OrderTemplateContextBuilder;
+use Velox\MailSendVx\Service\Theme\ColorPaletteProvider;
 
 class EventTemplateContextService
 {
@@ -30,16 +31,23 @@ class EventTemplateContextService
      */
     private $cartBuilder;
 
+    /**
+     * @var ColorPaletteProvider
+     */
+    private $colorPaletteProvider;
+
     public function __construct(
         OrderTemplateContextBuilder $orderBuilder,
         CustomerTemplateContextBuilder $customerBuilder,
         NewsletterTemplateContextBuilder $newsletterBuilder,
-        CartTemplateContextBuilder $cartBuilder
+        CartTemplateContextBuilder $cartBuilder,
+        ColorPaletteProvider $colorPaletteProvider
     ) {
         $this->orderBuilder = $orderBuilder;
         $this->customerBuilder = $customerBuilder;
         $this->newsletterBuilder = $newsletterBuilder;
         $this->cartBuilder = $cartBuilder;
+        $this->colorPaletteProvider = $colorPaletteProvider;
     }
 
     /**
@@ -49,7 +57,7 @@ class EventTemplateContextService
      */
     public function buildOrderStatusContext(array $params): array
     {
-        return $this->orderBuilder->buildHookContext(ModuleConstants::EVENT_ORDER_STATUS_CHANGED, $params);
+        return $this->withGlobalContext($this->orderBuilder->buildHookContext(ModuleConstants::EVENT_ORDER_STATUS_CHANGED, $params));
     }
 
     /**
@@ -59,7 +67,7 @@ class EventTemplateContextService
      */
     public function buildOrderCreatedContext(array $params): array
     {
-        return $this->orderBuilder->buildHookContext(ModuleConstants::EVENT_ORDER_CREATED, $params);
+        return $this->withGlobalContext($this->orderBuilder->buildHookContext(ModuleConstants::EVENT_ORDER_CREATED, $params));
     }
 
     /**
@@ -69,7 +77,7 @@ class EventTemplateContextService
      */
     public function buildCustomerRegisteredContext(array $params): array
     {
-        return $this->customerBuilder->buildHookContext(ModuleConstants::EVENT_CUSTOMER_REGISTERED, $params);
+        return $this->withGlobalContext($this->customerBuilder->buildHookContext(ModuleConstants::EVENT_CUSTOMER_REGISTERED, $params));
     }
 
     /**
@@ -79,7 +87,7 @@ class EventTemplateContextService
      */
     public function buildNewsletterRegisteredContext(array $params): array
     {
-        return $this->newsletterBuilder->buildHookContext(ModuleConstants::EVENT_NEWSLETTER_REGISTERED, $params);
+        return $this->withGlobalContext($this->newsletterBuilder->buildHookContext(ModuleConstants::EVENT_NEWSLETTER_REGISTERED, $params));
     }
 
     /**
@@ -89,7 +97,7 @@ class EventTemplateContextService
      */
     public function buildCartAbandonedContext(array $params): array
     {
-        return $this->cartBuilder->buildHookContext(ModuleConstants::EVENT_CART_ABANDONED, $params);
+        return $this->withGlobalContext($this->cartBuilder->buildHookContext(ModuleConstants::EVENT_CART_ABANDONED, $params));
     }
 
     /**
@@ -98,22 +106,22 @@ class EventTemplateContextService
     public function getSampleContext(string $eventName): array
     {
         if ($this->orderBuilder->supportsEvent($eventName)) {
-            return $this->orderBuilder->buildSampleContext($eventName);
+            return $this->withGlobalContext($this->orderBuilder->buildSampleContext($eventName));
         }
 
         if ($this->customerBuilder->supportsEvent($eventName)) {
-            return $this->customerBuilder->buildSampleContext($eventName);
+            return $this->withGlobalContext($this->customerBuilder->buildSampleContext($eventName));
         }
 
         if ($this->newsletterBuilder->supportsEvent($eventName)) {
-            return $this->newsletterBuilder->buildSampleContext($eventName);
+            return $this->withGlobalContext($this->newsletterBuilder->buildSampleContext($eventName));
         }
 
         if ($this->cartBuilder->supportsEvent($eventName)) {
-            return $this->cartBuilder->buildSampleContext($eventName);
+            return $this->withGlobalContext($this->cartBuilder->buildSampleContext($eventName));
         }
 
-        return [];
+        return $this->withGlobalContext([]);
     }
 
     /**
@@ -128,15 +136,25 @@ class EventTemplateContextService
 
         switch ($contextType) {
             case ModuleConstants::CONTEXT_ORDER:
-                return $this->orderBuilder->buildSampleContext($resolvedEventName);
+                return $this->withGlobalContext($this->orderBuilder->buildSampleContext($resolvedEventName));
             case ModuleConstants::CONTEXT_CART:
-                return $this->cartBuilder->buildSampleContext($resolvedEventName);
+                return $this->withGlobalContext($this->cartBuilder->buildSampleContext($resolvedEventName));
             case ModuleConstants::CONTEXT_CUSTOMER:
-                return $this->customerBuilder->buildSampleContext($resolvedEventName);
+                return $this->withGlobalContext($this->customerBuilder->buildSampleContext($resolvedEventName));
             case ModuleConstants::CONTEXT_NEWSLETTER:
-                return $this->newsletterBuilder->buildSampleContext($resolvedEventName);
+                return $this->withGlobalContext($this->newsletterBuilder->buildSampleContext($resolvedEventName));
             default:
-                return [];
+                return $this->withGlobalContext([]);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    private function withGlobalContext(array $context): array
+    {
+        return array_merge($context, $this->colorPaletteProvider->getTemplateContext());
     }
 }

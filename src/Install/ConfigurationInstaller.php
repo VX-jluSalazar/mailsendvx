@@ -21,6 +21,9 @@ class ConfigurationInstaller
             ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER => '1',
             ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS => '1',
             ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE => '100',
+            ModuleConstants::CONFIG_COLOR_PRIMARY_500 => '#1B3A5C',
+            ModuleConstants::CONFIG_COLOR_SECONDARY_500 => '#C4690A',
+            ModuleConstants::CONFIG_COLOR_NEUTRAL_500 => '#6E6A62',
         ];
 
         foreach ($values as $key => $value) {
@@ -45,6 +48,9 @@ class ConfigurationInstaller
             && Configuration::deleteByName(ModuleConstants::CONFIG_ABANDONED_CART_DELAY_UNIT)
             && Configuration::deleteByName(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_CUSTOMER)
             && Configuration::deleteByName(ModuleConstants::CONFIG_ABANDONED_CART_REQUIRE_PRODUCTS)
-            && Configuration::deleteByName(ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE);
+            && Configuration::deleteByName(ModuleConstants::CONFIG_ABANDONED_CART_CRON_BATCH_SIZE)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_COLOR_PRIMARY_500)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_COLOR_SECONDARY_500)
+            && Configuration::deleteByName(ModuleConstants::CONFIG_COLOR_NEUTRAL_500);
     }
 }

@@ -1,4 +1,4 @@
-{% form_theme configurationForm '@PrestaShop/Admin/TwigTemplateForm/prestashop_ui_kit.html.twig' %}
+{% form_theme configurationForm '@Modules/mailsendvx/views/templates/admin/_form_theme.html.twig' %}
 
 {% if activeTab == 'events' %}
   <section class="mailsendvx-tab-panel is-active" data-tab-panel="events">
@@ -87,6 +87,69 @@
                 {{ form_row(configurationForm.mailsendvx_configuration.enabled) }}
                 {{ form_row(configurationForm.mailsendvx_configuration.provider) }}
                 {{ form_row(configurationForm.mailsendvx_configuration.debug) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="card mailsendvx-card mt-3">
+            <h3 class="card-header">
+              <i class="material-icons">palette</i>
+              {{ 'Paleta de colores'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </h3>
+            <div class="card-body">
+              <div class="mailsendvx-inline-note">
+                {{ 'Define los tonos base primary-500, secondary-500 y neutral-500. El módulo generará automáticamente los niveles 50 a 950 y los expondrá en Twig para templates y wrappers.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+                <br>
+                {{ 'Usa por ejemplo: {{ color.primary[500] }}, {{ color.neutral_900 }} o {{ color[\'secondary-700\'] }}.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+              </div>
+              <div class="mailsendvx-settings-grid">
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__field">
+                    {{ form_row(configurationForm.mailsendvx_configuration.primary_500) }}
+                  </div>
+                </div>
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__field">
+                    {{ form_row(configurationForm.mailsendvx_configuration.secondary_500) }}
+                  </div>
+                </div>
+                <div class="mailsendvx-setting">
+                  <div class="mailsendvx-setting__field">
+                    {{ form_row(configurationForm.mailsendvx_configuration.neutral_500) }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="mailsendvx-doc-table-wrap">
+                <table class="table mailsendvx-table mailsendvx-doc-table">
+                  <thead>
+                    <tr>
+                      <th>{{ 'Variable'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Color'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                      <th>{{ 'Acceso Twig'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for family in generatedColorPalette %}
+                      {% for item in family.rows %}
+                        <tr>
+                          <td><code>{{ item.name }}</code></td>
+                          <td>
+                            <span class="mailsendvx-color-chip">
+                              <span class="mailsendvx-color-chip__swatch" style="background-color: {{ item.hex }};"></span>
+                              <code>{{ item.hex }}</code>
+                            </span>
+                          </td>
+                          <td>
+                            <pre class="mailsendvx-doc-code">{{ item.twig }}</pre>
+                            <pre class="mailsendvx-doc-code">{{ item.twig_alias }}</pre>
+                            <pre class="mailsendvx-doc-code">{{ item.twig_bracket }}</pre>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% endfor %}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

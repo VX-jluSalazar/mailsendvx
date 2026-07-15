@@ -2,11 +2,11 @@
 
 namespace Velox\MailSendVx\Form\Type;
 
+use PrestaShopBundle\Form\Admin\Type\ColorPickerType;
 use PrestaShopBundle\Form\Admin\Type\TranslatorAwareType;
 use PrestaShopBundle\Form\Admin\Type\SwitchType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
@@ -19,7 +19,7 @@ class ConfigurationFormType extends TranslatorAwareType
                 'label' => $this->trans('Habilitar captura de eventos', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
             ])
-            ->add('provider', TextType::class, [
+            ->add('provider', \Symfony\Component\Form\Extension\Core\Type\TextType::class, [
                 'label' => $this->trans('Proveedor', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
                 'disabled' => true,
@@ -27,6 +27,21 @@ class ConfigurationFormType extends TranslatorAwareType
             ->add('debug', SwitchType::class, [
                 'label' => $this->trans('Modo debug', 'Modules.Mailsendvx.Admin'),
                 'required' => false,
+            ])
+            ->add('primary_500', ColorPickerType::class, [
+                'label' => $this->trans('Primary 500', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'empty_data' => '#1B3A5C',
+            ])
+            ->add('secondary_500', ColorPickerType::class, [
+                'label' => $this->trans('Secondary 500', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'empty_data' => '#C4690A',
+            ])
+            ->add('neutral_500', ColorPickerType::class, [
+                'label' => $this->trans('Neutral 500', 'Modules.Mailsendvx.Admin'),
+                'required' => false,
+                'empty_data' => '#6E6A62',
             ])
             ->add('abandoned_cart_enabled', SwitchType::class, [
                 'label' => $this->trans('Habilitar detección de carrito abandonado', 'Modules.Mailsendvx.Admin'),

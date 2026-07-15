@@ -41,6 +41,7 @@ services:
     arguments:
       - '@prestashop.module.mailsendvx.service.template_admin'
       - '@prestashop.module.mailsendvx.service.fixture_generator'
+      - '@prestashop.module.mailsendvx.service.color_palette'
     tags:
       - { name: controller.service_arguments }
 
@@ -58,5 +59,6 @@ services:
       - '@prestashop.module.mailsendvx.form.configuration_data_handler'
       - '@prestashop.module.mailsendvx.service.admin_ajax_response_builder'
       - '@prestashop.module.mailsendvx.service.admin_grid_record_detail'
+      - '@prestashop.module.mailsendvx.service.color_palette'
     tags:
       - { name: controller.service_arguments }

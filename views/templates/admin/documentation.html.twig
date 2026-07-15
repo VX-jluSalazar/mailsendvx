@@ -84,6 +84,58 @@
       <div class="col-xl-4">
         <div class="card mailsendvx-card mailsendvx-card--aside">
           <h3 class="card-header">
+            <i class="material-icons">palette</i>
+            {{ 'Variables de color'|trans({}, 'Modules.Mailsendvx.Admin') }}
+          </h3>
+          <div class="card-body">
+            <p class="mailsendvx-inline-note">
+              {{ 'La paleta no vive solo en el payload histórico. El módulo la inyecta en todos los contextos Twig y aquí puedes ver el resultado final generado desde primary-500, secondary-500 y neutral-500.'|trans({}, 'Modules.Mailsendvx.Admin') }}
+            </p>
+            <div class="mailsendvx-reference-grid">
+              {% for family in colorPaletteGuide %}
+                <article class="mailsendvx-reference-card">
+                  <div class="mailsendvx-reference-card__meta">
+                    <strong>{{ family.family|capitalize }}</strong>
+                    <span class="mailsendvx-color-chip">
+                      <span class="mailsendvx-color-chip__swatch" style="background-color: {{ family.base_color }};"></span>
+                      <code>{{ family.base_color }}</code>
+                    </span>
+                  </div>
+                  <div class="mailsendvx-doc-table-wrap">
+                    <table class="table mailsendvx-table mailsendvx-doc-table">
+                      <thead>
+                        <tr>
+                          <th>{{ 'Variable'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                          <th>{{ 'Twig'|trans({}, 'Modules.Mailsendvx.Admin') }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for item in family.rows %}
+                          <tr>
+                            <td>
+                              <span class="mailsendvx-color-chip">
+                                <span class="mailsendvx-color-chip__swatch" style="background-color: {{ item.hex }};"></span>
+                                <code>{{ item.name }}</code>
+                              </span>
+                            </td>
+                            <td>
+                              <pre class="mailsendvx-doc-code">{{ item.twig }}</pre>
+                              <pre class="mailsendvx-doc-code">{{ item.twig_alias }}</pre>
+                              <pre class="mailsendvx-doc-code">{{ item.twig_bracket }}</pre>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card mailsendvx-card mailsendvx-card--aside mt-3">
+          <h3 class="card-header">
             <i class="material-icons">schedule_send</i>
             {{ 'Crons del servidor'|trans({}, 'Modules.Mailsendvx.Admin') }}
           </h3>
